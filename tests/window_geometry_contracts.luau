@@ -13,10 +13,17 @@ assert(stableX == 320 and stableY == 180, "Valid restored bounds must not move")
 local narrowWidth, narrowHeight = Geometry.ClampSize(1120, 680, 600, 360, 16, 720, 420)
 assert(narrowWidth == 568 and narrowHeight == 328, "Small viewports must override the normal minimum size")
 
+local tinyWidth, tinyHeight = Geometry.ClampSize(1120, 680, 300, 220, 16, 720, 420)
+assert(tinyWidth == 268 and tinyHeight == 188, "Tiny viewports must retain the complete outer margin")
+
 local windowSource = fs.readFile("ui/window.lua")
 assert(
     windowSource:find("base.Position = clampRestoredPosition(restorePosition, restoredSize)", 1, true),
     "Restoring from maximized state must use the tested position clamp"
+)
+assert(
+    windowSource:find("clampRestoredPosition(collapsedPosition, restoredSize)", 1, true),
+    "Reopening from collapsed state must clamp its saved position to the current viewport"
 )
 
 print("window-geometry-contracts-ok")

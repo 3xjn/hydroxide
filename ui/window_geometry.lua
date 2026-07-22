@@ -13,8 +13,8 @@ function Geometry.ClampSize(
     minimumWidth,
     minimumHeight
 )
-    local availableWidth = math.max(320, viewportWidth - margin * 2)
-    local availableHeight = math.max(240, viewportHeight - margin * 2)
+    local availableWidth = math.max(0, viewportWidth - margin * 2)
+    local availableHeight = math.max(0, viewportHeight - margin * 2)
     local clampedMinimumWidth = math.min(minimumWidth, availableWidth)
     local clampedMinimumHeight = math.min(minimumHeight, availableHeight)
 

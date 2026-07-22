@@ -89,7 +89,7 @@ function Window.Attach(interface)
 
     local function availableSize()
         local viewport = viewportSize()
-        return Vector2.new(math.max(320, viewport.X - margin * 2), math.max(240, viewport.Y - margin * 2))
+        return Vector2.new(math.max(0, viewport.X - margin * 2), math.max(0, viewport.Y - margin * 2))
     end
 
     local function clampSize(size)
@@ -286,7 +286,15 @@ function Window.Attach(interface)
         end
 
         collapsed = false
-        local destination = (maximized and UDim2.new(0, margin, 0, margin)) or collapsedPosition
+        local destination
+        if maximized then
+            destination = UDim2.new(0, margin, 0, margin)
+        else
+            local restoredSize = clampSize(base.AbsoluteSize)
+            destination = clampRestoredPosition(collapsedPosition, restoredSize)
+            base.Size = UDim2.new(0, restoredSize.X, 0, restoredSize.Y)
+            collapsedPosition = destination
+        end
         open.Visible = false
         base.Position = destination
         base.Visible = true
@@ -301,6 +309,9 @@ function Window.Attach(interface)
             local size = clampSize(base.AbsoluteSize)
             base.Position = clampRestoredPosition(base.Position, size)
             base.Size = UDim2.new(0, size.X, 0, size.Y)
+            if collapsed then
+                collapsedPosition = base.Position
+            end
         end
         updateWorkspace()
     end)
