@@ -6,12 +6,10 @@ local function render(checkBox)
     local enabled = checkBox.Enabled
     checkBox.Label.Text = enabled and '✓' or ''
 
-    local selection = toggle:FindFirstChild("Selection")
     local icon = toggle:FindFirstChild("Icon")
-    if selection and icon then
-        selection.Visible = enabled
+    if icon then
         toggle.BackgroundColor3 = enabled and Theme.Colors.AccentSurface or Theme.Colors.Elevated
-        icon.ImageColor3 = enabled and Theme.Colors.Accent or Theme.Colors.MutedText
+        icon.ImageColor3 = enabled and Color3.fromRGB(255, 255, 255) or Theme.Colors.MutedText
     end
 end
 

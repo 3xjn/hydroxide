@@ -2,6 +2,7 @@ local UserInput = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Theme = import("ui/theme")
 local Geometry = import("ui/window_geometry")
+local VisualAssets = import("ui/assets")
 
 local Window = {}
 
@@ -20,25 +21,33 @@ local function addControlCorner(control)
     corner.CornerRadius = UDim.new(0, 5)
 end
 
-local function createControl(parent, name, glyph, rightOffset)
-    local control = Instance.new("TextButton")
+local function createControl(parent, name, iconName, rightOffset)
+    local control = Instance.new("ImageButton")
     control.Name = name
     control.AnchorPoint = Vector2.new(1, 0.5)
     control.Position = UDim2.new(1, rightOffset, 0.5, 0)
     control.Size = UDim2.new(0, layout.ControlTargetSize, 0, layout.ControlTargetSize)
     control.BackgroundTransparency = 1
     control.AutoButtonColor = false
-    control.Font = Enum.Font.Gotham
-    control.Text = glyph
-    control.TextColor3 = Theme.Colors.SecondaryText
-    control.TextSize = 16
+    control.ImageTransparency = 1
     control.ZIndex = 20
     control.Parent = parent
     addControlCorner(control)
+
+    local icon = Instance.new("ImageLabel")
+    icon.Name = "Icon"
+    icon.AnchorPoint = Vector2.new(0.5, 0.5)
+    icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    icon.Size = UDim2.new(0, 14, 0, 14)
+    icon.BackgroundTransparency = 1
+    icon.ImageColor3 = Theme.Colors.SecondaryText
+    icon.ZIndex = control.ZIndex + 1
+    icon.Parent = control
+    VisualAssets.ApplyWindowIcon(icon, iconName)
     return control
 end
 
-local function styleExistingControl(control, glyph, rightOffset)
+local function styleExistingControl(control, iconName, rightOffset)
     control.AnchorPoint = Vector2.new(1, 0.5)
     control.Position = UDim2.new(1, rightOffset, 0.5, 0)
     control.Size = UDim2.new(0, layout.ControlTargetSize, 0, layout.ControlTargetSize)
@@ -50,33 +59,25 @@ local function styleExistingControl(control, glyph, rightOffset)
         stroke.Transparency = 1
     end
 
-    if control:IsA("ImageButton") then
-        control.ImageTransparency = 1
-        local label = Instance.new("TextLabel")
-        label.Name = "Glyph"
-        label.Size = UDim2.new(1, 0, 1, 0)
-        label.BackgroundTransparency = 1
-        label.Font = Enum.Font.Gotham
-        label.Text = glyph
-        label.TextColor3 = Theme.Colors.SecondaryText
-        label.TextSize = 16
-        label.ZIndex = control.ZIndex + 1
-        label.Parent = control
-    else
-        control.Text = glyph
-        control.TextColor3 = Theme.Colors.SecondaryText
-        control.TextSize = 16
-    end
+    control.ImageTransparency = 1
+    local icon = control:FindFirstChild("Icon")
+    assert(icon and icon:IsA("ImageLabel"), control.Name .. " must contain an Icon ImageLabel")
+    icon.AnchorPoint = Vector2.new(0.5, 0.5)
+    icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    icon.Size = UDim2.new(0, 14, 0, 14)
+    icon.BackgroundTransparency = 1
+    icon.ImageColor3 = Theme.Colors.SecondaryText
+    icon.ZIndex = control.ZIndex + 1
+    VisualAssets.ApplyWindowIcon(icon, iconName)
 end
 
 local function setControlHover(control, hovered, destructive)
     control.BackgroundColor3 = Theme.Colors.Hover
     control.BackgroundTransparency = hovered and 0 or 1
 
-    local glyph = control:FindFirstChild("Glyph")
-    local textControl = glyph or (control:IsA("TextButton") and control)
-    if textControl then
-        textControl.TextColor3 = hovered and (destructive and Theme.Colors.Danger or Theme.Colors.Text) or Theme.Colors.SecondaryText
+    local icon = control:FindFirstChild("Icon")
+    if icon then
+        icon.ImageColor3 = hovered and (destructive and Theme.Colors.Danger or Theme.Colors.Text) or Theme.Colors.SecondaryText
     end
 end
 
@@ -102,11 +103,6 @@ function Window.Attach(interface)
 
     local function viewportSize()
         return camera.ViewportSize
-    end
-
-    local function availableSize()
-        local viewport = viewportSize()
-        return Vector2.new(math.max(0, viewport.X - margin * 2), math.max(0, viewport.Y - margin * 2))
     end
 
     local function clampSize(size)
@@ -153,12 +149,21 @@ function Window.Attach(interface)
         updateWorkspace()
     end
 
-    styleExistingControl(collapse, "−", -76)
+    local function setShellMaximized(value)
+        local corner = base:FindFirstChild("HydroxideCorner")
+        local stroke = base:FindFirstChild("HydroxideStroke")
+        assert(corner and corner:IsA("UICorner"), "Hydroxide window must retain its shell corner")
+        assert(stroke and stroke:IsA("UIStroke"), "Hydroxide window must retain its shell stroke")
+        corner.CornerRadius = UDim.new(0, value and 0 or 8)
+        stroke.Transparency = value and 1 or 0
+    end
+
+    styleExistingControl(collapse, "Collapse", -76)
     open.Position = UDim2.new(0.5, 0, 0, -layout.LauncherSize - layout.WorkspaceInset)
     open.Size = UDim2.new(0, layout.LauncherSize, 0, layout.LauncherSize)
     open.Visible = false
-    local maximize = createControl(drag, "Maximize", "□", -40)
-    local exit = createControl(drag, "Exit", "×", -4)
+    local maximize = createControl(drag, "Maximize", "Maximize", -40)
+    local exit = createControl(drag, "Exit", "Exit", -4)
 
     oh.Events.WindowCollapseEnter = collapse.MouseEnter:Connect(function()
         setControlHover(collapse, true)
@@ -185,20 +190,11 @@ function Window.Attach(interface)
         open.BackgroundColor3 = Theme.Colors.Elevated
     end)
 
-    local resizeHandle = createControl(base, "Resize", "", -4)
+    local resizeHandle = createControl(base, "Resize", "Resize", -4)
     resizeHandle.AnchorPoint = Vector2.new(1, 1)
     resizeHandle.Position = UDim2.new(1, -4, 1, -4)
     resizeHandle.Size = UDim2.new(0, 28, 0, 28)
-    local resizeGrip = Instance.new("Frame")
-    resizeGrip.Name = "Grip"
-    resizeGrip.AnchorPoint = Vector2.new(0.5, 0.5)
-    resizeGrip.Position = UDim2.new(1, -7, 1, -7)
-    resizeGrip.Size = UDim2.new(0, 10, 0, 1)
-    resizeGrip.Rotation = -45
-    resizeGrip.BackgroundColor3 = Theme.Colors.MutedText
-    resizeGrip.BorderSizePixel = 0
-    resizeGrip.ZIndex = resizeHandle.ZIndex + 1
-    resizeGrip.Parent = resizeHandle
+    resizeHandle.Icon.Size = UDim2.new(0, 13, 0, 13)
 
     local function setMaximized(value)
         if value == maximized then
@@ -208,16 +204,18 @@ function Window.Attach(interface)
         if value then
             restorePosition = base.Position
             restoreSize = base.Size
-            local available = availableSize()
-            base.Position = UDim2.new(0, margin, 0, margin)
-            base.Size = UDim2.new(0, available.X, 0, available.Y)
-            maximize.Text = "❐"
+            local viewport = viewportSize()
+            base.Position = UDim2.new(0, 0, 0, 0)
+            base.Size = UDim2.new(0, viewport.X, 0, viewport.Y)
+            VisualAssets.ApplyWindowIcon(maximize.Icon, "Restore")
+            setShellMaximized(true)
             resizeHandle.Visible = false
         else
             local restoredSize = clampSize(Vector2.new(restoreSize.X.Offset, restoreSize.Y.Offset))
             base.Position = clampRestoredPosition(restorePosition, restoredSize)
             base.Size = UDim2.new(0, restoredSize.X, 0, restoredSize.Y)
-            maximize.Text = "□"
+            VisualAssets.ApplyWindowIcon(maximize.Icon, "Maximize")
+            setShellMaximized(false)
             resizeHandle.Visible = true
         end
 
@@ -319,7 +317,9 @@ function Window.Attach(interface)
         collapsed = false
         local destination
         if maximized then
-            destination = UDim2.new(0, margin, 0, margin)
+            local viewport = viewportSize()
+            destination = UDim2.new(0, 0, 0, 0)
+            base.Size = UDim2.new(0, viewport.X, 0, viewport.Y)
         else
             local restoredSize = clampSize(base.AbsoluteSize)
             destination = clampRestoredPosition(collapsedPosition, restoredSize)
@@ -333,9 +333,9 @@ function Window.Attach(interface)
 
     oh.Events.WindowViewport = camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
         if maximized then
-            local available = availableSize()
-            base.Position = UDim2.new(0, margin, 0, margin)
-            base.Size = UDim2.new(0, available.X, 0, available.Y)
+            local viewport = viewportSize()
+            base.Position = UDim2.new(0, 0, 0, 0)
+            base.Size = UDim2.new(0, viewport.X, 0, viewport.Y)
         else
             local size = clampSize(base.AbsoluteSize)
             base.Position = clampRestoredPosition(base.Position, size)

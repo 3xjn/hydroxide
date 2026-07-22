@@ -40,7 +40,8 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 - Page anatomy: tool controls and results sit inside a 12-pixel page inset. Query bars are 36 pixels high. The page does not receive its own rounded card, outline, or elevation; layout grouping comes from spacing, restrained input surfaces, and one-pixel dividers.
 - Home composition: the welcome label, generated mark, and tagline share one centered vertical axis at approximately 24, 48, and 70 percent of the page height.
 - The title bar, tool rail, and status bar remain fixed. Page-owned lists keep their own scrolling.
-- The bottom-right resize handle is a transparent 28-pixel target with a small muted grip contained inside the shell corner; it never creates a colored block over the status bar. Title-bar controls are collapse, maximize/restore, and exit. They share identical target geometry, corner treatment, typography, and hover behavior; exit alone uses the danger color. Collapse creates the compact reopen target, maximize toggles a viewport-filling state, and exit fully shuts Hydroxide down.
+- The bottom-right resize handle is a transparent 28-pixel target with a small generated grip contained inside the shell corner; it never creates a colored block over the status bar. Title-bar controls are collapse, maximize/restore, and exit. They share identical target geometry, corner treatment, raster-icon family, and hover behavior; exit alone uses the danger color. Collapse creates the compact reopen target, maximize toggles a viewport-filling state, and exit fully shuts Hydroxide down.
+- Normal windows retain the 16-pixel viewport margin, eight-pixel corner radius, and outer stroke. Maximized windows sit flush at viewport origin, fill the complete viewport, and temporarily remove the outer radius and stroke so game pixels cannot leak around or beneath the shell.
 - If the Roblox viewport changes while maximized, restored bounds are reclamped so the complete window remains inside the current 16-pixel margin.
 - Every shell region uses scale-plus-offset geometry or is recomputed from the current window bounds. Resizing the outer window must never leave legacy 650-by-350 geometry inside it.
 
@@ -58,7 +59,9 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 
 `assets/ui/hydroxide-logo.png` is the two-tone Home Page mark. `assets/ui/hydroxide-logo-source.png` preserves the generated source artwork.
 
-`assets/ui/hydroxide-remote-icons.png` is a 256 by 128 transparent atlas for the four Remote Spy type filters and query actions. `assets/ui/hydroxide-remote-icons-source.png` preserves the generated raster source. Remote type filters are icon-only 40-pixel controls with distinct enabled and hover states; executor class names do not appear as permanent filter labels.
+`assets/ui/hydroxide-remote-icons.png` is a 256 by 128 transparent atlas for the four Remote Spy type filters and query actions. `assets/ui/hydroxide-remote-icons-source.png` preserves the generated raster source. Remote type filters are icon-only 40-pixel controls with white class artwork, a quiet tinted enabled surface, and no underline or navigation marker; executor class names do not appear as permanent filter labels.
+
+`assets/ui/hydroxide-window-icons.png` is a 256 by 128 transparent atlas for collapse, maximize, restore, exit, and resize. `assets/ui/hydroxide-window-icons-source.png` preserves the generated raster source. Window controls never depend on font glyph coverage or switch visual families between normal and maximized states.
 
 The runtime asset path is `hydroxide/assets/<branch>/ui-v1/<filename>`. Stable `master` builds reuse their validated local files. Development builds refresh code and artwork from `dev` on every launch, so testers do not see stale assets. Files are written as binary strings and loaded through Volt's required `getcustomasset` API. Missing filesystem or custom-asset support is a startup error. There is no legacy image fallback.
 

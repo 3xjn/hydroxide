@@ -259,14 +259,7 @@ local function iconToggle(parent, name, enabled)
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(0, 19, 0, 19),
-        ImageColor3 = enabled and Theme.Colors.Accent or Theme.Colors.MutedText
-    })
-    frame("Selection", toggle, {
-        AnchorPoint = Vector2.new(0.5, 1),
-        Position = UDim2.new(0.5, 0, 1, 0),
-        Size = UDim2.new(0, 20, 0, 2),
-        BackgroundColor3 = Theme.Colors.Accent,
-        Visible = enabled
+        ImageColor3 = enabled and Color3.fromRGB(255, 255, 255) or Theme.Colors.MutedText
     })
     label("Label", toggle, enabled and "✓" or "", {
         Size = UDim2.new(0, 0, 0, 0),
@@ -672,7 +665,8 @@ local function buildInterface()
     image("Logo", brand, { Position = UDim2.new(0, 0, 0.5, -12), Size = UDim2.new(0, 24, 0, 24), ZIndex = 12 })
     label("Name", brand, "Hydroxide", { Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(0, 84, 1, 0), TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 })
     label("Version", brand, "c.1", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 116, 0.5, -1), Size = UDim2.new(0, 40, 0, 16), TextColor3 = Theme.Colors.MutedText, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Center, ZIndex = 12 })
-    textButton("Collapse", drag, "−", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -76, 0.5, 0), Size = UDim2.new(0, Theme.Layout.ControlTargetSize, 0, Theme.Layout.ControlTargetSize), BackgroundTransparency = 1, TextSize = 16, ZIndex = 20 })
+    local collapse = imageButton("Collapse", drag, { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -76, 0.5, 0), Size = UDim2.new(0, Theme.Layout.ControlTargetSize, 0, Theme.Layout.ControlTargetSize), BackgroundTransparency = 1, ZIndex = 20 })
+    image("Icon", collapse, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 14, 0, 14), ImageColor3 = Theme.Colors.SecondaryText, ZIndex = 21 })
 
     local tabs = frame("Tabs", base, { Position = UDim2.new(0, 0, 0, Theme.Layout.TitleBarHeight), Size = UDim2.new(0, Theme.Layout.RailWidth, 1, -(Theme.Layout.TitleBarHeight + Theme.Layout.StatusBarHeight)), BackgroundColor3 = Theme.Colors.Rail })
     local tabContainer = frame("Container", tabs, { Position = UDim2.new(0, 6, 0, Theme.Layout.WorkspaceInset), Size = UDim2.new(1, -12, 1, -(Theme.Layout.WorkspaceInset * 2)), BackgroundTransparency = 1 })

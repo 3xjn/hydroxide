@@ -24,6 +24,14 @@ local remoteIcons = {
     Filter = Vector2.new(64, 64)
 }
 
+local windowIcons = {
+    Collapse = Vector2.new(0, 0),
+    Maximize = Vector2.new(64, 0),
+    Restore = Vector2.new(128, 0),
+    Exit = Vector2.new(192, 0),
+    Resize = Vector2.new(0, 64)
+}
+
 local glyphs = {
     type = "ConstantScanner",
     status = "RemoteSpy",
@@ -93,6 +101,7 @@ function Assets.Load()
     loaded = {
         Atlas = installAsset("hydroxide-icons.png"),
         RemoteAtlas = installAsset("hydroxide-remote-icons.png"),
+        WindowAtlas = installAsset("hydroxide-window-icons.png"),
         Logo = installAsset("hydroxide-logo.png")
     }
 
@@ -106,6 +115,18 @@ function Assets.ApplyRemoteIcon(image, name)
     assert(offset, "Hydroxide has no generated Remote Spy icon named " .. tostring(name))
 
     image.Image = Assets.Load().RemoteAtlas
+    image.ImageRectOffset = offset
+    image.ImageRectSize = cellSize
+    image.ScaleType = Enum.ScaleType.Fit
+end
+
+function Assets.ApplyWindowIcon(image, name)
+    assert(image and (image:IsA("ImageLabel") or image:IsA("ImageButton")), "ApplyWindowIcon requires an image instance")
+
+    local offset = windowIcons[name]
+    assert(offset, "Hydroxide has no generated window icon named " .. tostring(name))
+
+    image.Image = Assets.Load().WindowAtlas
     image.ImageRectOffset = offset
     image.ImageRectSize = cellSize
     image.ScaleType = Enum.ScaleType.Fit
@@ -138,6 +159,10 @@ function Assets.ApplyGlyph(image, name)
         return Assets.ApplyRemoteIcon(image, name)
     end
 
+    if windowIcons[name] then
+        return Assets.ApplyWindowIcon(image, name)
+    end
+
     local iconName = glyphs[name] or (icons[name] and name) or "ConstantScanner"
     Assets.ApplyIcon(image, iconName)
 end
@@ -148,4 +173,5 @@ end
 
 Assets.Icons = icons
 Assets.RemoteIcons = remoteIcons
+Assets.WindowIcons = windowIcons
 return Assets
