@@ -96,15 +96,15 @@ function ContextMenu.new(contextMenuButtons)
         local textWidth = TextService:GetTextSize(buttonInstance.Label.Text, 18, "SourceSans", constants.textWidth).X
 
         buttonInstance.Parent = instance.List
-        buttonInstance.TextWrapped = false
+        buttonInstance.Label.TextWrapped = false
 
-        local buttonWidth = buttonInstance.Icon.AbsoluteSize.X + textWidth + 16
+        local buttonWidth = buttonInstance.Icon.Size.X.Offset + textWidth + 32
         
         if buttonWidth > instanceWidth then
             instanceWidth = buttonWidth
         end
 
-        instanceHeight = instanceHeight + buttonInstance.AbsoluteSize.Y
+        instanceHeight = instanceHeight + buttonInstance.Size.Y.Offset
     end
     
     instance.Size = UDim2.new(0, instanceWidth, 0, instanceHeight)

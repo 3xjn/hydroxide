@@ -16,32 +16,33 @@ VisualAssets.Load()
 import("ui/controls/TabSelector")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 
-local RemoteSpy
-local ClosureSpy
-local ScriptScanner
-local ModuleScanner
-local UpvalueScanner
-local ConstantScanner
+local moduleLoaders = {
+	{ Name = "RemoteSpy", Label = "Remote Spy", Path = "ui/modules/RemoteSpy" },
+	{ Name = "ClosureSpy", Label = "Closure Spy", Path = "ui/modules/ClosureSpy" },
+	{ Name = "ScriptScanner", Label = "Script Scanner", Path = "ui/modules/ScriptScanner" },
+	{ Name = "ModuleScanner", Label = "Module Scanner", Path = "ui/modules/ModuleScanner" },
+	{ Name = "UpvalueScanner", Label = "Upvalue Scanner", Path = "ui/modules/UpvalueScanner" },
+	{ Name = "ConstantScanner", Label = "Constant Scanner", Path = "ui/modules/ConstantScanner" }
+}
+local failures = {}
 
-xpcall(function()
-	RemoteSpy = import("ui/modules/RemoteSpy")
-	ClosureSpy = import("ui/modules/ClosureSpy")
-	ScriptScanner = import("ui/modules/ScriptScanner")
-	ModuleScanner = import("ui/modules/ModuleScanner")
-	UpvalueScanner = import("ui/modules/UpvalueScanner")
-	ConstantScanner = import("ui/modules/ConstantScanner")
-end, function(err)
-	local message
-	if err:find("valid member") then
-		message = "The UI has updated, please rejoin and restart. If you get this message more than once, screenshot this message and report it in the Hydroxide server.\n\n" .. err
-	else
-		message = "Report this error in Hydroxide's server:\n\n" .. err
-	end
-
-	MessageBox.Show("An error has occurred", message, MessageType.OK, function()
-		Interface:Destroy() 
+for _index, moduleLoader in ipairs(moduleLoaders) do
+	local success, result = xpcall(function()
+		return import(moduleLoader.Path)
+	end, function(err)
+		return tostring(err)
 	end)
-end)
+
+	if not success then
+		table.insert(failures, {
+			Name = moduleLoader.Name,
+			Label = moduleLoader.Label,
+			Error = result
+		})
+	end
+end
+
+oh.LoadErrors = failures
 
 local Base = Interface.Base
 local Status = Base.Status
@@ -67,5 +68,26 @@ end
 
 Theme.Apply(Interface, VisualAssets)
 Window.Attach(Interface)
+
+if #failures > 0 then
+	local summaries = {}
+	for _index, failure in ipairs(failures) do
+		local firstLine = failure.Error:match("^[^\r\n]+") or failure.Error
+		table.insert(summaries, "• " .. failure.Label .. ": " .. firstLine)
+
+		local tab = Interface.Base.Tabs.Container:FindFirstChild(failure.Name)
+		if tab then
+			tab.Visible = false
+		end
+	end
+
+	MessageBox.Show(
+		"Some tools could not start",
+		"Hydroxide is still running, but the affected tools were disabled for this session:\n\n"
+			.. table.concat(summaries, "\n")
+			.. "\n\nScreenshot this message when reporting the bug.",
+		MessageType.OK
+	)
+end
 
 return Interface
