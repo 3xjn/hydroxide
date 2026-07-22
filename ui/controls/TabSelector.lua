@@ -1,6 +1,7 @@
 local TweenService = game:GetService("TweenService")
 
 local TabSelector = {}
+local Theme = import("ui/theme")
 
 local Base = import("rbxassetid://11389137937").Base
 local Tabs = Base.Tabs.Container
@@ -18,11 +19,11 @@ local requiredMethods = {
 }
 
 local constants = {
-    fadeLength = TweenInfo.new(0.15),
-    tabSelected = Color3.fromRGB(45, 45, 45),
-    iconSelected = Color3.fromRGB(255, 255, 255),
-    tabUnselected = Color3.fromRGB(20, 20, 20),
-    iconUnselected = Color3.fromRGB(127, 127, 127)
+    fadeLength = Theme.Motion,
+    tabSelected = Theme.Colors.AccentSurface,
+    iconSelected = Theme.Colors.Accent,
+    tabUnselected = Theme.Colors.Rail,
+    iconUnselected = Theme.Colors.MutedText
 }
 
 local selectedTab 

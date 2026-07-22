@@ -5,9 +5,13 @@ if oh then
 end
 
 local web = true
-local user = "Upbolt" -- change if you're using a fork
-local branch = "revision"
+local configuration = environment.HydroxideConfig or {}
+local user = configuration.Owner or "3xjn"
+local branch = configuration.Branch or "master"
+local sourceBaseUrl = "https://raw.githubusercontent.com/" .. user .. "/Hydroxide/" .. branch .. "/"
 local importCache = {}
+
+assert(branch == "master" or branch == "dev", "<OH> ~ Branch must be either 'master' or 'dev'")
 
 local function hasMethods(methods)
     for name in pairs(methods) do
@@ -69,6 +73,7 @@ local globalMethods = {
     makeFolder = makefolder,
     isFolder = isfolder,
     isFile = isfile,
+    getCustomAsset = getcustomasset,
 }
 
 if PROTOSMASHER_LOADED then
@@ -103,6 +108,10 @@ environment.oh = {
     Cache = importCache,
     Methods = globalMethods,
     Constants = {
+        AssetBaseUrl = sourceBaseUrl .. "assets/ui/",
+        IsDevelopment = branch == "dev",
+        SourceBaseUrl = sourceBaseUrl,
+        SourceBranch = branch,
         Types = {
             ["nil"] = "rbxassetid://4800232219",
             table = "rbxassetid://4666594276",
@@ -189,9 +198,11 @@ local releaseInfo = HttpService:JSONDecode(game:HttpGetAsync("https://api.github
 
 if readFile and writeFile then
     local hasFolderFunctions = (isFolder and makeFolder) ~= nil
-    local ran, result = pcall(readFile, "__oh_version.txt")
+    local cacheRoot = "hydroxide/user/" .. user .. "/" .. branch
+    local versionFile = (hasFolderFunctions and cacheRoot .. "/__version.txt") or ("__oh_" .. user .. "_" .. branch .. "_version.txt")
+    local ran, result = pcall(readFile, versionFile)
 
-    if not ran or releaseInfo.tag_name ~= result then
+    if branch == "dev" or not ran or releaseInfo.tag_name ~= result then
         if hasFolderFunctions then
             local function createFolder(path)
                 if not isFolder(path) then
@@ -202,12 +213,13 @@ if readFile and writeFile then
             createFolder("hydroxide")
             createFolder("hydroxide/user")
             createFolder("hydroxide/user/" .. user)
-            createFolder("hydroxide/user/" .. user .. "/methods")
-            createFolder("hydroxide/user/" .. user .. "/modules")
-            createFolder("hydroxide/user/" .. user .. "/objects")
-            createFolder("hydroxide/user/" .. user .. "/ui")
-            createFolder("hydroxide/user/" .. user .. "/ui/controls")
-            createFolder("hydroxide/user/" .. user .. "/ui/modules")
+            createFolder(cacheRoot)
+            createFolder(cacheRoot .. "/methods")
+            createFolder(cacheRoot .. "/modules")
+            createFolder(cacheRoot .. "/objects")
+            createFolder(cacheRoot .. "/ui")
+            createFolder(cacheRoot .. "/ui/controls")
+            createFolder(cacheRoot .. "/ui/modules")
         end
 
         function environment.import(asset)
@@ -221,17 +233,17 @@ if readFile and writeFile then
                 assets = { game:GetObjects(asset)[1] }
             elseif web then
                 if readFile and writeFile then
-                    local file = (hasFolderFunctions and "hydroxide/user/" .. user .. '/' .. asset .. ".lua") or ("hydroxide-" .. user .. '-' .. asset:gsub('/', '-') .. ".lua")
+                    local file = (hasFolderFunctions and cacheRoot .. '/' .. asset .. ".lua") or ("hydroxide-" .. user .. '-' .. branch .. '-' .. asset:gsub('/', '-') .. ".lua")
                     local content
 
                     if (isFile and not isFile(file)) or not importCache[asset] then
-                        content = game:HttpGetAsync("https://raw.githubusercontent.com/" .. user .. "/Hydroxide/" .. branch .. '/' .. asset .. ".lua")
+                        content = game:HttpGetAsync(sourceBaseUrl .. asset .. ".lua")
                         writeFile(file, content)
                     else
                         local ran, result = pcall(readFile, file)
 
                         if (not ran) or not importCache[asset] then
-                            content = game:HttpGetAsync("https://raw.githubusercontent.com/" .. user .. "/Hydroxide/" .. branch .. '/' .. asset .. ".lua")
+                            content = game:HttpGetAsync(sourceBaseUrl .. asset .. ".lua")
                             writeFile(file, content)
                         else
                             content = result
@@ -240,7 +252,7 @@ if readFile and writeFile then
 
                     assets = { loadstring(content, asset .. '.lua')() }
                 else
-                    assets = { loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/" .. user .. "/Hydroxide/" .. branch .. '/' .. asset .. ".lua"), asset .. '.lua')() }
+                    assets = { loadstring(game:HttpGetAsync(sourceBaseUrl .. asset .. ".lua"), asset .. '.lua')() }
                 end
             else
                 assets = { loadstring(readFile("hydroxide/" .. asset .. ".lua"), asset .. '.lua')() }
@@ -250,7 +262,7 @@ if readFile and writeFile then
             return unpack(assets)
         end
 
-        writeFile("__oh_version.txt", releaseInfo.tag_name)
+        writeFile(versionFile, releaseInfo.tag_name)
     elseif ran and releaseInfo.tag_name == result then
         function environment.import(asset)
             if importCache[asset] then
@@ -260,12 +272,12 @@ if readFile and writeFile then
             if asset:find("rbxassetid://") then
                 assets = { game:GetObjects(asset)[1] }
             elseif web then
-                local file = (hasFolderFunctions and "hydroxide/user/" .. user .. '/' .. asset .. ".lua") or ("hydroxide-" .. user .. '-' .. asset:gsub('/', '-') .. ".lua")
+                local file = (hasFolderFunctions and cacheRoot .. '/' .. asset .. ".lua") or ("hydroxide-" .. user .. '-' .. branch .. '-' .. asset:gsub('/', '-') .. ".lua")
                 local ran, result = pcall(readFile, file)
                 local content
 
                 if not ran then
-                    content = game:HttpGetAsync("https://raw.githubusercontent.com/" .. user .. "/Hydroxide/" .. branch .. '/' .. asset .. ".lua")
+                    content = game:HttpGetAsync(sourceBaseUrl .. asset .. ".lua")
                     writeFile(file, content)
                 else
                     content = result
