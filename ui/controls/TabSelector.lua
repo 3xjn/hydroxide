@@ -20,8 +20,10 @@ local requiredMethods = {
 
 local constants = {
     fadeLength = Theme.Motion,
-    tabSelected = Theme.Colors.AccentSurface,
+    tabSelected = Theme.Colors.Rail,
     iconSelected = Theme.Colors.Accent,
+    tabHovered = Theme.Colors.Hover,
+    iconHovered = Theme.Colors.SecondaryText,
     tabUnselected = Theme.Colors.Rail,
     iconUnselected = Theme.Colors.MutedText
 }
@@ -62,12 +64,14 @@ local function selectTab(tabName)
         local tabAnimation = animationCache[selectedTab]
         tabAnimation.unselected:Play()
         tabAnimation.iconUnselected:Play()
+        selectedTab.Selection.Visible = false
     end
 
     selectedPage.Visible = false
     page.Visible = true
     tab.BackgroundColor3 = constants.tabSelected
     tab.Icon.ImageColor3 = constants.iconSelected
+    tab.Selection.Visible = true
 
     oh.setStatus(page.Name:sub(1, 1) .. page.Name:sub(2):gsub('%u', function(c) return ' ' .. c end))
     
@@ -78,15 +82,15 @@ end
 
 for _i, tab in pairs(Tabs:GetChildren()) do
     if tab:IsA("ImageButton") then
-        local selected = TweenService:Create(tab, constants.fadeLength, { BackgroundColor3 = constants.tabSelected })
+        local hovered = TweenService:Create(tab, constants.fadeLength, { BackgroundColor3 = constants.tabHovered })
         local unselected = TweenService:Create(tab, constants.fadeLength, { BackgroundColor3 = constants.tabUnselected })
-        local iconSelected = TweenService:Create(tab.Icon, constants.fadeLength, { ImageColor3 = constants.iconSelected })
+        local iconHovered = TweenService:Create(tab.Icon, constants.fadeLength, { ImageColor3 = constants.iconHovered })
         local iconUnselected = TweenService:Create(tab.Icon, constants.fadeLength, { ImageColor3 = constants.iconUnselected })
 
         animationCache[tab] = {
-            selected = selected,
+            hovered = hovered,
             unselected = unselected,
-            iconSelected = iconSelected,
+            iconHovered = iconHovered,
             iconUnselected = iconUnselected
         }
 
@@ -98,8 +102,8 @@ for _i, tab in pairs(Tabs:GetChildren()) do
 
         tab.MouseEnter:Connect(function()
             if selectedPage ~= Pages:FindFirstChild(tab.Name) then
-                selected:Play()
-                iconSelected:Play()
+                hovered:Play()
+                iconHovered:Play()
             end
         end)
 
@@ -115,6 +119,7 @@ end
 selectedTab = Tabs.Home
 selectedTab.BackgroundColor3 = constants.tabSelected
 selectedTab.Icon.ImageColor3 = constants.iconSelected
+selectedTab.Selection.Visible = true
 
 TabSelector.SelectTab = selectTab
 return TabSelector

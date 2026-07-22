@@ -24,9 +24,6 @@ Theme.Layout = {
     RailWidth = 52,
     StatusBarHeight = 24,
     WorkspaceInset = 12,
-    PaneGap = 12,
-    ExplorerMinWidth = 224,
-    ExplorerMaxWidth = 272,
     MinimumPageWidth = 400,
     PagePadding = 12,
     QueryHeight = 36,
@@ -141,8 +138,7 @@ function Theme.Apply(interface, assets)
 
     for _index, page in pairs(pages:GetChildren()) do
         if page:IsA("GuiObject") then
-            styleSurface(page, Theme.Colors.Panel, 6)
-            addStroke(page, Theme.Colors.Border)
+            styleSurface(page, Theme.Colors.Canvas)
         end
     end
 
@@ -159,6 +155,7 @@ function Theme.Apply(interface, assets)
             assets.ApplyIcon(tab.Icon, tab.Name)
             tab.BackgroundColor3 = Theme.Colors.Rail
             tab.Icon.ImageColor3 = Theme.Colors.MutedText
+            tab.HydroxideStroke.Transparency = 1
         end
     end
 

@@ -625,7 +625,7 @@ local function buildInterface()
         Position = UDim2.new(0, Theme.Layout.OuterMargin, 0, Theme.Layout.OuterMargin),
         Size = UDim2.new(0, Theme.Layout.DefaultWindowSize.X, 0, Theme.Layout.DefaultWindowSize.Y),
         BackgroundColor3 = Theme.Colors.Canvas,
-        ClipsDescendants = false
+        ClipsDescendants = true
     })
     addCorner(base, 8)
     addStroke(base)
@@ -640,14 +640,15 @@ local function buildInterface()
     local brand = frame("Brand", drag, { Position = UDim2.new(0, 12, 0, 0), Size = UDim2.new(0, 196, 1, 0), BackgroundTransparency = 1, ZIndex = 11 })
     image("Logo", brand, { Position = UDim2.new(0, 0, 0.5, -12), Size = UDim2.new(0, 24, 0, 24), ZIndex = 12 })
     label("Name", brand, "Hydroxide", { Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(0, 84, 1, 0), TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 })
-    label("Version", brand, "c.1", { Position = UDim2.new(0, 116, 0, 0), Size = UDim2.new(0, 40, 1, 0), TextColor3 = Theme.Colors.MutedText, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 })
-    textButton("Collapse", drag, "×", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0), Size = UDim2.new(0, Theme.Layout.ControlTargetSize, 0, Theme.Layout.ControlTargetSize), BackgroundTransparency = 1, TextSize = 16, ZIndex = 20 })
+    label("Version", brand, "c.1", { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 116, 0.5, -1), Size = UDim2.new(0, 40, 0, 16), TextColor3 = Theme.Colors.MutedText, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Center, ZIndex = 12 })
+    textButton("Collapse", drag, "−", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -76, 0.5, 0), Size = UDim2.new(0, Theme.Layout.ControlTargetSize, 0, Theme.Layout.ControlTargetSize), BackgroundTransparency = 1, TextSize = 16, ZIndex = 20 })
 
     local tabs = frame("Tabs", base, { Position = UDim2.new(0, 0, 0, Theme.Layout.TitleBarHeight), Size = UDim2.new(0, Theme.Layout.RailWidth, 1, -(Theme.Layout.TitleBarHeight + Theme.Layout.StatusBarHeight)), BackgroundColor3 = Theme.Colors.Rail })
-    local tabContainer = frame("Container", tabs, { Position = UDim2.new(0, 6, 0, 8), Size = UDim2.new(1, -12, 1, -16), BackgroundTransparency = 1 })
+    local tabContainer = frame("Container", tabs, { Position = UDim2.new(0, 6, 0, Theme.Layout.WorkspaceInset), Size = UDim2.new(1, -12, 1, -(Theme.Layout.WorkspaceInset * 2)), BackgroundTransparency = 1 })
     listLayout(tabContainer, Theme.Layout.TabGap)
     for index, tabName in ipairs({ "Home", "RemoteSpy", "ClosureSpy", "ScriptScanner", "ModuleScanner", "UpvalueScanner", "ConstantScanner" }) do
         local tab = imageButton(tabName, tabContainer, { Size = UDim2.new(0, Theme.Layout.TabTargetSize, 0, Theme.Layout.TabTargetSize), BackgroundColor3 = Theme.Colors.Rail, LayoutOrder = index })
+        frame("Selection", tab, { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.new(0, 2, 0, 20), BackgroundColor3 = Theme.Colors.Accent, Visible = false, ZIndex = 2 })
         image("Icon", tab, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, Theme.Layout.TabIconSize, 0, Theme.Layout.TabIconSize) })
     end
 
@@ -656,7 +657,7 @@ local function buildInterface()
         Size = UDim2.new(1, -(Theme.Layout.RailWidth + Theme.Layout.WorkspaceInset * 2), 1, -(Theme.Layout.TitleBarHeight + Theme.Layout.StatusBarHeight + Theme.Layout.WorkspaceInset * 2)),
         BackgroundTransparency = 1
     })
-    local pages = frame("Pages", body, { Size = UDim2.new(1, -(Theme.Layout.ExplorerMaxWidth + Theme.Layout.PaneGap), 1, 0), BackgroundTransparency = 1 })
+    local pages = frame("Pages", body, { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 })
     local home = frame("Home", pages, { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Theme.Colors.Panel, Visible = true })
     addPadding(home, Theme.Layout.PagePadding)
     label("Welcome", home, "Welcome to Hydroxide", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.24, 0), Size = UDim2.new(1, -48, 0, 32), TextSize = 22 })
@@ -674,27 +675,6 @@ local function buildInterface()
     upvaluePage.Results.Size = UDim2.new(1, 0, 1, -(queryContentOffset + 40))
     label("ResultStatus", upvaluePage.Results.Clip, "Results", { Size = UDim2.new(1, 0, 0, 32), TextColor3 = Theme.Colors.MutedText, Visible = false })
     scannerPage(pages, "ConstantScanner", "Closure name or constant...", true)
-
-    local explorer = frame("Explorer", body, { Position = UDim2.new(1, -Theme.Layout.ExplorerMaxWidth, 0, 0), Size = UDim2.new(0, Theme.Layout.ExplorerMaxWidth, 1, 0), BackgroundColor3 = Theme.Colors.Panel })
-    addCorner(explorer, 6)
-    addStroke(explorer)
-    local explorerSearch = create("TextBox", "Search", explorer, {
-        Position = UDim2.new(0, 12, 0, 12),
-        Size = UDim2.new(1, -24, 0, Theme.Layout.QueryHeight),
-        BackgroundColor3 = Theme.Colors.Elevated,
-        BorderSizePixel = 0,
-        ClearTextOnFocus = false,
-        Font = Enum.Font.Gotham,
-        PlaceholderColor3 = Theme.Colors.MutedText,
-        PlaceholderText = "Filter explorer ...",
-        Text = "",
-        TextColor3 = Theme.Colors.Text,
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left
-    })
-    addCorner(explorerSearch, 5)
-    addStroke(explorerSearch)
-    addPadding(explorerSearch, 12, 12, 0, 0)
 
     local status = label("Status", base, "Status  ·  Home Page", { Position = UDim2.new(0, 0, 1, -Theme.Layout.StatusBarHeight), Size = UDim2.new(1, 0, 0, Theme.Layout.StatusBarHeight), BackgroundColor3 = Theme.Colors.Rail, BackgroundTransparency = 0, TextColor3 = Theme.Colors.MutedText, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left })
     addPadding(status, 12, 12, 0, 0)

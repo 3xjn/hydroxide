@@ -28,8 +28,4 @@ function Geometry.ClampRestoredPosition(x, y, width, height, viewportWidth, view
     return clamp(x, margin, maximumX), clamp(y, margin, maximumY)
 end
 
-function Geometry.ShouldShowExplorer(workspaceWidth, explorerMinimumWidth, paneGap, pageMinimumWidth)
-    return workspaceWidth >= explorerMinimumWidth + paneGap + pageMinimumWidth
-end
-
 return Geometry

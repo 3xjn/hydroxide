@@ -5,6 +5,7 @@ local contextMenuSource = fs.readFile("ui/controls/ContextMenu.lua")
 local mainSource = fs.readFile("ui/main.lua")
 local runtimeSource = fs.readFile("ui/runtime.lua")
 local themeSource = fs.readFile("ui/theme.lua")
+local tabSelectorSource = fs.readFile("ui/controls/TabSelector.lua")
 local windowSource = fs.readFile("ui/window.lua")
 
 local imageButton = roblox.Instance.new("ImageButton")
@@ -68,11 +69,46 @@ assert(
 )
 assert(windowSource:find("base.Visible = false", 1, true), "Collapse must atomically hide the full window")
 assert(themeSource:find("WorkspaceInset = 12", 1, true), "The shell must use a consistent workspace inset")
-assert(themeSource:find("PaneGap = 12", 1, true), "The list-detail panes must use a declared gap")
 assert(themeSource:find("MinimumPageWidth = 400", 1, true), "Responsive reflow must preserve the primary tool pane")
 assert(themeSource:find("TitleBarHeight = 44", 1, true), "The title bar must use compact chrome")
 assert(themeSource:find("RailWidth = 52", 1, true), "The tool rail must use compact chrome")
 assert(themeSource:find("TabTargetSize = 40", 1, true), "Tab targets must stay usable without oversized artwork")
+assert(
+    runtimeSource:find('frame("Selection", tab', 1, true),
+    "Every tool tab must expose a quiet leading-edge selection marker"
+)
+assert(
+    tabSelectorSource:find("tab.Selection.Visible = true", 1, true),
+    "The selected tab must display its semantic marker"
+)
+assert(
+    tabSelectorSource:find("selectedTab.Selection.Visible = false", 1, true),
+    "Changing tools must clear the previous selection marker"
+)
+assert(
+    runtimeSource:find("0, Theme.Layout.WorkspaceInset", 1, true),
+    "Rail content must share the workspace top inset"
+)
+assert(
+    not themeSource:find("addStroke(page, Theme.Colors.Border)", 1, true),
+    "Tool pages must not add a second card elevation"
+)
+assert(
+    themeSource:find("tab.HydroxideStroke.Transparency = 1", 1, true),
+    "Tool tabs must not render an outlined card in their default state"
+)
+
+local themeApply = assert(mainSource:find("Theme.Apply(Interface, VisualAssets)", 1, true))
+local homeSelection = assert(mainSource:find('TabSelector.SelectTab("Home")', 1, true))
+assert(themeApply < homeSelection, "Home selection must be applied after theming so it remains visible")
+assert(not runtimeSource:find('frame("Explorer"', 1, true), "The inert Explorer pane must not consume workspace")
+assert(not runtimeSource:find("Filter explorer ...", 1, true), "The inert Explorer filter must be removed")
+assert(not windowSource:find("ShouldShowExplorer", 1, true), "Window layout must give the full workspace to the active tool")
+assert(windowSource:find('createControl(drag, "Maximize"', 1, true), "Maximize must use the shared title control primitive")
+assert(windowSource:find('createControl(drag, "Exit"', 1, true), "Exit must use the shared title control primitive")
+assert(windowSource:find('corner.Name = "HydroxideCorner"', 1, true), "Title controls must share the shell corner treatment")
+assert(windowSource:find('createControl(base, "Resize", ""', 1, true), "The resize hit target must not paint a text block over the status bar")
+assert(runtimeSource:find("ClipsDescendants = true", 1, true), "The shell must clip its chrome to the outer corner radius")
 
 local atomicHide = windowSource:find("base.Visible = false", 1, true)
 local launcherShow = windowSource:find("open.Visible = true", 1, true)
@@ -93,15 +129,10 @@ local railWidth = layoutNumber("RailWidth")
 local titleHeight = layoutNumber("TitleBarHeight")
 local statusHeight = layoutNumber("StatusBarHeight")
 local workspaceInset = layoutNumber("WorkspaceInset")
-local paneGap = layoutNumber("PaneGap")
-local explorerMin = layoutNumber("ExplorerMinWidth")
-local explorerMax = layoutNumber("ExplorerMaxWidth")
-
 assert(defaultWidth and defaultHeight and minimumWidth and minimumHeight, "Window size tokens must remain numeric")
 local defaultBodyWidth = defaultWidth - railWidth - workspaceInset * 2
-local defaultExplorerWidth = math.max(explorerMin, math.min(explorerMax, math.floor(defaultBodyWidth * 0.25 + 0.5)))
-local defaultPageWidth = defaultBodyWidth - defaultExplorerWidth - paneGap
-local minimumPageWidth = minimumWidth - railWidth - workspaceInset * 2 - explorerMin - paneGap
+local defaultPageWidth = defaultBodyWidth
+local minimumPageWidth = minimumWidth - railWidth - workspaceInset * 2
 local minimumBodyHeight = minimumHeight - titleHeight - statusHeight - workspaceInset * 2
 
 assert(defaultPageWidth >= 720, "The default primary workspace must not be crowded by Explorer")

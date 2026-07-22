@@ -10,6 +10,16 @@ local margin = layout.OuterMargin
 local defaultSize = layout.DefaultWindowSize
 local minimumSize = layout.MinimumWindowSize
 
+local function addControlCorner(control)
+    local corner = control:FindFirstChild("HydroxideCorner")
+    if not corner then
+        corner = Instance.new("UICorner")
+        corner.Name = "HydroxideCorner"
+        corner.Parent = control
+    end
+    corner.CornerRadius = UDim.new(0, 5)
+end
+
 local function createControl(parent, name, glyph, rightOffset)
     local control = Instance.new("TextButton")
     control.Name = name
@@ -24,6 +34,7 @@ local function createControl(parent, name, glyph, rightOffset)
     control.TextSize = 16
     control.ZIndex = 20
     control.Parent = parent
+    addControlCorner(control)
     return control
 end
 
@@ -32,6 +43,12 @@ local function styleExistingControl(control, glyph, rightOffset)
     control.Position = UDim2.new(1, rightOffset, 0.5, 0)
     control.Size = UDim2.new(0, layout.ControlTargetSize, 0, layout.ControlTargetSize)
     control.BackgroundTransparency = 1
+    addControlCorner(control)
+
+    local stroke = control:FindFirstChild("HydroxideStroke")
+    if stroke then
+        stroke.Transparency = 1
+    end
 
     if control:IsA("ImageButton") then
         control.ImageTransparency = 1
@@ -52,14 +69,14 @@ local function styleExistingControl(control, glyph, rightOffset)
     end
 end
 
-local function setControlHover(control, hovered)
+local function setControlHover(control, hovered, destructive)
     control.BackgroundColor3 = Theme.Colors.Hover
     control.BackgroundTransparency = hovered and 0 or 1
 
     local glyph = control:FindFirstChild("Glyph")
     local textControl = glyph or (control:IsA("TextButton") and control)
     if textControl then
-        textControl.TextColor3 = hovered and Theme.Colors.Text or Theme.Colors.SecondaryText
+        textControl.TextColor3 = hovered and (destructive and Theme.Colors.Danger or Theme.Colors.Text) or Theme.Colors.SecondaryText
     end
 end
 
@@ -126,25 +143,7 @@ function Window.Attach(interface)
     end
 
     local function updateWorkspace()
-        local body = base.Body
-        local workspaceWidth = math.max(0, body.AbsoluteSize.X)
-        local showExplorer = Geometry.ShouldShowExplorer(
-            workspaceWidth,
-            layout.ExplorerMinWidth,
-            layout.PaneGap,
-            layout.MinimumPageWidth
-        )
-        body.Explorer.Visible = showExplorer
-
-        if not showExplorer then
-            body.Pages.Size = UDim2.new(1, 0, 1, 0)
-            return
-        end
-
-        local explorerWidth = math.max(layout.ExplorerMinWidth, math.min(layout.ExplorerMaxWidth, math.floor(workspaceWidth * 0.25 + 0.5)))
-        body.Pages.Size = UDim2.new(1, -explorerWidth - layout.PaneGap, 1, 0)
-        body.Explorer.Position = UDim2.new(1, -explorerWidth, 0, 0)
-        body.Explorer.Size = UDim2.new(0, explorerWidth, 1, 0)
+        base.Body.Pages.Size = UDim2.new(1, 0, 1, 0)
     end
 
     local function fitInitialWindow()
@@ -154,11 +153,12 @@ function Window.Attach(interface)
         updateWorkspace()
     end
 
-    styleExistingControl(collapse, "×", -4)
+    styleExistingControl(collapse, "−", -76)
     open.Position = UDim2.new(0.5, 0, 0, -layout.LauncherSize - layout.WorkspaceInset)
     open.Size = UDim2.new(0, layout.LauncherSize, 0, layout.LauncherSize)
     open.Visible = false
     local maximize = createControl(drag, "Maximize", "□", -40)
+    local exit = createControl(drag, "Exit", "×", -4)
 
     oh.Events.WindowCollapseEnter = collapse.MouseEnter:Connect(function()
         setControlHover(collapse, true)
@@ -172,6 +172,12 @@ function Window.Attach(interface)
     oh.Events.WindowMaximizeLeave = maximize.MouseLeave:Connect(function()
         setControlHover(maximize, false)
     end)
+    oh.Events.WindowExitEnter = exit.MouseEnter:Connect(function()
+        setControlHover(exit, true, true)
+    end)
+    oh.Events.WindowExitLeave = exit.MouseLeave:Connect(function()
+        setControlHover(exit, false, true)
+    end)
     oh.Events.WindowOpenEnter = open.MouseEnter:Connect(function()
         open.BackgroundColor3 = Theme.Colors.Hover
     end)
@@ -179,12 +185,20 @@ function Window.Attach(interface)
         open.BackgroundColor3 = Theme.Colors.Elevated
     end)
 
-    local resizeHandle = createControl(base, "Resize", "◢", -2)
+    local resizeHandle = createControl(base, "Resize", "", -4)
     resizeHandle.AnchorPoint = Vector2.new(1, 1)
-    resizeHandle.Position = UDim2.new(1, -2, 1, -2)
+    resizeHandle.Position = UDim2.new(1, -4, 1, -4)
     resizeHandle.Size = UDim2.new(0, 28, 0, 28)
-    resizeHandle.TextColor3 = Theme.Colors.MutedText
-    resizeHandle.TextSize = 14
+    local resizeGrip = Instance.new("Frame")
+    resizeGrip.Name = "Grip"
+    resizeGrip.AnchorPoint = Vector2.new(0.5, 0.5)
+    resizeGrip.Position = UDim2.new(1, -7, 1, -7)
+    resizeGrip.Size = UDim2.new(0, 10, 0, 1)
+    resizeGrip.Rotation = -45
+    resizeGrip.BackgroundColor3 = Theme.Colors.MutedText
+    resizeGrip.BorderSizePixel = 0
+    resizeGrip.ZIndex = resizeHandle.ZIndex + 1
+    resizeGrip.Parent = resizeHandle
 
     local function setMaximized(value)
         if value == maximized then
@@ -274,6 +288,10 @@ function Window.Attach(interface)
 
     oh.Events.WindowMaximize = maximize.MouseButton1Click:Connect(function()
         setMaximized(not maximized)
+    end)
+
+    oh.Events.WindowExit = exit.MouseButton1Click:Connect(function()
+        oh.Exit()
     end)
 
     oh.Events.WindowCollapse = collapse.MouseButton1Click:Connect(function()

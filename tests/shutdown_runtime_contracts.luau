@@ -1,10 +1,12 @@
 local fs = require("@lune/fs")
 
 local initSource = fs.readFile("init.lua")
+local contextMenuSource = fs.readFile("ui/controls/ContextMenu.lua")
 local uiMainSource = fs.readFile("ui/main.lua")
+local windowSource = fs.readFile("ui/window.lua")
 
 assert(
-    initSource:find("pcall(oh.Exit)", 1, true),
+    initSource:find("pcall(previousSession.Exit)", 1, true),
     "A failed previous-session cleanup must not abort the next Hydroxide startup"
 )
 assert(
@@ -16,7 +18,7 @@ assert(
     "Reverse-hook cleanup can fail when the original closure has more upvalues"
 )
 assert(
-    initSource:find("local interface = oh.Interface", 1, true),
+    initSource:find("local interface = session.Interface", 1, true),
     "Shutdown must destroy the directly owned interface even when the import cache is unavailable"
 )
 assert(
@@ -26,6 +28,20 @@ assert(
 assert(
     uiMainSource:find('Interface.Name = "Hydroxide"', 1, true),
     "The live interface needs a stable identity for single-instance ownership"
+)
+assert(initSource:find("local installedMethods = {}", 1, true), "Shutdown must track every injected environment method")
+assert(initSource:find("environment[name] = previousMethods[name].Value", 1, true), "Shutdown must restore injected environment methods")
+assert(initSource:find("environment.oh = nil", 1, true), "Shutdown must clear the active Hydroxide session")
+assert(
+    not initSource:find('game:GetService("ScriptContext").Error', 1, true),
+    "Hydroxide must not disable executor-wide ScriptContext error listeners that it cannot restore"
+)
+assert(windowSource:find('createControl(drag, "Exit"', 1, true), "The title bar must expose a distinct full-exit action")
+assert(windowSource:find("oh.Events.WindowExit", 1, true), "The full-exit listener must be owned by the Hydroxide session")
+assert(windowSource:find("oh.Exit()", 1, true), "The title-bar exit action must invoke full session cleanup")
+assert(
+    contextMenuSource:find("session.Events.ContextMenuInputEnded", 1, true),
+    "The global context-menu input listener must be disconnected during shutdown"
 )
 
 print("shutdown-runtime-contracts-ok")

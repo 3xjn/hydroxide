@@ -38,16 +38,18 @@ local methodHooks = {
 local currentRemotes = {}
 
 local remoteDataEvent = Instance.new("BindableEvent")
+table.insert(oh.Resources, remoteDataEvent)
 local eventSet = false
 
 local function connectEvent(callback)
-    remoteDataEvent.Event:Connect(callback)
+    oh.Events.RemoteSpyData = remoteDataEvent.Event:Connect(callback)
 
     if not eventSet then
         eventSet = true
     end
 end
 
+local namecallTarget = getMetatable(game).__namecall
 local nmcTrampoline
 nmcTrampoline = hookMetaMethod(game, "__namecall", function(...)
     local instance = ...
@@ -96,6 +98,7 @@ nmcTrampoline = hookMetaMethod(game, "__namecall", function(...)
 
     return nmcTrampoline(...)
 end)
+oh.Hooks[nmcTrampoline] = namecallTarget
 
 -- vuln fix
 

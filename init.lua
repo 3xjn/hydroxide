@@ -1,7 +1,8 @@
 local environment = assert(getgenv, "<OH> ~ Your exploit is not supported")()
 
-if oh then
-    local exited, exitError = pcall(oh.Exit)
+local previousSession = environment.oh
+if previousSession then
+    local exited, exitError = pcall(previousSession.Exit)
     if not exited then
         warn("<OH> ~ Previous session cleanup was incomplete: " .. tostring(exitError))
     end
@@ -13,6 +14,8 @@ local user = configuration.Owner or "3xjn"
 local branch = configuration.Branch or "master"
 local sourceBaseUrl = "https://raw.githubusercontent.com/" .. user .. "/Hydroxide/" .. branch .. "/"
 local importCache = {}
+local previousMethods = {}
+local installedMethods = {}
 
 assert(branch == "master" or branch == "dev", "<OH> ~ Branch must be either 'master' or 'dev'")
 
@@ -29,6 +32,10 @@ end
 local function useMethods(module)
     for name, method in pairs(module) do
         if method then
+            if previousMethods[name] == nil then
+                previousMethods[name] = { Value = environment[name] }
+            end
+            installedMethods[name] = method
             environment[name] = method
         end
     end
@@ -105,10 +112,11 @@ globalMethods.getUpvalues = function(closure)
     return oldGetUpvalues(closure)
 end
 
-environment.hasMethods = hasMethods
-environment.oh = {
+local session
+session = {
     Events = {},
     Hooks = {},
+    Resources = {},
     Cache = importCache,
     Methods = globalMethods,
     Constants = {
@@ -150,13 +158,13 @@ environment.oh = {
             end
         end
 
-        for name, event in pairs(oh.Events) do
+        for name, event in pairs(session.Events) do
             cleanup("event " .. tostring(name), function()
                 event:Disconnect()
             end)
         end
 
-        for original, hook in pairs(oh.Hooks) do
+        for original, hook in pairs(session.Hooks) do
             local hookType = type(hook)
             if hookType == "function" then
                 cleanup("hook " .. tostring(original), function()
@@ -169,13 +177,29 @@ environment.oh = {
             end
         end
 
-        local interface = oh.Interface
+        for index, resource in pairs(session.Resources) do
+            cleanup("resource " .. tostring(index), function()
+                resource:Destroy()
+            end)
+        end
+
+        local interface = session.Interface
 
         if interface then
             cleanup("interface", function()
                 interface:Destroy()
             end)
-            oh.Interface = nil
+            session.Interface = nil
+        end
+
+        for name, method in pairs(installedMethods) do
+            if environment[name] == method then
+                environment[name] = previousMethods[name].Value
+            end
+        end
+
+        if environment.oh == session then
+            environment.oh = nil
         end
 
         for _index, cleanupError in ipairs(cleanupErrors) do
@@ -186,32 +210,8 @@ environment.oh = {
     end
 }
 
-if getConnections then 
-    for __, connection in pairs(getConnections(game:GetService("ScriptContext").Error)) do
-
-        local conn = getrawmetatable(connection)
-        local old = conn and conn.__index
-        
-        if PROTOSMASHER_LOADED ~= nil then setwriteable(conn) else setReadOnly(conn, false) end
-        
-        if old then
-            conn.__index = newcclosure(function(t, k)
-                if k == "Connected" then
-                    return true
-                end
-                return old(t, k)
-            end)
-        end
-
-        if PROTOSMASHER_LOADED ~= nil then
-            setReadOnly(conn)
-            connection:Disconnect()
-        else
-            setReadOnly(conn, true)
-            connection:Disable()
-        end
-    end
-end
+environment.oh = session
+useMethods({ hasMethods = hasMethods })
 
 useMethods(globalMethods)
 
@@ -220,6 +220,10 @@ local sourceInfo = HttpService:JSONDecode(game:HttpGetAsync("https://api.github.
 local sourceVersion = assert(sourceInfo.sha, "Hydroxide could not resolve the " .. branch .. " branch version")
 
 if readFile and writeFile then
+    if previousMethods.import == nil then
+        previousMethods.import = { Value = environment.import }
+    end
+
     local hasFolderFunctions = (isFolder and makeFolder) ~= nil
     local cacheRoot = "hydroxide/user/" .. user .. "/" .. branch
     local versionFile = (hasFolderFunctions and cacheRoot .. "/__version.txt") or ("__oh_" .. user .. "_" .. branch .. "_version.txt")

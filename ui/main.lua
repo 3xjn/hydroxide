@@ -33,7 +33,18 @@ local function destroyPreviousInterfaces(parent)
 end
 
 VisualAssets.Load()
-import("ui/controls/TabSelector")
+local Base = Interface.Base
+local Status = Base.Status
+
+function oh.setStatus(text)
+	Status.Text = 'Status  ·  ' .. text
+end
+
+function oh.getStatus()
+	return Status.Text:gsub('Status  ·  ', '')
+end
+
+local TabSelector = import("ui/controls/TabSelector")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 
 local moduleLoaders = {
@@ -64,17 +75,6 @@ end
 
 oh.LoadErrors = failures
 
-local Base = Interface.Base
-local Status = Base.Status
-
-function oh.setStatus(text)
-	Status.Text = 'Status  ·  ' .. text
-end
-
-function oh.getStatus()
-	return Status.Text:gsub('Status  ·  ', '')
-end
-
 local interfaceParent
 if getHui then
 	interfaceParent = getHui()
@@ -92,6 +92,7 @@ oh.Interface = Interface
 Interface.Parent = interfaceParent
 
 Theme.Apply(Interface, VisualAssets)
+TabSelector.SelectTab("Home")
 Window.Attach(Interface)
 
 if #failures > 0 then
