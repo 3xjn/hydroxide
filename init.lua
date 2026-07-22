@@ -194,7 +194,8 @@ end
 useMethods(globalMethods)
 
 local HttpService = game:GetService("HttpService")
-local releaseInfo = HttpService:JSONDecode(game:HttpGetAsync("https://api.github.com/repos/" .. user .. "/Hydroxide/releases"))[1]
+local sourceInfo = HttpService:JSONDecode(game:HttpGetAsync("https://api.github.com/repos/" .. user .. "/hydroxide/commits/" .. branch))
+local sourceVersion = assert(sourceInfo.sha, "Hydroxide could not resolve the " .. branch .. " branch version")
 
 if readFile and writeFile then
     local hasFolderFunctions = (isFolder and makeFolder) ~= nil
@@ -202,7 +203,7 @@ if readFile and writeFile then
     local versionFile = (hasFolderFunctions and cacheRoot .. "/__version.txt") or ("__oh_" .. user .. "_" .. branch .. "_version.txt")
     local ran, result = pcall(readFile, versionFile)
 
-    if branch == "dev" or not ran or releaseInfo.tag_name ~= result then
+    if branch == "dev" or not ran or sourceVersion ~= result then
         if hasFolderFunctions then
             local function createFolder(path)
                 if not isFolder(path) then
@@ -262,8 +263,8 @@ if readFile and writeFile then
             return unpack(assets)
         end
 
-        writeFile(versionFile, releaseInfo.tag_name)
-    elseif ran and releaseInfo.tag_name == result then
+        writeFile(versionFile, sourceVersion)
+    elseif ran and sourceVersion == result then
         function environment.import(asset)
             if importCache[asset] then
                 return unpack(importCache[asset])
