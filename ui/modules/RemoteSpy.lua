@@ -501,7 +501,7 @@ local function refreshLogs()
 end
 
 for _i,flag in pairs(ListFlags:GetChildren()) do
-    if flag:IsA("Frame") then
+    if flag:IsA("GuiButton") and remotesViewing[flag.Name] ~= nil then
         local check = CheckBox.new(flag)
 
         check:SetCallback(function(enabled)

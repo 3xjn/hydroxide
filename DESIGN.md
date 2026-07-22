@@ -58,6 +58,8 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 
 `assets/ui/hydroxide-logo.png` is the two-tone Home Page mark. `assets/ui/hydroxide-logo-source.png` preserves the generated source artwork.
 
+`assets/ui/hydroxide-remote-icons.png` is a 256 by 128 transparent atlas for the four Remote Spy type filters and query actions. `assets/ui/hydroxide-remote-icons-source.png` preserves the generated raster source. Remote type filters are icon-only 40-pixel controls with distinct enabled and hover states; executor class names do not appear as permanent filter labels.
+
 The runtime asset path is `hydroxide/assets/<branch>/ui-v1/<filename>`. Stable `master` builds reuse their validated local files. Development builds refresh code and artwork from `dev` on every launch, so testers do not see stale assets. Files are written as binary strings and loaded through Volt's required `getcustomasset` API. Missing filesystem or custom-asset support is a startup error. There is no legacy image fallback.
 
 All interface instances, row templates, prompts, overlays, menus, and window controls are created by local Luau modules. Hydroxide must not import external Roblox UI models or template packs. Raster artwork may only come from the generated files under `assets/ui/` through `getcustomasset`.

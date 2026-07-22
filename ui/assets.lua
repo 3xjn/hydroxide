@@ -15,6 +15,15 @@ local icons = {
     ConstantScanner = Vector2.new(128, 64)
 }
 
+local remoteIcons = {
+    RemoteEvent = Vector2.new(0, 0),
+    RemoteFunction = Vector2.new(64, 0),
+    BindableEvent = Vector2.new(128, 0),
+    BindableFunction = Vector2.new(192, 0),
+    Refresh = Vector2.new(0, 64),
+    Filter = Vector2.new(64, 64)
+}
+
 local glyphs = {
     type = "ConstantScanner",
     status = "RemoteSpy",
@@ -23,10 +32,6 @@ local glyphs = {
     unblock = "ConstantScanner",
     ignore = "RemoteSpy",
     unignore = "RemoteSpy",
-    RemoteEvent = "RemoteSpy",
-    RemoteFunction = "RemoteSpy",
-    BindableEvent = "RemoteSpy",
-    BindableFunction = "RemoteSpy",
     LocalScript = "ScriptScanner",
     ModuleScript = "ModuleScanner",
     ScriptObject = "ScriptScanner",
@@ -87,10 +92,23 @@ function Assets.Load()
 
     loaded = {
         Atlas = installAsset("hydroxide-icons.png"),
+        RemoteAtlas = installAsset("hydroxide-remote-icons.png"),
         Logo = installAsset("hydroxide-logo.png")
     }
 
     return loaded
+end
+
+function Assets.ApplyRemoteIcon(image, name)
+    assert(image and (image:IsA("ImageLabel") or image:IsA("ImageButton")), "ApplyRemoteIcon requires an image instance")
+
+    local offset = remoteIcons[name]
+    assert(offset, "Hydroxide has no generated Remote Spy icon named " .. tostring(name))
+
+    image.Image = Assets.Load().RemoteAtlas
+    image.ImageRectOffset = offset
+    image.ImageRectSize = cellSize
+    image.ScaleType = Enum.ScaleType.Fit
 end
 
 function Assets.ApplyIcon(image, name)
@@ -116,6 +134,10 @@ function Assets.ApplyLogo(image)
 end
 
 function Assets.ApplyGlyph(image, name)
+    if remoteIcons[name] then
+        return Assets.ApplyRemoteIcon(image, name)
+    end
+
     local iconName = glyphs[name] or (icons[name] and name) or "ConstantScanner"
     Assets.ApplyIcon(image, iconName)
 end
@@ -125,4 +147,5 @@ function Assets.ApplyType(image, valueType)
 end
 
 Assets.Icons = icons
+Assets.RemoteIcons = remoteIcons
 return Assets

@@ -177,10 +177,16 @@ local function queryBar(parent, placeholder, buttonSearch)
         addCorner(search, 5)
         addStroke(search)
         addPadding(search, 12, 12, 0, 0)
-        textButton("Refresh", query, "↻", {
+        local refresh = imageButton("Refresh", query, {
             Position = UDim2.new(1, -36, 0, 0),
             Size = UDim2.new(0, 36, 0, queryHeight),
-            TextSize = 18
+            BackgroundColor3 = Theme.Colors.Elevated
+        })
+        image("Icon", refresh, {
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.new(0.5, 0, 0.5, 0),
+            Size = UDim2.new(0, 18, 0, 18),
+            ImageColor3 = Theme.Colors.SecondaryText
         })
     end
 
@@ -242,6 +248,31 @@ local function checkbox(parent, name, text, enabled)
         TextXAlignment = Enum.TextXAlignment.Left
     })
     return root
+end
+
+local function iconToggle(parent, name, enabled)
+    local toggle = imageButton(name, parent, {
+        Size = UDim2.new(0, Theme.Layout.TabTargetSize, 0, 32),
+        BackgroundColor3 = enabled and Theme.Colors.AccentSurface or Theme.Colors.Elevated
+    })
+    image("Icon", toggle, {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(0, 19, 0, 19),
+        ImageColor3 = enabled and Theme.Colors.Accent or Theme.Colors.MutedText
+    })
+    frame("Selection", toggle, {
+        AnchorPoint = Vector2.new(0.5, 1),
+        Position = UDim2.new(0.5, 0, 1, 0),
+        Size = UDim2.new(0, 20, 0, 2),
+        BackgroundColor3 = Theme.Colors.Accent,
+        Visible = enabled
+    })
+    label("Label", toggle, enabled and "✓" or "", {
+        Size = UDim2.new(0, 0, 0, 0),
+        Visible = false
+    })
+    return toggle
 end
 
 local function dropdown(parent, name, options)
@@ -348,7 +379,7 @@ local function spyPage(pages, name, objectName, withFlags)
         local flags = frame("Flags", list, { Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1 })
         listLayout(flags, 8, true)
         for _, flag in ipairs({ "RemoteEvent", "RemoteFunction", "BindableEvent", "BindableFunction" }) do
-            checkbox(flags, flag, flag, true)
+            iconToggle(flags, flag, true)
         end
         queryOffset = 40
     end
