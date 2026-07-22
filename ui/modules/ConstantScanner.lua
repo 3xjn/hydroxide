@@ -14,9 +14,11 @@ local List, ListButton = import("ui/controls/List")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
 local TabSelector = import("ui/controls/TabSelector")
+local VisualAssets = import("ui/assets")
 
-local Page = import("rbxassetid://11389137937").Base.Body.Pages.ConstantScanner
-local Assets = import("rbxassetid://5042114982").ConstantScanner
+local Runtime = import("ui/runtime")
+local Page = Runtime.GetInterface().Base.Body.Pages.ConstantScanner
+local Assets = Runtime.GetTemplates().ConstantScanner
 
 local Query = Page.Query
 local Search = Query.Search
@@ -26,9 +28,9 @@ local constantList = List.new(Page.Results.Clip.Content)
 local constantLogs = {}
 local selectedLog 
 
-local spyClosureContext = ContextMenuButton.new("rbxassetid://4666593447", "Spy Closure")
-local viewConstantsContext = ContextMenuButton.new("rbxassetid://5179169654", "View All Constants")
-local getScriptContext = ContextMenuButton.new("rbxassetid://4891705738", "Get Script Path")
+local spyClosureContext = ContextMenuButton.new(nil, "Spy Closure")
+local viewConstantsContext = ContextMenuButton.new(nil, "View All Constants")
+local getScriptContext = ContextMenuButton.new(nil, "Get Script Path")
 
 local constants = {
     tempConstantColor = Color3.fromRGB(40, 20, 20),
@@ -45,8 +47,8 @@ local function addConstant(constant, temporary)
     local valueText = toString(value)
 
     if temporary then
-        constantLog.ImageColor3 = constants.tempConstantColor
-        constantLog.Border.ImageColor3 = constants.tempBorderColor
+        constantLog.BackgroundColor3 = constants.tempConstantColor
+        constantLog.HydroxideStroke.Color = constants.tempBorderColor
     end
 
     if valueType == "function" then
@@ -59,7 +61,7 @@ local function addConstant(constant, temporary)
     constantLog.Name = index
     constantLog.Index.Text = index
     constantLog.Value.TextColor3 = oh.Constants.Syntax[valueType]
-    constantLog.Icon.Image = oh.Constants.Types[valueType]
+    VisualAssets.ApplyType(constantLog.Icon, valueType)
 
     -- constantLog.MouseButton1Click:Connect(function()
     --     selectedConstant = constant

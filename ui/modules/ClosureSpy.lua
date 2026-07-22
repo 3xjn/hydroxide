@@ -14,9 +14,11 @@ local Dropdown = import("ui/controls/Dropdown")
 local List, ListButton = import("ui/controls/List")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
+local VisualAssets = import("ui/assets")
 
-local Base = import("rbxassetid://11389137937").Base
-local Assets = import("rbxassetid://5042114982").ClosureSpy
+local Runtime = import("ui/runtime")
+local Base = Runtime.GetInterface().Base
+local Assets = Runtime.GetTemplates().ClosureSpy
 
 local Prompts = Base.Prompts
 local Page = Base.Body.Pages.ClosureSpy
@@ -48,13 +50,13 @@ local NewConditionIndex = NewConditionContent.Index
 local currentClosures = Methods.CurrentClosures
 
 local icons = {
-    type = "rbxassetid://4702850565",
-    status = "rbxassetid://4909102841",
-    valueType = "rbxassetid://4702850565",
-    block = "rbxassetid://4891641806",
-    unblock = "rbxassetid://4891642508",
-    ignore = "rbxassetid://4842578510",
-    unignore = "rbxassetid://4842578818"
+    type = "type",
+    status = "status",
+    valueType = "valueType",
+    block = "block",
+    unblock = "unblock",
+    ignore = "ignore",
+    unignore = "unignore"
 }
 
 local constants = {
@@ -82,25 +84,25 @@ local selected = {
     conditions = {}
 }
 
-local conditionContext = ContextMenuButton.new("rbxassetid://4891633802", "Call Conditions")
-local clearContext = ContextMenuButton.new("rbxassetid://4892169181", "Clear Calls")
-local ignoreContext = ContextMenuButton.new("rbxassetid://4842578510", "Ignore Calls")
-local blockContext = ContextMenuButton.new("rbxassetid://4891641806", "Block Calls")
-local removeContext = ContextMenuButton.new("rbxassetid://4702831188", "Remove Log")
+local conditionContext = ContextMenuButton.new(nil, "Call Conditions")
+local clearContext = ContextMenuButton.new(nil, "Clear Calls")
+local ignoreContext = ContextMenuButton.new(nil, "Ignore Calls")
+local blockContext = ContextMenuButton.new(nil, "Block Calls")
+local removeContext = ContextMenuButton.new(nil, "Remove Log")
 
-local callingScriptContext = ContextMenuButton.new("rbxassetid://4800244808", "Get Calling Script")
-local spyClosureContext = ContextMenuButton.new("rbxassetid://4666593447", "Spy Calling Function")
+local callingScriptContext = ContextMenuButton.new(nil, "Get Calling Script")
+local spyClosureContext = ContextMenuButton.new(nil, "Spy Calling Function")
 
-local removeConditionContext = ContextMenuButton.new("rbxassetid://4702831188", "Remove Condition")
+local removeConditionContext = ContextMenuButton.new(nil, "Remove Condition")
 
-local clearContextSelected = ContextMenuButton.new("rbxassetid://4892169181", "Clear Calls")
-local ignoreContextSelected = ContextMenuButton.new("rbxassetid://4842578510", "Ignore Calls")
-local blockContextSelected = ContextMenuButton.new("rbxassetid://4891641806", "Block Calls")
-local unignoreContextSelected = ContextMenuButton.new("rbxassetid://4842578818", "Unignore Calls")
-local unblockContextSelected = ContextMenuButton.new("rbxassetid://4891642508", "Unblock Calls")
-local removeContextSelected = ContextMenuButton.new("rbxassetid://4702831188", "Remove Logs")
+local clearContextSelected = ContextMenuButton.new(nil, "Clear Calls")
+local ignoreContextSelected = ContextMenuButton.new(nil, "Ignore Calls")
+local blockContextSelected = ContextMenuButton.new(nil, "Block Calls")
+local unignoreContextSelected = ContextMenuButton.new(nil, "Unignore Calls")
+local unblockContextSelected = ContextMenuButton.new(nil, "Unblock Calls")
+local removeContextSelected = ContextMenuButton.new(nil, "Remove Logs")
 
-local removeConditionContextSelected = ContextMenuButton.new("rbxassetid://4702831188", "Remove Conditions")
+local removeConditionContextSelected = ContextMenuButton.new(nil, "Remove Conditions")
 
 local closureListMenu = ContextMenu.new({ conditionContext, clearContext, ignoreContext, blockContext, removeContext })
 local closureListMenuSelected = ContextMenu.new({ clearContextSelected, ignoreContextSelected, unignoreContextSelected, blockContextSelected, unblockContextSelected, removeContextSelected })
@@ -112,7 +114,7 @@ local function checkCurrentIgnored()
     local selectedHook = (selected.hookLog or selected.logContext).Hook
 
     LogsButtons.Ignore.Label.Text = (selectedHook.Ignored and "Unignore") or "Ignore"
-    LogsButtons.Ignore.Icon.Image = (selectedHook.Ignored and icons.unignore) or icons.ignore
+    VisualAssets.ApplyGlyph(LogsButtons.Ignore.Icon, (selectedHook.Ignored and icons.unignore) or icons.ignore)
 
     local newWidth = TextService:GetTextSize((selectedHook.Ignored and "Unignore") or "Ignore", 18, "SourceSans", constants.textWidth).X + 30
 
@@ -123,7 +125,7 @@ local function checkCurrentBlocked()
     local selectedHook = (selected.hookLog or selected.logContext).Hook
 
     LogsButtons.Block.Label.Text = (selectedHook.Blocked and "Unblock") or "Block"
-    LogsButtons.Block.Icon.Image = (selectedHook.Blocked and icons.unblock) or icons.block
+    VisualAssets.ApplyGlyph(LogsButtons.Block.Icon, (selectedHook.Blocked and icons.unblock) or icons.block)
 
     local newWidth = TextService:GetTextSize((selectedHook.Blocked and "Unblock") or "Block", 18, "SourceSans", constants.textWidth).X + 30
 
@@ -139,7 +141,6 @@ function Condition.new(closure, status, index, value, type)
     local button = ListButton.new(instance, closureConditions)
     local check = CheckBox.new(content.Toggle)
     local valueType = type or typeof(value)
-    local typeIcons = oh.Constants.Types
     local branch = (status == "Ignore" and closure.IgnoredArgs[index]) or closure.BlockedArgs[index]
 
     condition.Branch = branch
@@ -173,13 +174,13 @@ function Condition.new(closure, status, index, value, type)
     end 
     
     identifiers.ByType.Visible = type ~= nil
-    identifiers.Status.Image = (status == "Ignore" and icons.ignore) or icons.block
-    identifiers.Status.Border.Image = identifiers.Status.Image
+    VisualAssets.ApplyGlyph(identifiers.Status, (status == "Ignore" and icons.ignore) or icons.block)
+    VisualAssets.ApplyGlyph(identifiers.Status.Border, (status == "Ignore" and icons.ignore) or icons.block)
 
     content.Index.Text = index
     content.Label.Text = (type and valueType) or toString(value)
     content.Label.TextColor3 = oh.Constants.Syntax[valueType] or oh.Constants.Syntax["userdata"]
-    content.Type.Image = typeIcons[valueType] or typeIcons["userdata"]
+    VisualAssets.ApplyType(content.Type, valueType)
 
     return condition
 end
@@ -221,7 +222,7 @@ local function createConditions(hook)
 
     local nameLength = TextService:GetTextSize(hook.Closure.Name, 18, "SourceSans", constants.textWidth).X + 20
 
-    ConditionsClosure.Icon.Image = oh.Constants.Types["function"]
+    VisualAssets.ApplyType(ConditionsClosure.Icon, "function")
     ConditionsClosure.Label.Text = hook.Closure.Name
     ConditionsClosure.Label.Size = UDim2.new(0, nameLength, 0, 20)
     ConditionsClosure.Position = UDim2.new(1, -nameLength, 0, 0)
@@ -293,7 +294,7 @@ function Log.new(hook)
         checkCurrentBlocked()
         checkCurrentIgnored()
 
-        LogsClosure.Icon.Image = oh.Constants.Types["function"]
+        VisualAssets.ApplyType(LogsClosure.Icon, "function")
         LogsClosure.Label.Text = closure.Name
         LogsClosure.Label.Size = UDim2.new(0, nameLength, 0, 20)
         LogsClosure.Position = UDim2.new(1, -nameLength, 0, 0)
@@ -367,7 +368,7 @@ local function createArg(instance, index, value)
     local arg = Assets.Arg:Clone()
     local valueType = type(value)
 
-    arg.Icon.Image = oh.Constants.Types[valueType]
+    VisualAssets.ApplyType(arg.Icon, valueType)
     arg.Index.Text = index
     arg.Label.Text = toString(value)
     arg.Label.TextColor3 = oh.Constants.Syntax[valueType]
@@ -818,25 +819,22 @@ conditionStatus:SetCallback(function(_dropdown, selected)
     local iconCondition = (selected.Name == "Ignore" and icons.ignore) or icons.block
     local icon = NewConditionContent.Status.Icon 
 
-    icon.Image = iconCondition
-    icon.Border.Image = iconCondition
+    VisualAssets.ApplyGlyph(icon, iconCondition)
+    VisualAssets.ApplyGlyph(icon.Border, iconCondition)
 end)
 
 conditionType:SetCallback(function(_dropdown, selected)
     local icon = NewConditionContent.Type.Icon 
-    local typeIcons = oh.Constants.Types
-    local iconCondition = typeIcons[selected.Name] or typeIcons["userdata"]
-    
-    icon.Image = iconCondition
-    icon.Border.Image = iconCondition
+    VisualAssets.ApplyType(icon, selected.Name)
+    VisualAssets.ApplyType(icon.Border, selected.Name)
 end)
 
 conditionValueType:SetCallback(function(_dropdown, selected)
-    local iconCondition = (selected.Name == "Type" and icons.type) or oh.Constants.Types["integral"]
+    local iconCondition = (selected.Name == "Type" and icons.type) or "valueType"
     local icon = NewConditionContent.ValueType.Icon 
 
-    icon.Image = iconCondition
-    icon.Border.Image = iconCondition
+    VisualAssets.ApplyGlyph(icon, iconCondition)
+    VisualAssets.ApplyGlyph(icon.Border, iconCondition)
 end)
 
 Methods.SetEvent(function(hook, call)

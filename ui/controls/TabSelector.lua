@@ -3,7 +3,7 @@ local TweenService = game:GetService("TweenService")
 local TabSelector = {}
 local Theme = import("ui/theme")
 
-local Base = import("rbxassetid://11389137937").Base
+local Base = import("ui/runtime").GetInterface().Base
 local Tabs = Base.Tabs.Container
 local Pages = Base.Body.Pages
 
@@ -66,7 +66,7 @@ local function selectTab(tabName)
 
     selectedPage.Visible = false
     page.Visible = true
-    tab.ImageColor3 = constants.tabSelected
+    tab.BackgroundColor3 = constants.tabSelected
     tab.Icon.ImageColor3 = constants.iconSelected
 
     oh.setStatus(page.Name:sub(1, 1) .. page.Name:sub(2):gsub('%u', function(c) return ' ' .. c end))
@@ -78,8 +78,8 @@ end
 
 for _i, tab in pairs(Tabs:GetChildren()) do
     if tab:IsA("ImageButton") then
-        local selected = TweenService:Create(tab, constants.fadeLength, { ImageColor3 = constants.tabSelected })
-        local unselected = TweenService:Create(tab, constants.fadeLength, { ImageColor3 = constants.tabUnselected })
+        local selected = TweenService:Create(tab, constants.fadeLength, { BackgroundColor3 = constants.tabSelected })
+        local unselected = TweenService:Create(tab, constants.fadeLength, { BackgroundColor3 = constants.tabUnselected })
         local iconSelected = TweenService:Create(tab.Icon, constants.fadeLength, { ImageColor3 = constants.iconSelected })
         local iconUnselected = TweenService:Create(tab.Icon, constants.fadeLength, { ImageColor3 = constants.iconUnselected })
 
@@ -111,6 +111,10 @@ for _i, tab in pairs(Tabs:GetChildren()) do
         end)
     end
 end
+
+selectedTab = Tabs.Home
+selectedTab.BackgroundColor3 = constants.tabSelected
+selectedTab.Icon.ImageColor3 = constants.iconSelected
 
 TabSelector.SelectTab = selectTab
 return TabSelector

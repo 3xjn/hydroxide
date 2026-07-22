@@ -9,8 +9,9 @@ local List, ListButton = import("ui/controls/List")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
 
-local Page = import("rbxassetid://11389137937").Base.Body.Pages.ModuleScanner
-local Assets = import("rbxassetid://5042114982").ModuleScanner
+local Runtime = import("ui/runtime")
+local Page = Runtime.GetInterface().Base.Body.Pages.ModuleScanner
+local Assets = Runtime.GetTemplates().ModuleScanner
 
 local Query = Page.Query
 local Search = Query.Search
@@ -21,7 +22,7 @@ local moduleList = List.new(Results)
 local moduleLogs = {}
 local selectedLog
 
-local pathContext = ContextMenuButton.new("rbxassetid://4891705738", "Get Module Path")
+local pathContext = ContextMenuButton.new(nil, "Get Module Path")
 moduleList:BindContextMenu(ContextMenu.new({ pathContext }))
 
 pathContext:SetCallback(function()

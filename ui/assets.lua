@@ -15,6 +15,40 @@ local icons = {
     ConstantScanner = Vector2.new(128, 64)
 }
 
+local glyphs = {
+    type = "ConstantScanner",
+    status = "RemoteSpy",
+    valueType = "ConstantScanner",
+    block = "ConstantScanner",
+    unblock = "ConstantScanner",
+    ignore = "RemoteSpy",
+    unignore = "RemoteSpy",
+    RemoteEvent = "RemoteSpy",
+    RemoteFunction = "RemoteSpy",
+    BindableEvent = "RemoteSpy",
+    BindableFunction = "RemoteSpy",
+    LocalScript = "ScriptScanner",
+    ModuleScript = "ModuleScanner",
+    ScriptObject = "ScriptScanner",
+    RemoteObject = "RemoteSpy",
+    ClosureObject = "ClosureSpy",
+    Ignore = "RemoteSpy",
+    Block = "RemoteSpy",
+    Clear = "ConstantScanner",
+    Conditions = "RemoteSpy",
+    New = "ConstantScanner",
+    ["function"] = "ClosureSpy",
+    ["table"] = "UpvalueScanner",
+    ["string"] = "ConstantScanner",
+    ["number"] = "ConstantScanner",
+    ["boolean"] = "ConstantScanner",
+    ["userdata"] = "ConstantScanner",
+    ["vector"] = "ConstantScanner",
+    ["integral"] = "ConstantScanner",
+    ["thread"] = "ClosureSpy",
+    ["nil"] = "ConstantScanner"
+}
+
 local function requireMethod(name)
     local method = oh.Methods[name]
     assert(method, "Hydroxide's new interface requires Volt's " .. name .. " filesystem method")
@@ -79,6 +113,15 @@ function Assets.ApplyLogo(image)
     image.ImageRectSize = Vector2.new(0, 0)
     image.ImageColor3 = Color3.fromRGB(255, 255, 255)
     image.ScaleType = Enum.ScaleType.Fit
+end
+
+function Assets.ApplyGlyph(image, name)
+    local iconName = glyphs[name] or (icons[name] and name) or "ConstantScanner"
+    Assets.ApplyIcon(image, iconName)
+end
+
+function Assets.ApplyType(image, valueType)
+    Assets.ApplyGlyph(image, valueType)
 end
 
 Assets.Icons = icons

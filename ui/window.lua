@@ -1,9 +1,10 @@
 local UserInput = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local Theme = import("ui/theme")
 
 local Window = {}
 
-local margin = 12
+local margin = 16
 local defaultSize = Vector2.new(1120, 680)
 local minimumSize = Vector2.new(720, 420)
 
@@ -68,6 +69,7 @@ function Window.Attach(interface)
     local restorePosition
     local restoreSize
     local collapsedPosition
+    local transitionId = 0
 
     local function viewportSize()
         return camera.ViewportSize
@@ -93,13 +95,26 @@ function Window.Attach(interface)
         base.Position = UDim2.new(0, math.floor((viewport.X - size.X) / 2), 0, math.floor((viewport.Y - size.Y) / 2))
     end
 
+    local function updateWorkspace()
+        local body = base.Body
+        local workspaceWidth = math.max(0, base.AbsoluteSize.X - base.Tabs.AbsoluteSize.X)
+        local explorerWidth = math.max(200, math.min(288, math.floor(workspaceWidth * 0.26 + 0.5)))
+        body.Pages.Size = UDim2.new(1, -explorerWidth - 12, 1, 0)
+        body.Explorer.Position = UDim2.new(1, -explorerWidth, 0, 0)
+        body.Explorer.Size = UDim2.new(0, explorerWidth, 1, 0)
+    end
+
     local function fitInitialWindow()
         local size = clampSize(defaultSize)
         base.Size = UDim2.new(0, size.X, 0, size.Y)
         center(size)
+        updateWorkspace()
     end
 
     styleExistingControl(collapse, "×", -4)
+    open.Position = UDim2.new(0.5, 0, 0, -68)
+    open.Size = UDim2.new(0, 52, 0, 52)
+    open.Visible = false
     local maximize = createControl(drag, "Maximize", "□", -40)
 
     local resizeHandle = createControl(base, "Resize", "◢", -2)
@@ -130,6 +145,7 @@ function Window.Attach(interface)
         end
 
         maximized = value
+        updateWorkspace()
     end
 
     fitInitialWindow()
@@ -189,6 +205,7 @@ function Window.Attach(interface)
             local delta = input.Position - resizeStart
             local size = clampSize(resizeSize + Vector2.new(delta.X, delta.Y))
             base.Size = UDim2.new(0, size.X, 0, size.Y)
+            updateWorkspace()
         end
     end)
 
@@ -203,8 +220,23 @@ function Window.Attach(interface)
 
         collapsed = true
         collapsedPosition = base.Position
-        base:TweenPosition(UDim2.new(0, base.Position.X.Offset, 0, -base.AbsoluteSize.Y - 16), "Out", "Quad", 0.15)
-        open:TweenPosition(UDim2.new(0.5, -15, 0, 20), "Out", "Quad", 0.15)
+        transitionId = transitionId + 1
+        local thisTransition = transitionId
+        local hideWindow = TweenService:Create(base, Theme.Motion, {
+            Position = UDim2.new(0, base.Position.X.Offset, 0, -base.AbsoluteSize.Y - margin)
+        })
+        local showOpen = TweenService:Create(open, Theme.Motion, {
+            Position = UDim2.new(0.5, 0, 0, margin)
+        })
+
+        open.Visible = true
+        hideWindow:Play()
+        showOpen:Play()
+        hideWindow.Completed:Connect(function()
+            if collapsed and transitionId == thisTransition then
+                base.Visible = false
+            end
+        end)
     end)
 
     oh.Events.WindowOpen = open.MouseButton1Click:Connect(function()
@@ -213,13 +245,22 @@ function Window.Attach(interface)
         end
 
         collapsed = false
-        open:TweenPosition(UDim2.new(0.5, -15, 0, -75), "Out", "Quad", 0.15)
+        transitionId = transitionId + 1
+        local thisTransition = transitionId
+        local destination = (maximized and UDim2.new(0, margin, 0, margin)) or collapsedPosition
+        local hideOpen = TweenService:Create(open, Theme.Motion, {
+            Position = UDim2.new(0.5, 0, 0, -68)
+        })
+        local showWindow = TweenService:Create(base, Theme.Motion, { Position = destination })
 
-        if maximized then
-            base:TweenPosition(UDim2.new(0, margin, 0, margin), "Out", "Quad", 0.15)
-        else
-            base:TweenPosition(collapsedPosition, "Out", "Quad", 0.15)
-        end
+        base.Visible = true
+        hideOpen:Play()
+        showWindow:Play()
+        hideOpen.Completed:Connect(function()
+            if not collapsed and transitionId == thisTransition then
+                open.Visible = false
+            end
+        end)
     end)
 
     oh.Events.WindowViewport = camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
@@ -231,6 +272,7 @@ function Window.Attach(interface)
             local size = clampSize(base.AbsoluteSize)
             base.Size = UDim2.new(0, size.X, 0, size.Y)
         end
+        updateWorkspace()
     end)
 end
 

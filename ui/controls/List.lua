@@ -1,5 +1,6 @@
 local UserInput = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local Theme = import("ui/theme")
 
 local List = {}
 local ListButton = {}
@@ -8,8 +9,8 @@ local lists = {}
 local ctrlHeld = false
 local constants = {
     tweenTime = TweenInfo.new(0.15),
-    selected = Color3.fromRGB(55, 35, 35),
-    deselected = Color3.fromRGB(35, 35, 35)
+    selected = Theme.Colors.AccentSurface,
+    deselected = Theme.Colors.Elevated
 }
 
 function List.new(instance, multiClick)
@@ -77,8 +78,8 @@ function ListButton.new(instance, list)
     listButton.SetRightCallback = ListButton.setRightCallback
     listButton.SetSelectedCallback = ListButton.setSelectedCallback
     listButton.Remove = ListButton.remove
-    listButton.SelectAnimation = TweenService:Create(instance, constants.tweenTime, { ImageColor3 = constants.selected })
-    listButton.DeselectAnimation = TweenService:Create(instance, constants.tweenTime, { ImageColor3 = constants.deselected })
+    listButton.SelectAnimation = TweenService:Create(instance, constants.tweenTime, { BackgroundColor3 = constants.selected })
+    listButton.DeselectAnimation = TweenService:Create(instance, constants.tweenTime, { BackgroundColor3 = constants.deselected })
     return listButton
 end
 

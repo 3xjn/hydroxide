@@ -18,9 +18,11 @@ local List, ListButton = import("ui/controls/List")
 local TabSelector = import("ui/controls/TabSelector")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
+local VisualAssets = import("ui/assets")
 
-local Base = import("rbxassetid://11389137937").Base
-local Assets = import("rbxassetid://5042114982").UpvalueScanner
+local Runtime = import("ui/runtime")
+local Base = Runtime.GetInterface().Base
+local Assets = Runtime.GetTemplates().UpvalueScanner
 
 local Prompts = Base.Prompts
 local Page = Base.Body.Pages.UpvalueScanner
@@ -45,16 +47,16 @@ local selectedUpvalue
 local selectedUpvalueLog
 local selectedElement
 
-local spyClosureContext = ContextMenuButton.new("rbxassetid://4666593447", "Spy Closure")
-local viewUpvaluesContext = ContextMenuButton.new("rbxassetid://5179169654", "View All Upvalues")
-local changeUpvalueContext = ContextMenuButton.new("rbxassetid://5458573463", "Change Upvalue")
-local changeTableContext = ContextMenuButton.new("rbxassetid://5458573463", "Change Upvalue")
-local viewElementsContext = ContextMenuButton.new("rbxassetid://5179169654", "View All Elements")
-local changeElementContext = ContextMenuButton.new("rbxassetid://5458573463", "Change Element")
-local upvalueScriptContext = ContextMenuButton.new("rbxassetid://4800244808", "Generate Script")
-local tableScriptContext = ContextMenuButton.new("rbxassetid://4800244808", "Generate Script")
-local elementScriptContext = ContextMenuButton.new("rbxassetid://4800244808", "Generate Script")
-local getScriptContext = ContextMenuButton.new("rbxassetid://4891705738", "Get Script Path")
+local spyClosureContext = ContextMenuButton.new(nil, "Spy Closure")
+local viewUpvaluesContext = ContextMenuButton.new(nil, "View All Upvalues")
+local changeUpvalueContext = ContextMenuButton.new(nil, "Change Upvalue")
+local changeTableContext = ContextMenuButton.new(nil, "Change Upvalue")
+local viewElementsContext = ContextMenuButton.new(nil, "View All Elements")
+local changeElementContext = ContextMenuButton.new(nil, "Change Element")
+local upvalueScriptContext = ContextMenuButton.new(nil, "Generate Script")
+local tableScriptContext = ContextMenuButton.new(nil, "Generate Script")
+local elementScriptContext = ContextMenuButton.new(nil, "Generate Script")
+local getScriptContext = ContextMenuButton.new(nil, "Get Script Path")
 
 local closureContextMenu = ContextMenu.new({ spyClosureContext, viewUpvaluesContext, getScriptContext })
 local tableContextMenu = ContextMenu.new({ changeTableContext, viewElementsContext, tableScriptContext })
@@ -95,17 +97,17 @@ local function addElement(upvalueLog, upvalue, index, value, temporary)
     local indexText = toString(index)
 
     if temporary then
-        elementLog.ImageColor3 = constants.tempElementColor
-        elementLog.Border.ImageColor3 = constants.tempBorderColor
+        elementLog.BackgroundColor3 = constants.tempElementColor
+        elementLog.HydroxideStroke.Color = constants.tempBorderColor
     end
 
     elementLog.Name = indexText
     elementLog.Index.Label.Text = indexText
     elementLog.Value.Label.Text = toString(value)
     elementLog.Index.Label.TextColor3 = oh.Constants.Syntax[elementIndexType]
-    elementLog.Index.Icon.Image = oh.Constants.Types[elementIndexType]
+    VisualAssets.ApplyType(elementLog.Index.Icon, elementIndexType)
     elementLog.Value.Label.TextColor3 = oh.Constants.Syntax[elementValueType]
-    elementLog.Value.Icon.Image = oh.Constants.Types[elementValueType]
+    VisualAssets.ApplyType(elementLog.Value.Icon, elementValueType)
 
     elementLog.MouseButton2Click:Connect(function()
         selectedUpvalue = upvalue
@@ -128,8 +130,8 @@ local function updateElement(upvalueLog, index, value)
     elementLog.Value.Label.Text = toString(value)
     elementLog.Index.Label.TextColor3 = oh.Constants.Syntax[elementIndexType]
     elementLog.Value.Label.TextColor3 = oh.Constants.Syntax[elementValueType]
-    elementLog.Value.Icon.Image = oh.Constants.Types[elementIndexType]
-    elementLog.Value.Icon.Image = oh.Constants.Types[elementValueType]
+    VisualAssets.ApplyType(elementLog.Index.Icon, elementIndexType)
+    VisualAssets.ApplyType(elementLog.Value.Icon, elementValueType)
     elementLog.Parent = upvalueLog.Elements
 end
 
@@ -144,8 +146,8 @@ local function addUpvalue(upvalue, temporary)
         local height = 25
 
         if temporary then
-            upvalueLog.ImageColor3 = constants.tempUpvalueColor
-            upvalueLog.Border.ImageColor3 = constants.tempBorderColor
+            upvalueLog.BackgroundColor3 = constants.tempUpvalueColor
+            upvalueLog.HydroxideStroke.Color = constants.tempBorderColor
         end
 
         if not temporary then
@@ -162,8 +164,8 @@ local function addUpvalue(upvalue, temporary)
         upvalueLog = Assets.Upvalue:Clone()
 
         if temporary then
-            upvalueLog.ImageColor3 = constants.tempUpvalueColor
-            upvalueLog.Border.ImageColor3 = constants.tempBorderColor
+            upvalueLog.BackgroundColor3 = constants.tempUpvalueColor
+            upvalueLog.HydroxideStroke.Color = constants.tempBorderColor
         end
 
         if valueType == "function" then
@@ -177,7 +179,7 @@ local function addUpvalue(upvalue, temporary)
     upvalueLog.Name = index
     upvalueLog.Index.Text = index
     upvalueLog.Value.TextColor3 = oh.Constants.Syntax[valueType]
-    upvalueLog.Icon.Image = oh.Constants.Types[valueType]
+    VisualAssets.ApplyType(upvalueLog.Icon, valueType)
 
     upvalueLog.MouseButton2Click:Connect(function()
         selectedUpvalue = upvalue
@@ -221,7 +223,7 @@ local function updateUpvalue(closureLog, upvalue)
     end
 
     upvalueLog.Value.TextColor3 = oh.Constants.Syntax[valueType]
-    upvalueLog.Icon.Image = oh.Constants.Types[valueType]
+    VisualAssets.ApplyType(upvalueLog.Icon, valueType)
 
     upvalue:Update(newValue)
 end
@@ -370,9 +372,7 @@ end
 
 local function typeDropdownAdjust(dropdown, button)
     local instance = dropdown.Instance
-    local icon = oh.Constants.Types[button.Name] or oh.Constants.Types["userdata"]
-
-    instance.Icon.Image = icon
+    VisualAssets.ApplyType(instance.Icon, button.Name)
 end
 
 modifyUpvalueButtons.Set.MouseButton1Click:Connect(function()

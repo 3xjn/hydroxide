@@ -1,6 +1,6 @@
 local TextService = game:GetService("TextService")
 
-local Interface = import("rbxassetid://11389137937")
+local Interface = import("ui/runtime").GetInterface()
 local Base = Interface.Base
 local Object = Base.MessageBox
 local Shadow = Base.MessageBoxShadow
@@ -60,7 +60,7 @@ function MessageBox.Show(title, message, messageType, firstCallback, secondCallb
     inner.Message.Text = message
 
     Object.Size = UDim2.new(0, messageWidth, 0, messageHeight)
-    Object.Position = UDim2.new(0.5, -(messageWidth / 2), 0.5, -(messageHeight / 2))
+    Object.Position = UDim2.new(0.5, 0, 0.5, 0)
 
     firstClickEvent = first.MouseButton1Click:Connect(function()
         if firstCallback then

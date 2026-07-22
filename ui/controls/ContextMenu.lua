@@ -1,5 +1,7 @@
-local Assets = import("rbxassetid://5042114982").Controls
-local Storage = import("rbxassetid://11389137937").ContextMenus
+local Runtime = import("ui/runtime")
+local VisualAssets = import("ui/assets")
+local Assets = Runtime.GetTemplates().Controls
+local Storage = Runtime.GetContextMenus()
 
 local Players = game:GetService("Players")
 local UserInput = game:GetService("UserInputService")
@@ -18,7 +20,23 @@ local constants = {
     textWidth = Vector2.new(1337420, 20)
 }
 
-function ContextMenuButton.new(icon, text)
+local function actionGlyph(text)
+    if text:find("Script") then
+        return "ScriptScanner"
+    elseif text:find("Closure") or text:find("Function") then
+        return "ClosureSpy"
+    elseif text:find("Upvalue") or text:find("Element") then
+        return "UpvalueScanner"
+    elseif text:find("Remote") or text:find("Call") or text:find("Condition") then
+        return "RemoteSpy"
+    elseif text:find("Constant") then
+        return "ConstantScanner"
+    end
+
+    return "ModuleScanner"
+end
+
+function ContextMenuButton.new(_icon, text)
     local contextMenuButton = {}
     local instance = Assets.ContextMenuButton:Clone()
     local label = instance.Label
@@ -27,7 +45,7 @@ function ContextMenuButton.new(icon, text)
     local leaveAnimation = TweenService:Create(label, constants.fadeLength, { TextTransparency = 0.2 })
 
     label.Text = text
-    instance.Icon.Image = icon
+    VisualAssets.ApplyGlyph(instance.Icon, actionGlyph(text))
 
     instance.MouseButton1Click:Connect(function()
         if contextMenuButton.Callback then
@@ -50,12 +68,13 @@ function ContextMenuButton.new(icon, text)
     return contextMenuButton
 end
 
-function ContextMenuButton.setIcon(contextMenuButton, newIcon)
-    contextMenuButton.Instance.Icon.Image = newIcon
+function ContextMenuButton.setIcon(contextMenuButton, _newIcon)
+    VisualAssets.ApplyGlyph(contextMenuButton.Instance.Icon, actionGlyph(contextMenuButton.Instance.Label.Text))
 end
 
 function ContextMenuButton.setText(contextMenuButton, newText)
     contextMenuButton.Instance.Label.Text = newText
+    VisualAssets.ApplyGlyph(contextMenuButton.Instance.Icon, actionGlyph(newText))
 end
 
 function ContextMenuButton.setCallback(contextMenuButton, callback)

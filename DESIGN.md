@@ -28,14 +28,26 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 
 ## Window layout
 
+- Visual reference: `design/hydroxide-home-redesign-v1.png`. It is the shell contract for the fully source-built interface.
 - Default size: 1120 by 680 pixels, clamped to the current viewport with a 16-pixel outer margin.
 - Minimum size: 720 by 420 pixels, reduced only when the viewport itself is smaller.
 - Title bar: 48 pixels.
 - Tool rail: 56 pixels.
 - Status bar: 28 pixels.
-- Explorer: preserve the current pane and feature flow in this pass.
+- Title bar anatomy: generated 32-pixel mark and `Hydroxide` wordmark at the left, centered version title, then 36-pixel window controls at the right.
+- Tool rail anatomy: 44-pixel tab targets with 28-pixel generated icons and 8-pixel vertical rhythm. On constrained-height viewports, targets may compact to 40 pixels but never below 36 pixels.
+- Workspace anatomy: tool page and Explorer form a list-detail pair with a 12-pixel gutter. Explorer is 26 percent of the workspace, clamped from 200 to 288 pixels.
+- Home composition: the welcome label, generated mark, and tagline share one centered vertical axis at approximately 24, 48, and 70 percent of the page height.
 - The title bar, tool rail, and status bar remain fixed. Page-owned lists keep their own scrolling.
 - The bottom-right handle resizes the window. The maximize control toggles a viewport-filling state and restores the prior bounds.
+- Every shell region uses scale-plus-offset geometry or is recomputed from the current window bounds. Resizing the outer window must never leave legacy 650-by-350 geometry inside it.
+
+## Window lifecycle
+
+- The close control condenses Hydroxide into a 52-by-52 top-center reopen button using the generated Hydroxide mark.
+- Closing explicitly hides the full window after the 150-millisecond transition; no title, page, status, border, or resize-handle pixels may remain onscreen.
+- Reopening explicitly hides the compact button and restores the previous normal or maximized bounds.
+- The reopen control has a dark elevated surface, mineral-mint border, visible focus treatment, and a 36-pixel minimum interactive target.
 
 ## Asset contract
 
@@ -44,6 +56,8 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 `assets/ui/hydroxide-logo.png` is the two-tone Home Page mark. `assets/ui/hydroxide-logo-source.png` preserves the generated source artwork.
 
 The runtime asset path is `hydroxide/assets/<branch>/ui-v1/<filename>`. Stable `master` builds reuse their validated local files. Development builds refresh code and artwork from `dev` on every launch, so testers do not see stale assets. Files are written as binary strings and loaded through Volt's required `getcustomasset` API. Missing filesystem or custom-asset support is a startup error. There is no legacy image fallback.
+
+All interface instances, row templates, prompts, overlays, menus, and window controls are created by local Luau modules. Hydroxide must not import external Roblox UI models or template packs. Raster artwork may only come from the generated files under `assets/ui/` through `getcustomasset`.
 
 ## Interaction states
 
@@ -57,4 +71,6 @@ The runtime asset path is `hydroxide/assets/<branch>/ui-v1/<filename>`. Stable `
 
 ## Implementation boundary
 
-The current shell still comes from `rbxassetid://11389137937`. The first implementation layer restyles that hierarchy and adds window behavior without renaming pages or changing module flow. Replacing the external model with a source-built GUI is a later migration and should happen only after every module-owned object path is captured.
+The complete interface is source-built. `ui/runtime.lua` owns the live instance tree and reusable templates; feature modules consume that local contract. The title bar, tool rail, workspace panes, Home composition, status bar, resize handle, reopen state, prompts, menus, list rows, and scanner pages must not depend on `rbxassetid://11389137937`, `rbxassetid://5042114982`, or any other imported UI model.
+
+Reusable primitives are: `Surface`, `ActionButton`, `QueryBar`, `ScrollList`, `ObjectLabel`, `Dropdown`, `CheckBox`, `Prompt`, `MessageBox`, `ContextMenu`, `Tab`, and `RowTemplate`. Each primitive has default, hover, selected, focused, and disabled styling where applicable and uses the token palette above.

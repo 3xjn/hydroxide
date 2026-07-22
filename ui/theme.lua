@@ -44,7 +44,6 @@ end
 
 local function styleText(instance)
     instance.Font = Enum.Font.Gotham
-    instance.TextColor3 = Theme.Colors.Text
     instance.TextStrokeTransparency = 1
 
     if instance:IsA("TextBox") then
@@ -126,13 +125,16 @@ function Theme.Apply(interface, assets)
 
     for _index, descendant in pairs(interface:GetDescendants()) do
         styleDescendant(descendant)
+        if descendant:IsA("ImageLabel") and descendant.Name == "Icon" then
+            assets.ApplyGlyph(descendant, descendant.Parent.Name)
+        end
     end
 
     local container = tabs.Container
     for _index, tab in pairs(container:GetChildren()) do
         if tab:IsA("ImageButton") and assets.Icons[tab.Name] then
             assets.ApplyIcon(tab.Icon, tab.Name)
-            tab.ImageColor3 = Theme.Colors.Rail
+            tab.BackgroundColor3 = Theme.Colors.Rail
             tab.Icon.ImageColor3 = Theme.Colors.MutedText
         end
     end
@@ -140,6 +142,8 @@ function Theme.Apply(interface, assets)
     local homeLogo = findHomeLogo(pages.Home)
     assert(homeLogo, "Hydroxide could not find the Home Page logo image")
     assets.ApplyLogo(homeLogo)
+    assets.ApplyLogo(base.Drag.Brand.Logo)
+    assets.ApplyLogo(interface.Open)
 
     oh.Events.ThemeDescendant = interface.DescendantAdded:Connect(styleDescendant)
 end

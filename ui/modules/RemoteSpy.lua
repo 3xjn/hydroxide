@@ -17,9 +17,11 @@ local List, ListButton = import("ui/controls/List")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
 local TabSelector = import("ui/controls/TabSelector")
+local VisualAssets = import("ui/assets")
 
-local Base = import("rbxassetid://11389137937").Base
-local Assets = import("rbxassetid://5042114982").RemoteSpy
+local Runtime = import("ui/runtime")
+local Base = Runtime.GetInterface().Base
+local Assets = Runtime.GetTemplates().RemoteSpy
 
 local Prompts = Base.Prompts
 local Page = Base.Body.Pages.RemoteSpy
@@ -53,17 +55,17 @@ local remotesViewing = Methods.RemotesViewing
 local currentRemotes = Methods.CurrentRemotes
 
 local icons = {
-    type = "rbxassetid://4702850565",
-    status = "rbxassetid://4909102841",
-    valueType = "rbxassetid://4702850565",
-    block = "rbxassetid://4891641806",
-    unblock = "rbxassetid://4891642508",
-    ignore = "rbxassetid://4842578510",
-    unignore = "rbxassetid://4842578818",
-    RemoteEvent = "rbxassetid://4229806545",
-    RemoteFunction = "rbxassetid://4229810474",
-    BindableEvent = "rbxassetid://4229809371",
-    BindableFunction = "rbxassetid://4229807624"
+    type = "type",
+    status = "status",
+    valueType = "valueType",
+    block = "block",
+    unblock = "unblock",
+    ignore = "ignore",
+    unignore = "unignore",
+    RemoteEvent = "RemoteEvent",
+    RemoteFunction = "RemoteFunction",
+    BindableEvent = "BindableEvent",
+    BindableFunction = "BindableFunction"
 }
 
 local constants = {
@@ -91,30 +93,30 @@ local selected = {
     conditions = {}
 }
 
-local pathContext = ContextMenuButton.new("rbxassetid://4891705738", "Get Remote Path")
-local conditionContext = ContextMenuButton.new("rbxassetid://4891633802", "Call Conditions")
-local clearContext = ContextMenuButton.new("rbxassetid://4892169181", "Clear Calls")
-local ignoreContext = ContextMenuButton.new("rbxassetid://4842578510", "Ignore Calls")
-local blockContext = ContextMenuButton.new("rbxassetid://4891641806", "Block Calls")
-local removeContext = ContextMenuButton.new("rbxassetid://4702831188", "Remove Log")
+local pathContext = ContextMenuButton.new(nil, "Get Remote Path")
+local conditionContext = ContextMenuButton.new(nil, "Call Conditions")
+local clearContext = ContextMenuButton.new(nil, "Clear Calls")
+local ignoreContext = ContextMenuButton.new(nil, "Ignore Calls")
+local blockContext = ContextMenuButton.new(nil, "Block Calls")
+local removeContext = ContextMenuButton.new(nil, "Remove Log")
 
-local scriptContext = ContextMenuButton.new("rbxassetid://4800244808", "Generate Script")
-local callingScriptContext = ContextMenuButton.new("rbxassetid://4800244808", "Get Calling Script")
-local spyClosureContext = ContextMenuButton.new("rbxassetid://4666593447", "Spy Calling Function")
-local repeatCallContext = ContextMenuButton.new("rbxassetid://4907151581", "Repeat Call")
-local viewAsHexContext = ContextMenuButton.new("rbxassetid://9058292613", "Toggle String Hex View")
+local scriptContext = ContextMenuButton.new(nil, "Generate Script")
+local callingScriptContext = ContextMenuButton.new(nil, "Get Calling Script")
+local spyClosureContext = ContextMenuButton.new(nil, "Spy Calling Function")
+local repeatCallContext = ContextMenuButton.new(nil, "Repeat Call")
+local viewAsHexContext = ContextMenuButton.new(nil, "Toggle String Hex View")
 
-local removeConditionContext = ContextMenuButton.new("rbxassetid://4702831188", "Remove Condition")
+local removeConditionContext = ContextMenuButton.new(nil, "Remove Condition")
 
-local pathContextSelected = ContextMenuButton.new("rbxassetid://4891705738", "Get Paths")
-local clearContextSelected = ContextMenuButton.new("rbxassetid://4892169181", "Clear Calls")
-local ignoreContextSelected = ContextMenuButton.new("rbxassetid://4842578510", "Ignore Calls")
-local blockContextSelected = ContextMenuButton.new("rbxassetid://4891641806", "Block Calls")
-local unignoreContextSelected = ContextMenuButton.new("rbxassetid://4842578818", "Unignore Calls")
-local unblockContextSelected = ContextMenuButton.new("rbxassetid://4891642508", "Unblock Calls")
-local removeContextSelected = ContextMenuButton.new("rbxassetid://4702831188", "Remove Logs")
+local pathContextSelected = ContextMenuButton.new(nil, "Get Paths")
+local clearContextSelected = ContextMenuButton.new(nil, "Clear Calls")
+local ignoreContextSelected = ContextMenuButton.new(nil, "Ignore Calls")
+local blockContextSelected = ContextMenuButton.new(nil, "Block Calls")
+local unignoreContextSelected = ContextMenuButton.new(nil, "Unignore Calls")
+local unblockContextSelected = ContextMenuButton.new(nil, "Unblock Calls")
+local removeContextSelected = ContextMenuButton.new(nil, "Remove Logs")
 
-local removeConditionContextSelected = ContextMenuButton.new("rbxassetid://4702831188", "Remove Conditions")
+local removeConditionContextSelected = ContextMenuButton.new(nil, "Remove Conditions")
 
 local remoteListMenu = ContextMenu.new({ pathContext, conditionContext, clearContext, ignoreContext, blockContext, removeContext })
 local remoteListMenuSelected = ContextMenu.new({ pathContextSelected, clearContextSelected, ignoreContextSelected, unignoreContextSelected, blockContextSelected, unblockContextSelected, removeContextSelected })
@@ -126,7 +128,7 @@ local function checkCurrentIgnored()
     local selectedRemote = (selected.remoteLog or selected.logContext).Remote
 
     LogsButtons.Ignore.Label.Text = (selectedRemote.Ignored and "Unignore") or "Ignore"
-    LogsButtons.Ignore.Icon.Image = (selectedRemote.Ignored and icons.unignore) or icons.ignore
+    VisualAssets.ApplyGlyph(LogsButtons.Ignore.Icon, (selectedRemote.Ignored and icons.unignore) or icons.ignore)
 
     local newWidth = TextService:GetTextSize((selectedRemote.Ignored and "Unignore") or "Ignore", 18, "SourceSans", constants.textWidth).X + 30
 
@@ -137,7 +139,7 @@ local function checkCurrentBlocked()
     local selectedRemote = selected.remoteLog.Remote
 
     LogsButtons.Block.Label.Text = (selectedRemote.Blocked and "Unblock") or "Block"
-    LogsButtons.Block.Icon.Image = (selectedRemote.Blocked and icons.unblock) or icons.block
+    VisualAssets.ApplyGlyph(LogsButtons.Block.Icon, (selectedRemote.Blocked and icons.unblock) or icons.block)
 
     local newWidth = TextService:GetTextSize((selectedRemote.Blocked and "Unblock") or "Block", 18, "SourceSans", constants.textWidth).X + 30
 
@@ -153,7 +155,6 @@ function Condition.new(remote, status, index, value, type)
     local button = ListButton.new(instance, remoteConditions)
     local check = CheckBox.new(content.Toggle)
     local valueType = type or typeof(value)
-    local typeIcons = oh.Constants.Types
     local branch = (status == "Ignore" and remote.IgnoredArgs[index]) or remote.BlockedArgs[index]
 
     condition.Branch = branch
@@ -187,13 +188,13 @@ function Condition.new(remote, status, index, value, type)
     end 
     
     identifiers.ByType.Visible = type ~= nil
-    identifiers.Status.Image = (status == "Ignore" and icons.ignore) or icons.block
-    identifiers.Status.Border.Image = identifiers.Status.Image
+    VisualAssets.ApplyGlyph(identifiers.Status, (status == "Ignore" and icons.ignore) or icons.block)
+    VisualAssets.ApplyGlyph(identifiers.Status.Border, (status == "Ignore" and icons.ignore) or icons.block)
 
     content.Index.Text = index
     content.Label.Text = (type and valueType) or toString(value)
     content.Label.TextColor3 = oh.Constants.Syntax[valueType] or oh.Constants.Syntax["userdata"]
-    content.Type.Image = typeIcons[valueType] or typeIcons["userdata"]
+    VisualAssets.ApplyType(content.Type, valueType)
 
     return condition
 end
@@ -238,7 +239,7 @@ local function createConditions(remote)
     local remoteClassName = remoteInstance.ClassName
     local nameLength = TextService:GetTextSize(remoteInstanceName, 18, "SourceSans", constants.textWidth).X + 20
 
-    ConditionsRemote.Icon.Image = icons[remoteClassName]
+    VisualAssets.ApplyGlyph(ConditionsRemote.Icon, icons[remoteClassName])
     ConditionsRemote.Label.Text = remoteInstanceName
     ConditionsRemote.Label.Size = UDim2.new(0, nameLength, 0, 20)
     ConditionsRemote.Position = UDim2.new(1, -nameLength, 0, 0)
@@ -288,7 +289,7 @@ function Log.new(remote)
 
     button.Name = remoteInstanceName
     button.Label.Text = remoteInstanceName
-    button.Icon.Image = icons[remoteClassName]
+    VisualAssets.ApplyGlyph(button.Icon, icons[remoteClassName])
 
     local function viewLogs()
         if selected.remoteLog then
@@ -306,7 +307,7 @@ function Log.new(remote)
         checkCurrentBlocked()
         checkCurrentIgnored()
 
-        LogsRemote.Icon.Image = icons[remoteClassName]
+        VisualAssets.ApplyGlyph(LogsRemote.Icon, icons[remoteClassName])
         LogsRemote.Label.Text = remoteInstanceName
         LogsRemote.Label.Size = UDim2.new(0, nameLength, 0, 20)
         LogsRemote.Position = UDim2.new(1, -nameLength, 0, 0)
@@ -368,7 +369,7 @@ local function createArg(instance, index, value)
     local arg = Assets.RemoteArg:Clone()
     local valueType = type(value)
 
-    arg.Icon.Image = oh.Constants.Types[valueType]
+    VisualAssets.ApplyType(arg.Icon, valueType)
     arg.Index.Text = index
     
     if valueType == "table" then
@@ -971,25 +972,22 @@ conditionStatus:SetCallback(function(_dropdown, selected)
     local iconCondition = (selected.Name == "Ignore" and icons.ignore) or icons.block
     local icon = NewConditionContent.Status.Icon 
 
-    icon.Image = iconCondition
-    icon.Border.Image = iconCondition
+    VisualAssets.ApplyGlyph(icon, iconCondition)
+    VisualAssets.ApplyGlyph(icon.Border, iconCondition)
 end)
 
 conditionType:SetCallback(function(_dropdown, selected)
     local icon = NewConditionContent.Type.Icon 
-    local typeIcons = oh.Constants.Types
-    local iconCondition = typeIcons[selected.Name] or typeIcons["userdata"]
-    
-    icon.Image = iconCondition
-    icon.Border.Image = iconCondition
+    VisualAssets.ApplyType(icon, selected.Name)
+    VisualAssets.ApplyType(icon.Border, selected.Name)
 end)
 
 conditionValueType:SetCallback(function(_dropdown, selected)
-    local iconCondition = (selected.Name == "Type" and icons.type) or oh.Constants.Types["integral"]
+    local iconCondition = (selected.Name == "Type" and icons.type) or "valueType"
     local icon = NewConditionContent.ValueType.Icon 
 
-    icon.Image = iconCondition
-    icon.Border.Image = iconCondition
+    VisualAssets.ApplyGlyph(icon, iconCondition)
+    VisualAssets.ApplyGlyph(icon.Border, iconCondition)
 end)
 
 Methods.ConnectEvent(function(remoteInstance, callInfo)

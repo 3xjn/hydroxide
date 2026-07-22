@@ -11,9 +11,11 @@ end
 local List, ListButton = import("ui/controls/List")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
+local VisualAssets = import("ui/assets")
 
-local Page = import("rbxassetid://11389137937").Base.Body.Pages.ScriptScanner
-local Assets = import("rbxassetid://5042114982").ScriptScanner
+local Runtime = import("ui/runtime")
+local Page = Runtime.GetInterface().Base.Body.Pages.ScriptScanner
+local Assets = Runtime.GetTemplates().ScriptScanner
 
 local ScriptList = Page.List
 local ScriptInfo = Page.Info
@@ -55,7 +57,7 @@ local constantsList = List.new(ConstantsResults)
 local scriptLogs = {}
 local selected = {}
 local icons = {
-    LocalScript = "rbxassetid://4800244808"
+    LocalScript = "LocalScript"
 }
 
 local constants = {
@@ -63,7 +65,7 @@ local constants = {
     textWidth = Vector2.new(133742069, 20)
 }
 
-local pathContext = ContextMenuButton.new("rbxassetid://4891705738", "Get Script Path")
+local pathContext = ContextMenuButton.new(nil, "Get Script Path")
 scriptList:BindContextMenu(ContextMenu.new({ pathContext }))
 
 pathContext:SetCallback(function()
@@ -149,7 +151,7 @@ function Log.new(localScript)
 
             local nameLength = TextService:GetTextSize(scriptName, 18, "SourceSans", constants.textWidth).X + 20
             
-            InfoScript.Icon.Image = icons.LocalScript
+            VisualAssets.ApplyGlyph(InfoScript.Icon, icons.LocalScript)
             InfoScript.Label.Text = scriptName
             InfoScript.Label.Size = UDim2.new(0, nameLength, 0, 20)
             InfoScript.Position = UDim2.new(1, -nameLength, 0, 0)

@@ -113,16 +113,16 @@ environment.oh = {
         SourceBaseUrl = sourceBaseUrl,
         SourceBranch = branch,
         Types = {
-            ["nil"] = "rbxassetid://4800232219",
-            table = "rbxassetid://4666594276",
-            string = "rbxassetid://4666593882",
-            number = "rbxassetid://4666593882",
-            boolean = "rbxassetid://4666593882",
-            userdata = "rbxassetid://4666594723",
-            vector = "rbxassetid://4666594723",
-            ["function"] = "rbxassetid://4666593447",
-            ["thread"] = "rbxassetid://4666593447",
-            ["integral"] = "rbxassetid://4666593882"
+            ["nil"] = true,
+            table = true,
+            string = true,
+            number = true,
+            boolean = true,
+            userdata = true,
+            vector = true,
+            ["function"] = true,
+            ["thread"] = true,
+            ["integral"] = true
         },
         Syntax = {
             ["nil"] = Color3.fromRGB(244, 135, 113),
@@ -151,15 +151,10 @@ environment.oh = {
             end
         end
 
-        local ui = importCache["rbxassetid://11389137937"]
-        local assets = importCache["rbxassetid://5042114982"]
+        local ui = importCache["ui/main"]
 
         if ui then
             unpack(ui):Destroy()
-        end
-
-        if assets then
-            unpack(assets):Destroy()
         end
     end
 }
@@ -230,9 +225,7 @@ if readFile and writeFile then
 
             local assets
 
-            if asset:find("rbxassetid://") then
-                assets = { game:GetObjects(asset)[1] }
-            elseif web then
+            if web then
                 if readFile and writeFile then
                     local file = (hasFolderFunctions and cacheRoot .. '/' .. asset .. ".lua") or ("hydroxide-" .. user .. '-' .. branch .. '-' .. asset:gsub('/', '-') .. ".lua")
                     local content
@@ -270,9 +263,8 @@ if readFile and writeFile then
                 return unpack(importCache[asset])
             end
 
-            if asset:find("rbxassetid://") then
-                assets = { game:GetObjects(asset)[1] }
-            elseif web then
+            local assets
+            if web then
                 local file = (hasFolderFunctions and cacheRoot .. '/' .. asset .. ".lua") or ("hydroxide-" .. user .. '-' .. branch .. '-' .. asset:gsub('/', '-') .. ".lua")
                 local ran, result = pcall(readFile, file)
                 local content
