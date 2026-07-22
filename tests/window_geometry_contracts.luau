@@ -15,6 +15,11 @@ assert(narrowWidth == 568 and narrowHeight == 328, "Small viewports must overrid
 
 local tinyWidth, tinyHeight = Geometry.ClampSize(1120, 680, 300, 220, 16, 720, 420)
 assert(tinyWidth == 268 and tinyHeight == 188, "Tiny viewports must retain the complete outer margin")
+assert(
+    not Geometry.ShouldShowExplorer(192, 224, 12, 400),
+    "Explorer must collapse before it crowds the primary tool pane"
+)
+assert(Geometry.ShouldShowExplorer(644, 224, 12, 400), "Explorer must return when both panes fit")
 
 local windowSource = fs.readFile("ui/window.lua")
 assert(

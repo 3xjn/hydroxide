@@ -27,6 +27,7 @@ Theme.Layout = {
     PaneGap = 12,
     ExplorerMinWidth = 224,
     ExplorerMaxWidth = 272,
+    MinimumPageWidth = 400,
     PagePadding = 12,
     QueryHeight = 36,
     TabTargetSize = 40,

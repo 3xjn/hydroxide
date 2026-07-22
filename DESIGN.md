@@ -37,6 +37,7 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 - Title bar anatomy: generated 24-pixel mark, `Hydroxide` wordmark, and subdued `c.1` version label at the left, then 36-pixel window controls at the right. Do not repeat the product title in the center.
 - Tool rail anatomy: 40-pixel tab targets with 22-pixel generated icons and 6-pixel vertical rhythm. Targets never compact below 36 pixels.
 - Workspace anatomy: the list-detail workspace sits 12 pixels away from the shell chrome on every side. Tool page and Explorer use a 12-pixel gutter. Explorer is 25 percent of the workspace, clamped from 224 to 272 pixels.
+- Responsive reflow: when the workspace cannot preserve both a 400-pixel tool pane and Explorer's 224-pixel minimum, Explorer hides and the tool pane takes the full workspace. Explorer returns automatically when both regions fit.
 - Page anatomy: tool controls and results sit inside a 12-pixel page inset. Query bars are 36 pixels high. Layout grouping comes from spacing, tonal surfaces, and one-pixel dividers rather than nested cards.
 - Home composition: the welcome label, generated mark, and tagline share one centered vertical axis at approximately 24, 48, and 70 percent of the page height.
 - The title bar, tool rail, and status bar remain fixed. Page-owned lists keep their own scrolling.

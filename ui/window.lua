@@ -128,6 +128,19 @@ function Window.Attach(interface)
     local function updateWorkspace()
         local body = base.Body
         local workspaceWidth = math.max(0, body.AbsoluteSize.X)
+        local showExplorer = Geometry.ShouldShowExplorer(
+            workspaceWidth,
+            layout.ExplorerMinWidth,
+            layout.PaneGap,
+            layout.MinimumPageWidth
+        )
+        body.Explorer.Visible = showExplorer
+
+        if not showExplorer then
+            body.Pages.Size = UDim2.new(1, 0, 1, 0)
+            return
+        end
+
         local explorerWidth = math.max(layout.ExplorerMinWidth, math.min(layout.ExplorerMaxWidth, math.floor(workspaceWidth * 0.25 + 0.5)))
         body.Pages.Size = UDim2.new(1, -explorerWidth - layout.PaneGap, 1, 0)
         body.Explorer.Position = UDim2.new(1, -explorerWidth, 0, 0)

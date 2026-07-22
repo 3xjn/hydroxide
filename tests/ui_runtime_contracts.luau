@@ -61,6 +61,7 @@ assert(
 assert(windowSource:find("base.Visible = false", 1, true), "Collapse must atomically hide the full window")
 assert(themeSource:find("WorkspaceInset = 12", 1, true), "The shell must use a consistent workspace inset")
 assert(themeSource:find("PaneGap = 12", 1, true), "The list-detail panes must use a declared gap")
+assert(themeSource:find("MinimumPageWidth = 400", 1, true), "Responsive reflow must preserve the primary tool pane")
 assert(themeSource:find("TitleBarHeight = 44", 1, true), "The title bar must use compact chrome")
 assert(themeSource:find("RailWidth = 52", 1, true), "The tool rail must use compact chrome")
 assert(themeSource:find("TabTargetSize = 40", 1, true), "Tab targets must stay usable without oversized artwork")
