@@ -17,7 +17,7 @@ end)
 assert(not imageButtonAcceptsTextWrapped, "ImageButton unexpectedly accepted TextWrapped")
 assert(labelAcceptsTextWrapped, "TextLabel must accept TextWrapped")
 assert(
-    contextMenuSource:find("buttonInstance.Label.TextWrapped = false", 1, true),
+    contextMenuSource:find("label.TextWrapped = false", 1, true),
     "Context menu wrapping must be configured on the row label"
 )
 assert(

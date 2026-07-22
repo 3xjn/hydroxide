@@ -1,13 +1,19 @@
-# Volt editor support
+# Luau type checking
 
-Hydroxide's Volt declarations live at [`_Index/volt/volt.d.luau`](../_Index/volt/volt.d.luau). This is a standard Luau definition file; `declare` is valid definition syntax. The Luau LSP loads this file explicitly through Rider's Custom Definitions setting.
+Hydroxide pins `luau-lsp` and Lune in [`rokit.toml`](../rokit.toml). The repository check analyzes the redesigned context-menu source against matching Roblox API definitions, Hydroxide's dynamic `import` declaration, and the Volt executor declarations in [`_Index/volt/volt.d.luau`](../_Index/volt/volt.d.luau).
 
-In Rider, install the **Luau** plugin, then use **Settings → Languages & Frameworks → Luau → Custom Definitions** to add `_Index/volt/volt.d.luau`. The project setting is already configured for this workspace.
-
-The definitions cover Volt's documented public API. Dynamic values whose exact layout Volt does not document are intentionally typed as `any`; this keeps diagnostics useful without inventing runtime contracts.
-
-To validate the definitions from a terminal, we can use:
+For first-time setup, we can use:
 
 ```bash
-luau-lsp analyze --platform=roblox --definitions @volt=_Index/volt/volt.d.luau path/to/script.luau
+rokit install
 ```
+
+Before pushing, we can run the same command as CI:
+
+```bash
+bash scripts/check.sh
+```
+
+The command performs three checks: the real context-menu source must pass strict analysis, an intentionally invalid `ImageButton.TextWrapped` fixture must fail for the expected reason, and the Lune UI/runtime contracts must pass. Roblox API definitions are downloaded from the commit matching the pinned `luau-lsp` release and verified by SHA-256 before use.
+
+For editor support, add `_Index/volt/volt.d.luau` and `types/hydroxide.d.luau` as custom definitions in the Luau plugin. Dynamic Volt values whose documented shape is incomplete remain `any` so diagnostics stay useful without inventing runtime contracts.
