@@ -1,7 +1,10 @@
 local environment = assert(getgenv, "<OH> ~ Your exploit is not supported")()
 
 if oh then
-    oh.Exit()
+    local exited, exitError = pcall(oh.Exit)
+    if not exited then
+        warn("<OH> ~ Previous session cleanup was incomplete: " .. tostring(exitError))
+    end
 end
 
 local web = true
@@ -39,6 +42,7 @@ local globalMethods = {
     checkCaller = checkcaller,
     newCClosure = newcclosure,
     hookFunction = hookfunction or detour_function,
+    restoreFunction = restorefunction,
     getGc = getgc or get_gc_objects,
     getInfo = debug.getinfo or getinfo,
     getSenv = getsenv,
@@ -138,24 +142,46 @@ environment.oh = {
         }
     },
     Exit = function()
-        for _i, event in pairs(oh.Events) do
-            event:Disconnect()
+        local cleanupErrors = {}
+        local function cleanup(label, callback)
+            local cleaned, cleanupError = pcall(callback)
+            if not cleaned then
+                table.insert(cleanupErrors, label .. ": " .. tostring(cleanupError))
+            end
+        end
+
+        for name, event in pairs(oh.Events) do
+            cleanup("event " .. tostring(name), function()
+                event:Disconnect()
+            end)
         end
 
         for original, hook in pairs(oh.Hooks) do
             local hookType = type(hook)
             if hookType == "function" then
-                hookFunction(hook, original)
+                cleanup("hook " .. tostring(original), function()
+                    restoreFunction(hook)
+                end)
             elseif hookType == "table" then
-                hookFunction(hook.Closure.Data, hook.Original)
+                cleanup("hook " .. tostring(original), function()
+                    restoreFunction(hook.Closure.Data)
+                end)
             end
         end
 
         local ui = importCache["ui/main"]
 
         if ui then
-            unpack(ui):Destroy()
+            cleanup("interface", function()
+                unpack(ui):Destroy()
+            end)
         end
+
+        for _index, cleanupError in ipairs(cleanupErrors) do
+            warn("<OH> ~ Cleanup warning: " .. cleanupError)
+        end
+
+        return #cleanupErrors == 0, cleanupErrors
     end
 }
 

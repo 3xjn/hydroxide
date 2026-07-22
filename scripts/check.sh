@@ -54,3 +54,4 @@ fi
 
 printf 'ui-negative-type-contract-ok\n'
 lune run tests/ui_runtime_contracts.luau
+lune run tests/shutdown_runtime_contracts.luau
