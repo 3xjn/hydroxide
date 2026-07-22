@@ -169,12 +169,13 @@ environment.oh = {
             end
         end
 
-        local ui = importCache["ui/main"]
+        local interface = oh.Interface
 
-        if ui then
+        if interface then
             cleanup("interface", function()
-                unpack(ui):Destroy()
+                interface:Destroy()
             end)
+            oh.Interface = nil
         end
 
         for _index, cleanupError in ipairs(cleanupErrors) do

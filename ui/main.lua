@@ -1,5 +1,4 @@
 local CoreGui = game:GetService("CoreGui")
-local HttpService = game:GetService("HttpService")
 
 local Runtime = import("ui/runtime")
 local Interface = Runtime.GetInterface()
@@ -11,6 +10,27 @@ end
 local VisualAssets = import("ui/assets")
 local Theme = import("ui/theme")
 local Window = import("ui/window")
+
+local function isHydroxideInterface(instance)
+	if not instance:IsA("ScreenGui") then
+		return false
+	end
+
+	local base = instance:FindFirstChild("Base")
+	return base ~= nil
+		and instance:FindFirstChild("Open") ~= nil
+		and base:FindFirstChild("Drag") ~= nil
+		and base:FindFirstChild("Tabs") ~= nil
+		and base:FindFirstChild("Status") ~= nil
+end
+
+local function destroyPreviousInterfaces(parent)
+	for _index, instance in ipairs(parent:GetChildren()) do
+		if isHydroxideInterface(instance) then
+			instance:Destroy()
+		end
+	end
+end
 
 VisualAssets.Load()
 import("ui/controls/TabSelector")
@@ -55,16 +75,21 @@ function oh.getStatus()
 	return Status.Text:gsub('Status  ·  ', '')
 end
 
-Interface.Name = HttpService:GenerateGUID(false)
+local interfaceParent
 if getHui then
-	Interface.Parent = getHui()
+	interfaceParent = getHui()
 else
 	if syn then
 		syn.protect_gui(Interface)
 	end
 
-	Interface.Parent = CoreGui
+	interfaceParent = CoreGui
 end
+
+destroyPreviousInterfaces(interfaceParent)
+Interface.Name = "Hydroxide"
+oh.Interface = Interface
+Interface.Parent = interfaceParent
 
 Theme.Apply(Interface, VisualAssets)
 Window.Attach(Interface)
