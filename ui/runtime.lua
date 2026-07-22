@@ -495,7 +495,7 @@ local function basicValueRow(parent, name)
 end
 
 local function buildTemplates(interface)
-    local templates = create("Folder", "Templates", interface)
+    local templates = frame("Templates", interface, { Visible = false, BackgroundTransparency = 1 })
     local controls = create("Folder", "Controls", templates)
     local contextButton = rowTemplate(controls, "ContextMenuButton", 34)
     image("Icon", contextButton, { Position = UDim2.new(0, 8, 0.5, -8), Size = UDim2.new(0, 16, 0, 16) })

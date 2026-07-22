@@ -47,6 +47,14 @@ assert(themeSource:find("LauncherSize = 36", 1, true), "The collapsed launcher m
 assert(themeSource:find("LauncherIconSize = 18", 1, true), "The collapsed launcher artwork must retain internal padding")
 assert(runtimeSource:find('image("Icon", open', 1, true), "The launcher logo must render inside a padded child")
 assert(
+    runtimeSource:find('local templates = frame("Templates", interface', 1, true),
+    "Runtime templates must live under a hidden GuiObject so visible template rows cannot render across the viewport"
+)
+assert(
+    runtimeSource:find('local templates = frame("Templates", interface, { Visible = false', 1, true),
+    "The runtime template container must hide all stored GuiObjects without changing clone visibility"
+)
+assert(
     themeSource:find("assets.ApplyLogo(interface.Open.Icon)", 1, true),
     "The launcher logo must be applied to its child icon"
 )
