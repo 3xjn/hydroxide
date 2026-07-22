@@ -4,22 +4,23 @@ local Theme = import("ui/theme")
 
 local Window = {}
 
-local margin = 16
-local defaultSize = Vector2.new(1120, 680)
-local minimumSize = Vector2.new(720, 420)
+local layout = Theme.Layout
+local margin = layout.OuterMargin
+local defaultSize = layout.DefaultWindowSize
+local minimumSize = layout.MinimumWindowSize
 
 local function createControl(parent, name, glyph, rightOffset)
     local control = Instance.new("TextButton")
     control.Name = name
     control.AnchorPoint = Vector2.new(1, 0.5)
     control.Position = UDim2.new(1, rightOffset, 0.5, 0)
-    control.Size = UDim2.new(0, 36, 0, 36)
+    control.Size = UDim2.new(0, layout.ControlTargetSize, 0, layout.ControlTargetSize)
     control.BackgroundTransparency = 1
     control.AutoButtonColor = false
     control.Font = Enum.Font.Gotham
     control.Text = glyph
     control.TextColor3 = Theme.Colors.SecondaryText
-    control.TextSize = 18
+    control.TextSize = 16
     control.ZIndex = 20
     control.Parent = parent
     return control
@@ -28,7 +29,7 @@ end
 local function styleExistingControl(control, glyph, rightOffset)
     control.AnchorPoint = Vector2.new(1, 0.5)
     control.Position = UDim2.new(1, rightOffset, 0.5, 0)
-    control.Size = UDim2.new(0, 36, 0, 36)
+    control.Size = UDim2.new(0, layout.ControlTargetSize, 0, layout.ControlTargetSize)
     control.BackgroundTransparency = 1
 
     if control:IsA("ImageButton") then
@@ -40,13 +41,24 @@ local function styleExistingControl(control, glyph, rightOffset)
         label.Font = Enum.Font.Gotham
         label.Text = glyph
         label.TextColor3 = Theme.Colors.SecondaryText
-        label.TextSize = 18
+        label.TextSize = 16
         label.ZIndex = control.ZIndex + 1
         label.Parent = control
     else
         control.Text = glyph
         control.TextColor3 = Theme.Colors.SecondaryText
-        control.TextSize = 18
+        control.TextSize = 16
+    end
+end
+
+local function setControlHover(control, hovered)
+    control.BackgroundColor3 = Theme.Colors.Hover
+    control.BackgroundTransparency = hovered and 0 or 1
+
+    local glyph = control:FindFirstChild("Glyph")
+    local textControl = glyph or (control:IsA("TextButton") and control)
+    if textControl then
+        textControl.TextColor3 = hovered and Theme.Colors.Text or Theme.Colors.SecondaryText
     end
 end
 
@@ -69,7 +81,6 @@ function Window.Attach(interface)
     local restorePosition
     local restoreSize
     local collapsedPosition
-    local transitionId = 0
 
     local function viewportSize()
         return camera.ViewportSize
@@ -98,8 +109,8 @@ function Window.Attach(interface)
     local function updateWorkspace()
         local body = base.Body
         local workspaceWidth = math.max(0, base.AbsoluteSize.X - base.Tabs.AbsoluteSize.X)
-        local explorerWidth = math.max(200, math.min(288, math.floor(workspaceWidth * 0.26 + 0.5)))
-        body.Pages.Size = UDim2.new(1, -explorerWidth - 12, 1, 0)
+        local explorerWidth = math.max(layout.ExplorerMinWidth, math.min(layout.ExplorerMaxWidth, math.floor(workspaceWidth * 0.25 + 0.5)))
+        body.Pages.Size = UDim2.new(1, -explorerWidth - layout.PaneGap, 1, 0)
         body.Explorer.Position = UDim2.new(1, -explorerWidth, 0, 0)
         body.Explorer.Size = UDim2.new(0, explorerWidth, 1, 0)
     end
@@ -112,10 +123,29 @@ function Window.Attach(interface)
     end
 
     styleExistingControl(collapse, "×", -4)
-    open.Position = UDim2.new(0.5, 0, 0, -68)
-    open.Size = UDim2.new(0, 52, 0, 52)
+    open.Position = UDim2.new(0.5, 0, 0, -layout.LauncherSize - layout.WorkspaceInset)
+    open.Size = UDim2.new(0, layout.LauncherSize, 0, layout.LauncherSize)
     open.Visible = false
     local maximize = createControl(drag, "Maximize", "□", -40)
+
+    oh.Events.WindowCollapseEnter = collapse.MouseEnter:Connect(function()
+        setControlHover(collapse, true)
+    end)
+    oh.Events.WindowCollapseLeave = collapse.MouseLeave:Connect(function()
+        setControlHover(collapse, false)
+    end)
+    oh.Events.WindowMaximizeEnter = maximize.MouseEnter:Connect(function()
+        setControlHover(maximize, true)
+    end)
+    oh.Events.WindowMaximizeLeave = maximize.MouseLeave:Connect(function()
+        setControlHover(maximize, false)
+    end)
+    oh.Events.WindowOpenEnter = open.MouseEnter:Connect(function()
+        open.BackgroundColor3 = Theme.Colors.Hover
+    end)
+    oh.Events.WindowOpenLeave = open.MouseLeave:Connect(function()
+        open.BackgroundColor3 = Theme.Colors.Elevated
+    end)
 
     local resizeHandle = createControl(base, "Resize", "◢", -2)
     resizeHandle.AnchorPoint = Vector2.new(1, 1)
@@ -220,23 +250,14 @@ function Window.Attach(interface)
 
         collapsed = true
         collapsedPosition = base.Position
-        transitionId = transitionId + 1
-        local thisTransition = transitionId
-        local hideWindow = TweenService:Create(base, Theme.Motion, {
-            Position = UDim2.new(0, base.Position.X.Offset, 0, -base.AbsoluteSize.Y - margin)
-        })
+        base.Visible = false
+        open.Position = UDim2.new(0.5, 0, 0, -layout.LauncherSize - layout.WorkspaceInset)
         local showOpen = TweenService:Create(open, Theme.Motion, {
-            Position = UDim2.new(0.5, 0, 0, margin)
+            Position = UDim2.new(0.5, 0, 0, layout.WorkspaceInset)
         })
 
         open.Visible = true
-        hideWindow:Play()
         showOpen:Play()
-        hideWindow.Completed:Connect(function()
-            if collapsed and transitionId == thisTransition then
-                base.Visible = false
-            end
-        end)
     end)
 
     oh.Events.WindowOpen = open.MouseButton1Click:Connect(function()
@@ -245,22 +266,10 @@ function Window.Attach(interface)
         end
 
         collapsed = false
-        transitionId = transitionId + 1
-        local thisTransition = transitionId
         local destination = (maximized and UDim2.new(0, margin, 0, margin)) or collapsedPosition
-        local hideOpen = TweenService:Create(open, Theme.Motion, {
-            Position = UDim2.new(0.5, 0, 0, -68)
-        })
-        local showWindow = TweenService:Create(base, Theme.Motion, { Position = destination })
-
+        open.Visible = false
+        base.Position = destination
         base.Visible = true
-        hideOpen:Play()
-        showWindow:Play()
-        hideOpen.Completed:Connect(function()
-            if not collapsed and transitionId == thisTransition then
-                open.Visible = false
-            end
-        end)
     end)
 
     oh.Events.WindowViewport = camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()

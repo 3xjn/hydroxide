@@ -48,11 +48,11 @@ local Base = Interface.Base
 local Status = Base.Status
 
 function oh.setStatus(text)
-	Status.Text = '• Status: ' .. text
+	Status.Text = 'Status  ·  ' .. text
 end
 
 function oh.getStatus()
-	return Status.Text:gsub('• Status: ', '')
+	return Status.Text:gsub('Status  ·  ', '')
 end
 
 Interface.Name = HttpService:GenerateGUID(false)

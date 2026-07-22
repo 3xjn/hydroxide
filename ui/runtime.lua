@@ -106,9 +106,10 @@ local function listLayout(parent, padding, horizontal)
 end
 
 local function scrollingContent(parent, name)
+    local contentOffset = Theme.Layout.QueryHeight + 8
     local results = frame(name or "Results", parent, {
-        Position = UDim2.new(0, 0, 0, 48),
-        Size = UDim2.new(1, 0, 1, -48),
+        Position = UDim2.new(0, 0, 0, contentOffset),
+        Size = UDim2.new(1, 0, 1, -contentOffset),
         BackgroundTransparency = 1
     })
     local clip = frame("Clip", results, {
@@ -129,15 +130,16 @@ local function scrollingContent(parent, name)
 end
 
 local function queryBar(parent, placeholder, buttonSearch)
+    local queryHeight = Theme.Layout.QueryHeight
     local query = frame("Query", parent, {
-        Size = UDim2.new(1, 0, 0, 40),
+        Size = UDim2.new(1, 0, 0, queryHeight),
         BackgroundTransparency = 1
     })
 
     if buttonSearch then
         local input = create("TextBox", "Query", query, {
             Position = UDim2.new(0, 0, 0, 0),
-            Size = UDim2.new(1, -108, 0, 40),
+            Size = UDim2.new(1, -104, 0, queryHeight),
             BackgroundColor3 = Theme.Colors.Elevated,
             BorderSizePixel = 0,
             ClearTextOnFocus = false,
@@ -153,14 +155,14 @@ local function queryBar(parent, placeholder, buttonSearch)
         addStroke(input)
         addPadding(input, 12, 12, 0, 0)
         textButton("Search", query, "Search", {
-            Position = UDim2.new(1, -96, 0, 0),
-            Size = UDim2.new(0, 96, 0, 40),
+            Position = UDim2.new(1, -92, 0, 0),
+            Size = UDim2.new(0, 92, 0, queryHeight),
             BackgroundColor3 = Theme.Colors.AccentSurface,
             TextColor3 = Theme.Colors.Accent
         })
     else
         local search = create("TextBox", "Search", query, {
-            Size = UDim2.new(1, -48, 0, 40),
+            Size = UDim2.new(1, -44, 0, queryHeight),
             BackgroundColor3 = Theme.Colors.Elevated,
             BorderSizePixel = 0,
             ClearTextOnFocus = false,
@@ -176,8 +178,8 @@ local function queryBar(parent, placeholder, buttonSearch)
         addStroke(search)
         addPadding(search, 12, 12, 0, 0)
         textButton("Refresh", query, "↻", {
-            Position = UDim2.new(1, -40, 0, 0),
-            Size = UDim2.new(0, 40, 0, 40),
+            Position = UDim2.new(1, -36, 0, 0),
+            Size = UDim2.new(0, 36, 0, queryHeight),
             TextSize = 18
         })
     end
@@ -294,6 +296,7 @@ local function scannerPage(pages, name, placeholder, buttonSearch)
         BackgroundColor3 = Theme.Colors.Panel,
         Visible = false
     })
+    addPadding(page, Theme.Layout.PagePadding)
     queryBar(page, placeholder, buttonSearch)
     scrollingContent(page)
     return page
@@ -337,7 +340,9 @@ local function spyPage(pages, name, objectName, withFlags)
         BackgroundColor3 = Theme.Colors.Panel,
         Visible = false
     })
+    addPadding(page, Theme.Layout.PagePadding)
     local list = frame("List", page, { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 })
+    local contentOffset = Theme.Layout.QueryHeight + 8
     local queryOffset = 0
     if withFlags then
         local flags = frame("Flags", list, { Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1 })
@@ -350,8 +355,8 @@ local function spyPage(pages, name, objectName, withFlags)
     local query = queryBar(list, "Type to filter...", false)
     query.Position = UDim2.new(0, 0, 0, queryOffset)
     local results = scrollingContent(list)
-    results.Position = UDim2.new(0, 0, 0, queryOffset + 48)
-    results.Size = UDim2.new(1, 0, 1, -(queryOffset + 48))
+    results.Position = UDim2.new(0, 0, 0, queryOffset + contentOffset)
+    results.Size = UDim2.new(1, 0, 1, -(queryOffset + contentOffset))
     spySubview(page, "Logs", objectName)
     spySubview(page, "Conditions", objectName)
     return page
@@ -379,6 +384,7 @@ local function scriptPage(pages)
         BackgroundColor3 = Theme.Colors.Panel,
         Visible = false
     })
+    addPadding(page, Theme.Layout.PagePadding)
     local list = frame("List", page, { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 })
     queryBar(list, "Filter scripts...", false)
     scrollingContent(list)
@@ -600,48 +606,59 @@ local function buildInterface()
     })
     local open = imageButton("Open", interface, {
         AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, -68),
-        Size = UDim2.new(0, 52, 0, 52),
+        Position = UDim2.new(0.5, 0, 0, -Theme.Layout.LauncherSize - Theme.Layout.WorkspaceInset),
+        Size = UDim2.new(0, Theme.Layout.LauncherSize, 0, Theme.Layout.LauncherSize),
         BackgroundColor3 = Theme.Colors.Elevated,
         Visible = false,
         ZIndex = 100
     })
     addCorner(open, 8)
     addStroke(open, Theme.Colors.Accent)
+    image("Icon", open, {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(0, Theme.Layout.LauncherIconSize, 0, Theme.Layout.LauncherIconSize),
+        ZIndex = 101
+    })
 
     local base = frame("Base", interface, {
-        Position = UDim2.new(0, 16, 0, 16),
-        Size = UDim2.new(0, 1120, 0, 680),
+        Position = UDim2.new(0, Theme.Layout.OuterMargin, 0, Theme.Layout.OuterMargin),
+        Size = UDim2.new(0, Theme.Layout.DefaultWindowSize.X, 0, Theme.Layout.DefaultWindowSize.Y),
         BackgroundColor3 = Theme.Colors.Canvas,
         ClipsDescendants = false
     })
-    addCorner(base, 7)
+    addCorner(base, 8)
     addStroke(base)
 
-    local drag = label("Drag", base, "Hydroxide c.1", {
-        Size = UDim2.new(1, 0, 0, 48),
+    local drag = label("Drag", base, "", {
+        Size = UDim2.new(1, 0, 0, Theme.Layout.TitleBarHeight),
         BackgroundColor3 = Theme.Colors.Rail,
         BackgroundTransparency = 0,
         TextColor3 = Theme.Colors.SecondaryText,
-        TextSize = 15,
         ZIndex = 10
     })
-    local brand = frame("Brand", drag, { Position = UDim2.new(0, 12, 0, 0), Size = UDim2.new(0, 180, 1, 0), BackgroundTransparency = 1, ZIndex = 11 })
-    image("Logo", brand, { Position = UDim2.new(0, 0, 0.5, -16), Size = UDim2.new(0, 32, 0, 32), ZIndex = 12 })
-    label("Name", brand, "Hydroxide", { Position = UDim2.new(0, 42, 0, 0), Size = UDim2.new(1, -42, 1, 0), TextSize = 15, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 })
-    textButton("Collapse", drag, "×", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0), Size = UDim2.new(0, 36, 0, 36), BackgroundTransparency = 1, TextSize = 18, ZIndex = 20 })
+    local brand = frame("Brand", drag, { Position = UDim2.new(0, 12, 0, 0), Size = UDim2.new(0, 196, 1, 0), BackgroundTransparency = 1, ZIndex = 11 })
+    image("Logo", brand, { Position = UDim2.new(0, 0, 0.5, -12), Size = UDim2.new(0, 24, 0, 24), ZIndex = 12 })
+    label("Name", brand, "Hydroxide", { Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(0, 84, 1, 0), TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 })
+    label("Version", brand, "c.1", { Position = UDim2.new(0, 116, 0, 0), Size = UDim2.new(0, 40, 1, 0), TextColor3 = Theme.Colors.MutedText, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 })
+    textButton("Collapse", drag, "×", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -4, 0.5, 0), Size = UDim2.new(0, Theme.Layout.ControlTargetSize, 0, Theme.Layout.ControlTargetSize), BackgroundTransparency = 1, TextSize = 16, ZIndex = 20 })
 
-    local tabs = frame("Tabs", base, { Position = UDim2.new(0, 0, 0, 48), Size = UDim2.new(0, 56, 1, -76), BackgroundColor3 = Theme.Colors.Rail })
+    local tabs = frame("Tabs", base, { Position = UDim2.new(0, 0, 0, Theme.Layout.TitleBarHeight), Size = UDim2.new(0, Theme.Layout.RailWidth, 1, -(Theme.Layout.TitleBarHeight + Theme.Layout.StatusBarHeight)), BackgroundColor3 = Theme.Colors.Rail })
     local tabContainer = frame("Container", tabs, { Position = UDim2.new(0, 6, 0, 8), Size = UDim2.new(1, -12, 1, -16), BackgroundTransparency = 1 })
-    listLayout(tabContainer, 8)
+    listLayout(tabContainer, Theme.Layout.TabGap)
     for index, tabName in ipairs({ "Home", "RemoteSpy", "ClosureSpy", "ScriptScanner", "ModuleScanner", "UpvalueScanner", "ConstantScanner" }) do
-        local tab = imageButton(tabName, tabContainer, { Size = UDim2.new(0, 44, 0, 44), BackgroundColor3 = Theme.Colors.Rail, LayoutOrder = index })
-        image("Icon", tab, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 28, 0, 28) })
+        local tab = imageButton(tabName, tabContainer, { Size = UDim2.new(0, Theme.Layout.TabTargetSize, 0, Theme.Layout.TabTargetSize), BackgroundColor3 = Theme.Colors.Rail, LayoutOrder = index })
+        image("Icon", tab, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, Theme.Layout.TabIconSize, 0, Theme.Layout.TabIconSize) })
     end
 
-    local body = frame("Body", base, { Position = UDim2.new(0, 56, 0, 48), Size = UDim2.new(1, -56, 1, -76), BackgroundTransparency = 1 })
-    local pages = frame("Pages", body, { Size = UDim2.new(1, -292, 1, 0), BackgroundTransparency = 1 })
+    local body = frame("Body", base, {
+        Position = UDim2.new(0, Theme.Layout.RailWidth + Theme.Layout.WorkspaceInset, 0, Theme.Layout.TitleBarHeight + Theme.Layout.WorkspaceInset),
+        Size = UDim2.new(1, -(Theme.Layout.RailWidth + Theme.Layout.WorkspaceInset * 2), 1, -(Theme.Layout.TitleBarHeight + Theme.Layout.StatusBarHeight + Theme.Layout.WorkspaceInset * 2)),
+        BackgroundTransparency = 1
+    })
+    local pages = frame("Pages", body, { Size = UDim2.new(1, -(Theme.Layout.ExplorerMaxWidth + Theme.Layout.PaneGap), 1, 0), BackgroundTransparency = 1 })
     local home = frame("Home", pages, { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Theme.Colors.Panel, Visible = true })
+    addPadding(home, Theme.Layout.PagePadding)
     label("Welcome", home, "Welcome to Hydroxide", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.24, 0), Size = UDim2.new(1, -48, 0, 32), TextSize = 22 })
     image("Logo", home, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.48, 0), Size = UDim2.new(0, 164, 0, 164) })
     label("Tagline", home, "forever better than racist dolphin's console", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.70, 0), Size = UDim2.new(1, -48, 0, 32), TextColor3 = Theme.Colors.SecondaryText, TextSize = 16 })
@@ -650,19 +667,20 @@ local function buildInterface()
     scriptPage(pages)
     scannerPage(pages, "ModuleScanner", "Filter modules...", false)
     local upvaluePage = scannerPage(pages, "UpvalueScanner", "Closure name or constant...", true)
-    local filters = frame("Filters", upvaluePage, { Position = UDim2.new(0, 0, 0, 48), Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1 })
+    local queryContentOffset = Theme.Layout.QueryHeight + 8
+    local filters = frame("Filters", upvaluePage, { Position = UDim2.new(0, 0, 0, queryContentOffset), Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1 })
     checkbox(filters, "SearchInTables", "Search in tables", false)
-    upvaluePage.Results.Position = UDim2.new(0, 0, 0, 88)
-    upvaluePage.Results.Size = UDim2.new(1, 0, 1, -88)
+    upvaluePage.Results.Position = UDim2.new(0, 0, 0, queryContentOffset + 40)
+    upvaluePage.Results.Size = UDim2.new(1, 0, 1, -(queryContentOffset + 40))
     label("ResultStatus", upvaluePage.Results.Clip, "Results", { Size = UDim2.new(1, 0, 0, 32), TextColor3 = Theme.Colors.MutedText, Visible = false })
     scannerPage(pages, "ConstantScanner", "Closure name or constant...", true)
 
-    local explorer = frame("Explorer", body, { Position = UDim2.new(1, -280, 0, 0), Size = UDim2.new(0, 280, 1, 0), BackgroundColor3 = Theme.Colors.Panel })
-    addCorner(explorer, 5)
+    local explorer = frame("Explorer", body, { Position = UDim2.new(1, -Theme.Layout.ExplorerMaxWidth, 0, 0), Size = UDim2.new(0, Theme.Layout.ExplorerMaxWidth, 1, 0), BackgroundColor3 = Theme.Colors.Panel })
+    addCorner(explorer, 6)
     addStroke(explorer)
     local explorerSearch = create("TextBox", "Search", explorer, {
         Position = UDim2.new(0, 12, 0, 12),
-        Size = UDim2.new(1, -24, 0, 40),
+        Size = UDim2.new(1, -24, 0, Theme.Layout.QueryHeight),
         BackgroundColor3 = Theme.Colors.Elevated,
         BorderSizePixel = 0,
         ClearTextOnFocus = false,
@@ -678,7 +696,8 @@ local function buildInterface()
     addStroke(explorerSearch)
     addPadding(explorerSearch, 12, 12, 0, 0)
 
-    label("Status", base, "• Status: Home Page", { Position = UDim2.new(0, 0, 1, -28), Size = UDim2.new(1, 0, 0, 28), BackgroundColor3 = Theme.Colors.Rail, BackgroundTransparency = 0, TextColor3 = Theme.Colors.SecondaryText, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left })
+    local status = label("Status", base, "Status  ·  Home Page", { Position = UDim2.new(0, 0, 1, -Theme.Layout.StatusBarHeight), Size = UDim2.new(1, 0, 0, Theme.Layout.StatusBarHeight), BackgroundColor3 = Theme.Colors.Rail, BackgroundTransparency = 0, TextColor3 = Theme.Colors.MutedText, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left })
+    addPadding(status, 12, 12, 0, 0)
 
     local prompts = frame("Prompts", base, { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 60 })
     frame("PromptShadow", prompts, { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, Visible = false, ZIndex = 60 })

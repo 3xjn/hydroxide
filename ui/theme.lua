@@ -16,6 +16,27 @@ Theme.Colors = {
     Warning = Color3.fromRGB(234, 179, 61)
 }
 
+Theme.Layout = {
+    OuterMargin = 16,
+    DefaultWindowSize = Vector2.new(1120, 680),
+    MinimumWindowSize = Vector2.new(720, 420),
+    TitleBarHeight = 44,
+    RailWidth = 52,
+    StatusBarHeight = 24,
+    WorkspaceInset = 12,
+    PaneGap = 12,
+    ExplorerMinWidth = 224,
+    ExplorerMaxWidth = 272,
+    PagePadding = 12,
+    QueryHeight = 36,
+    TabTargetSize = 40,
+    TabIconSize = 22,
+    TabGap = 6,
+    LauncherSize = 36,
+    LauncherIconSize = 18,
+    ControlTargetSize = 36
+}
+
 Theme.Motion = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 local function addCorner(instance, radius)
@@ -110,7 +131,7 @@ function Theme.Apply(interface, assets)
     local pages = body.Pages
     local tabs = base.Tabs
 
-    styleSurface(base, Theme.Colors.Canvas, 7)
+    styleSurface(base, Theme.Colors.Canvas, 8)
     addStroke(base, Theme.Colors.Border)
     styleSurface(base.Drag, Theme.Colors.Rail)
     styleSurface(base.Status, Theme.Colors.Rail)
@@ -119,7 +140,8 @@ function Theme.Apply(interface, assets)
 
     for _index, page in pairs(pages:GetChildren()) do
         if page:IsA("GuiObject") then
-            styleSurface(page, Theme.Colors.Panel, 5)
+            styleSurface(page, Theme.Colors.Panel, 6)
+            addStroke(page, Theme.Colors.Border)
         end
     end
 
@@ -143,7 +165,7 @@ function Theme.Apply(interface, assets)
     assert(homeLogo, "Hydroxide could not find the Home Page logo image")
     assets.ApplyLogo(homeLogo)
     assets.ApplyLogo(base.Drag.Brand.Logo)
-    assets.ApplyLogo(interface.Open)
+    assets.ApplyLogo(interface.Open.Icon)
 
     oh.Events.ThemeDescendant = interface.DescendantAdded:Connect(styleDescendant)
 end

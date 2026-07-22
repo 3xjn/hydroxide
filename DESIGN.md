@@ -2,7 +2,7 @@
 
 ## Direction
 
-Hydroxide should feel like a precise debugging instrument inside Roblox: dark, compact, low-chroma, and readable. The existing page structure and tools stay intact. The shell becomes larger, resizable, and capable of a full-screen state.
+Hydroxide should feel like a precise debugging instrument inside Roblox: dark, compact, low-chroma, and readable. It is for developers tracing how remotes, closures, scripts, modules, upvalues, and constants connect, so the interface should favor fast scanning and stable spatial memory over decorative chrome. The existing page structure and tools stay intact. The shell is resizable and capable of a full-screen state.
 
 The signature visual is the open Hydroxide ring paired with one mineral-mint accent. Avoid neon, gradients, glass effects, large radii, and decorative dashboard cards.
 
@@ -24,19 +24,20 @@ The signature visual is the open Hydroxide ring paired with one mineral-mint acc
 | Danger | `#E66B6E` |
 | Warning | `#EAB33D` |
 
-Use Gotham for interface text and Code for technical values. The spacing scale is 4, 8, 12, 16, and 24 pixels. Corners use 4 to 7 pixels. Interactive targets are at least 36 by 36 pixels.
+Use Gotham for interface text and Code for technical values. The spacing scale is 4, 8, 12, 16, 20, and 24 pixels. Corners use 4 to 8 pixels. Interactive targets are at least 36 by 36 pixels; artwork inside compact targets is intentionally smaller and optically centered.
 
 ## Window layout
 
 - Visual reference: `design/hydroxide-home-redesign-v1.png`. It is the shell contract for the fully source-built interface.
 - Default size: 1120 by 680 pixels, clamped to the current viewport with a 16-pixel outer margin.
 - Minimum size: 720 by 420 pixels, reduced only when the viewport itself is smaller.
-- Title bar: 48 pixels.
-- Tool rail: 56 pixels.
-- Status bar: 28 pixels.
-- Title bar anatomy: generated 32-pixel mark and `Hydroxide` wordmark at the left, centered version title, then 36-pixel window controls at the right.
-- Tool rail anatomy: 44-pixel tab targets with 28-pixel generated icons and 8-pixel vertical rhythm. On constrained-height viewports, targets may compact to 40 pixels but never below 36 pixels.
-- Workspace anatomy: tool page and Explorer form a list-detail pair with a 12-pixel gutter. Explorer is 26 percent of the workspace, clamped from 200 to 288 pixels.
+- Title bar: 44 pixels.
+- Tool rail: 52 pixels.
+- Status bar: 24 pixels.
+- Title bar anatomy: generated 24-pixel mark, `Hydroxide` wordmark, and subdued `c.1` version label at the left, then 36-pixel window controls at the right. Do not repeat the product title in the center.
+- Tool rail anatomy: 40-pixel tab targets with 22-pixel generated icons and 6-pixel vertical rhythm. Targets never compact below 36 pixels.
+- Workspace anatomy: the list-detail workspace sits 12 pixels away from the shell chrome on every side. Tool page and Explorer use a 12-pixel gutter. Explorer is 25 percent of the workspace, clamped from 224 to 272 pixels.
+- Page anatomy: tool controls and results sit inside a 12-pixel page inset. Query bars are 36 pixels high. Layout grouping comes from spacing, tonal surfaces, and one-pixel dividers rather than nested cards.
 - Home composition: the welcome label, generated mark, and tagline share one centered vertical axis at approximately 24, 48, and 70 percent of the page height.
 - The title bar, tool rail, and status bar remain fixed. Page-owned lists keep their own scrolling.
 - The bottom-right handle resizes the window. The maximize control toggles a viewport-filling state and restores the prior bounds.
@@ -44,9 +45,9 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 
 ## Window lifecycle
 
-- The close control condenses Hydroxide into a 52-by-52 top-center reopen button using the generated Hydroxide mark.
-- Closing explicitly hides the full window after the 150-millisecond transition; no title, page, status, border, or resize-handle pixels may remain onscreen.
-- Reopening explicitly hides the compact button and restores the previous normal or maximized bounds.
+- The close control condenses Hydroxide into a 36-by-36 top-center reopen target containing an optically centered 18-by-18 generated Hydroxide mark.
+- Closing atomically hides the full window before the compact control enters; no title, page, status, border, or resize-handle pixels may remain onscreen during or after the transition.
+- Reopening atomically hides the compact control and restores the previous normal or maximized bounds.
 - The reopen control has a dark elevated surface, mineral-mint border, visible focus treatment, and a 36-pixel minimum interactive target.
 
 ## Asset contract
@@ -68,6 +69,18 @@ All interface instances, row templates, prompts, overlays, menus, and window con
 - Disabled: muted text at 55 percent opacity.
 - Destructive: reserve `Danger` for destructive actions only.
 - Transitions: 120 to 180 milliseconds, limited to color, opacity, and position.
+
+## Accessibility and resilience
+
+- Compact controls keep a 36-pixel pointer target even when their visible glyph is 14 to 22 pixels.
+- Primary and secondary text must remain legible over their declared surfaces; muted text is reserved for metadata and inactive chrome.
+- Long tool names and object values truncate inside their owned region instead of expanding the shell.
+- The title bar, tool rail, status bar, and Explorer stay fixed. Only page-owned result lists and Explorer content may scroll.
+- The minimum-size shell must retain a usable main pane and Explorer without horizontal overflow.
+
+## Accepted verification debt
+
+The local workspace cannot render the executor-owned Roblox surface. Source contracts and Lune checks cover hierarchy and geometry, but collapse animation, client chrome ownership, and final optical spacing require a fresh screenshot from the `dev` build before visual sign-off.
 
 ## Implementation boundary
 
