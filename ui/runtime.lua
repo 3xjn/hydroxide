@@ -661,6 +661,13 @@ local function buildInterface()
         TextColor3 = Theme.Colors.SecondaryText,
         ZIndex = 10
     })
+    addCorner(drag, 8)
+    frame("SquareBottom", drag, {
+        Position = UDim2.new(0, 0, 0, 8),
+        Size = UDim2.new(1, 0, 1, -8),
+        BackgroundColor3 = Theme.Colors.Rail,
+        ZIndex = 10
+    })
     local brand = frame("Brand", drag, { Position = UDim2.new(0, 12, 0, 0), Size = UDim2.new(0, 196, 1, 0), BackgroundTransparency = 1, ZIndex = 11 })
     image("Logo", brand, { Position = UDim2.new(0, 0, 0.5, -12), Size = UDim2.new(0, 24, 0, 24), ZIndex = 12 })
     label("Name", brand, "Hydroxide", { Position = UDim2.new(0, 32, 0, 0), Size = UDim2.new(0, 84, 1, 0), TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 12 })
@@ -702,6 +709,12 @@ local function buildInterface()
     scannerPage(pages, "ConstantScanner", "Closure name or constant...", true)
 
     local status = label("Status", base, "Status  ·  Home Page", { Position = UDim2.new(0, 0, 1, -Theme.Layout.StatusBarHeight), Size = UDim2.new(1, 0, 0, Theme.Layout.StatusBarHeight), BackgroundColor3 = Theme.Colors.Rail, BackgroundTransparency = 0, TextColor3 = Theme.Colors.MutedText, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left })
+    addCorner(status, 8)
+    frame("SquareTop", status, {
+        Size = UDim2.new(1, 0, 0, 8),
+        BackgroundColor3 = Theme.Colors.Rail,
+        ZIndex = status.ZIndex + 1
+    })
     addPadding(status, 12, 12, 0, 0)
 
     local prompts = frame("Prompts", base, { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 60 })

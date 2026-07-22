@@ -155,6 +155,8 @@ function Window.Attach(interface)
         assert(corner and corner:IsA("UICorner"), "Hydroxide window must retain its shell corner")
         assert(stroke and stroke:IsA("UIStroke"), "Hydroxide window must retain its shell stroke")
         corner.CornerRadius = UDim.new(0, value and 0 or 8)
+        drag.HydroxideCorner.CornerRadius = UDim.new(0, value and 0 or 8)
+        base.Status.HydroxideCorner.CornerRadius = UDim.new(0, value and 0 or 8)
         stroke.Transparency = value and 1 or 0
     end
 
