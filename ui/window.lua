@@ -1,6 +1,7 @@
 local UserInput = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Theme = import("ui/theme")
+local Geometry = import("ui/window_geometry")
 
 local Window = {}
 
@@ -92,13 +93,31 @@ function Window.Attach(interface)
     end
 
     local function clampSize(size)
-        local available = availableSize()
-        local minWidth = math.min(minimumSize.X, available.X)
-        local minHeight = math.min(minimumSize.Y, available.Y)
-        return Vector2.new(
-            math.max(minWidth, math.min(size.X, available.X)),
-            math.max(minHeight, math.min(size.Y, available.Y))
+        local viewport = viewportSize()
+        local width, height = Geometry.ClampSize(
+            size.X,
+            size.Y,
+            viewport.X,
+            viewport.Y,
+            margin,
+            minimumSize.X,
+            minimumSize.Y
         )
+        return Vector2.new(width, height)
+    end
+
+    local function clampRestoredPosition(position, size)
+        local viewport = viewportSize()
+        local x, y = Geometry.ClampRestoredPosition(
+            position.X.Offset,
+            position.Y.Offset,
+            size.X,
+            size.Y,
+            viewport.X,
+            viewport.Y,
+            margin
+        )
+        return UDim2.new(0, x, 0, y)
     end
 
     local function center(size)
@@ -108,7 +127,7 @@ function Window.Attach(interface)
 
     local function updateWorkspace()
         local body = base.Body
-        local workspaceWidth = math.max(0, base.AbsoluteSize.X - base.Tabs.AbsoluteSize.X)
+        local workspaceWidth = math.max(0, body.AbsoluteSize.X)
         local explorerWidth = math.max(layout.ExplorerMinWidth, math.min(layout.ExplorerMaxWidth, math.floor(workspaceWidth * 0.25 + 0.5)))
         body.Pages.Size = UDim2.new(1, -explorerWidth - layout.PaneGap, 1, 0)
         body.Explorer.Position = UDim2.new(1, -explorerWidth, 0, 0)
@@ -168,8 +187,9 @@ function Window.Attach(interface)
             maximize.Text = "❐"
             resizeHandle.Visible = false
         else
-            base.Position = restorePosition
-            base.Size = restoreSize
+            local restoredSize = clampSize(Vector2.new(restoreSize.X.Offset, restoreSize.Y.Offset))
+            base.Position = clampRestoredPosition(restorePosition, restoredSize)
+            base.Size = UDim2.new(0, restoredSize.X, 0, restoredSize.Y)
             maximize.Text = "□"
             resizeHandle.Visible = true
         end
@@ -279,6 +299,7 @@ function Window.Attach(interface)
             base.Size = UDim2.new(0, available.X, 0, available.Y)
         else
             local size = clampSize(base.AbsoluteSize)
+            base.Position = clampRestoredPosition(base.Position, size)
             base.Size = UDim2.new(0, size.X, 0, size.Y)
         end
         updateWorkspace()

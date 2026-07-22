@@ -90,7 +90,7 @@ local explorerMax = layoutNumber("ExplorerMaxWidth")
 
 assert(defaultWidth and defaultHeight and minimumWidth and minimumHeight, "Window size tokens must remain numeric")
 local defaultBodyWidth = defaultWidth - railWidth - workspaceInset * 2
-local defaultExplorerWidth = math.max(explorerMin, math.min(explorerMax, math.floor((defaultWidth - railWidth) * 0.25 + 0.5)))
+local defaultExplorerWidth = math.max(explorerMin, math.min(explorerMax, math.floor(defaultBodyWidth * 0.25 + 0.5)))
 local defaultPageWidth = defaultBodyWidth - defaultExplorerWidth - paneGap
 local minimumPageWidth = minimumWidth - railWidth - workspaceInset * 2 - explorerMin - paneGap
 local minimumBodyHeight = minimumHeight - titleHeight - statusHeight - workspaceInset * 2

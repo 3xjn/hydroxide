@@ -41,6 +41,7 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 - Home composition: the welcome label, generated mark, and tagline share one centered vertical axis at approximately 24, 48, and 70 percent of the page height.
 - The title bar, tool rail, and status bar remain fixed. Page-owned lists keep their own scrolling.
 - The bottom-right handle resizes the window. The maximize control toggles a viewport-filling state and restores the prior bounds.
+- If the Roblox viewport changes while maximized, restored bounds are reclamped so the complete window remains inside the current 16-pixel margin.
 - Every shell region uses scale-plus-offset geometry or is recomputed from the current window bounds. Resizing the outer window must never leave legacy 650-by-350 geometry inside it.
 
 ## Window lifecycle
