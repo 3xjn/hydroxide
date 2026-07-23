@@ -699,11 +699,21 @@ local function buildInterface()
         Size = UDim2.new(1, -48, 0, homeContentHeight),
         BackgroundTransparency = 1
     })
-    local homeLayout = listLayout(homeContent, Theme.Layout.HomeGap)
-    homeLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    label("Welcome", homeContent, "Welcome to Hydroxide", { Size = UDim2.new(1, 0, 0, 32), TextSize = 22, LayoutOrder = 1 })
-    image("Logo", homeContent, { Size = UDim2.new(0, Theme.Layout.HomeLogoSize, 0, Theme.Layout.HomeLogoSize), LayoutOrder = 2 })
-    label("Tagline", homeContent, "forever better than racist dolphin's console", { Size = UDim2.new(1, 0, 0, 32), TextColor3 = Theme.Colors.SecondaryText, TextSize = 16, TextWrapped = true, LayoutOrder = 3 })
+    local homeLogoY = 32 + Theme.Layout.HomeGap
+    local homeTaglineY = homeLogoY + Theme.Layout.HomeLogoSize + Theme.Layout.HomeGap
+    label("Welcome", homeContent, "Welcome to Hydroxide", { Size = UDim2.new(1, 0, 0, 32), TextSize = 22 })
+    image("Logo", homeContent, {
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 0, homeLogoY),
+        Size = UDim2.new(0, Theme.Layout.HomeLogoSize, 0, Theme.Layout.HomeLogoSize)
+    })
+    label("Tagline", homeContent, "forever better than racist dolphin's console", {
+        Position = UDim2.new(0, 0, 0, homeTaglineY),
+        Size = UDim2.new(1, 0, 0, 32),
+        TextColor3 = Theme.Colors.SecondaryText,
+        TextSize = 16,
+        TextWrapped = true
+    })
     spyPage(pages, "RemoteSpy", "RemoteObject", true)
     spyPage(pages, "ClosureSpy", "ClosureObject", false)
     scriptPage(pages)
