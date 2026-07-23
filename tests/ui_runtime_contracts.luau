@@ -8,6 +8,12 @@ local runtimeSource = fs.readFile("ui/runtime.lua")
 local themeSource = fs.readFile("ui/theme.lua")
 local tabSelectorSource = fs.readFile("ui/controls/TabSelector.lua")
 local windowSource = fs.readFile("ui/window.lua")
+local resizeCursor = fs.readFile("assets/ui/hydroxide-resize-cursor.png")
+
+local function pngDimension(data, offset)
+    local a, b, c, d = string.byte(data, offset, offset + 3)
+    return a * 0x1000000 + b * 0x10000 + c * 0x100 + d
+end
 
 local imageButton = roblox.Instance.new("ImageButton")
 local label = roblox.Instance.new("TextLabel")
@@ -115,6 +121,8 @@ assert(windowSource:find("UserInput.MouseIcon = VisualAssets.Load().ResizeCursor
 assert(windowSource:find("WindowResizeCursorCleanup", 1, true), "Shutdown must restore a cursor owned by the resize target")
 assert(windowSource:find("WindowFocusReleased:Connect", 1, true), "Losing Roblox focus must restore the resize cursor")
 assert(assetsSource:find('ResizeCursor = installAsset("hydroxide-resize-cursor.png")', 1, true), "The resize cursor must load through getcustomasset")
+assert(resizeCursor:sub(2, 4) == "PNG", "The resize cursor must remain a PNG asset")
+assert(pngDimension(resizeCursor, 17) == 24 and pngDimension(resizeCursor, 21) == 24, "The resize cursor must use a compact 24px canvas")
 assert(runtimeSource:find("ClipsDescendants = true", 1, true), "The shell must clip its chrome to the outer corner radius")
 assert(runtimeSource:find("addCorner(drag, 8)", 1, true), "The opaque title bar must own the shell's top corner radius")
 assert(runtimeSource:find('frame("SquareBottom", drag', 1, true), "The rounded title bar must square only its internal bottom edge")
