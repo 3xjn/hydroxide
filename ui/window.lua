@@ -238,6 +238,15 @@ function Window.Attach(interface)
             restoreResizeCursor()
         end
     end)
+    oh.Events.WindowResizeFocusReleased = UserInput.WindowFocusReleased:Connect(function()
+        resizeHovered = false
+        resizing = false
+        restoreResizeCursor()
+        if oh.Events.WindowResizeEnd then
+            oh.Events.WindowResizeEnd:Disconnect()
+            oh.Events.WindowResizeEnd = nil
+        end
+    end)
     oh.Events.WindowResizeCursorCleanup = { Disconnect = restoreResizeCursor }
 
     local function setMaximized(value)

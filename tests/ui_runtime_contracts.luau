@@ -113,6 +113,7 @@ assert(windowSource:find("resizeHandle.MouseEnter:Connect", 1, true), "The resiz
 assert(windowSource:find("resizeHandle.MouseLeave:Connect", 1, true), "The resize target must restore the previous cursor after hover")
 assert(windowSource:find("UserInput.MouseIcon = VisualAssets.Load().ResizeCursor", 1, true), "The resize target must use generated cursor artwork")
 assert(windowSource:find("WindowResizeCursorCleanup", 1, true), "Shutdown must restore a cursor owned by the resize target")
+assert(windowSource:find("WindowFocusReleased:Connect", 1, true), "Losing Roblox focus must restore the resize cursor")
 assert(assetsSource:find('ResizeCursor = installAsset("hydroxide-resize-cursor.png")', 1, true), "The resize cursor must load through getcustomasset")
 assert(runtimeSource:find("ClipsDescendants = true", 1, true), "The shell must clip its chrome to the outer corner radius")
 assert(runtimeSource:find("addCorner(drag, 8)", 1, true), "The opaque title bar must own the shell's top corner radius")
