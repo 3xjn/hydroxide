@@ -675,7 +675,7 @@ local function buildInterface()
     local collapse = imageButton("Collapse", drag, { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -76, 0.5, 0), Size = UDim2.new(0, Theme.Layout.ControlTargetSize, 0, Theme.Layout.ControlTargetSize), BackgroundTransparency = 1, ZIndex = 20 })
     image("Icon", collapse, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 14, 0, 14), ImageColor3 = Theme.Colors.SecondaryText, ZIndex = 21 })
 
-    local tabs = frame("Tabs", base, { Position = UDim2.new(0, 0, 0, Theme.Layout.TitleBarHeight), Size = UDim2.new(0, Theme.Layout.RailWidth, 1, -(Theme.Layout.TitleBarHeight + Theme.Layout.StatusBarHeight)), BackgroundColor3 = Theme.Colors.Rail })
+    local tabs = frame("Tabs", base, { Position = UDim2.new(0, 0, 0, Theme.Layout.TitleBarHeight), Size = UDim2.new(0, Theme.Layout.RailWidth, 1, -Theme.Layout.TitleBarHeight), BackgroundColor3 = Theme.Colors.Rail })
     local tabContainer = frame("Container", tabs, { Position = UDim2.new(0, 6, 0, Theme.Layout.WorkspaceInset), Size = UDim2.new(1, -12, 1, -(Theme.Layout.WorkspaceInset * 2)), BackgroundTransparency = 1 })
     listLayout(tabContainer, Theme.Layout.TabGap)
     for index, tabName in ipairs({ "Home", "RemoteSpy", "ClosureSpy", "ScriptScanner", "ModuleScanner", "UpvalueScanner", "ConstantScanner" }) do
@@ -686,15 +686,24 @@ local function buildInterface()
 
     local body = frame("Body", base, {
         Position = UDim2.new(0, Theme.Layout.RailWidth + Theme.Layout.WorkspaceInset, 0, Theme.Layout.TitleBarHeight + Theme.Layout.WorkspaceInset),
-        Size = UDim2.new(1, -(Theme.Layout.RailWidth + Theme.Layout.WorkspaceInset * 2), 1, -(Theme.Layout.TitleBarHeight + Theme.Layout.StatusBarHeight + Theme.Layout.WorkspaceInset * 2)),
+        Size = UDim2.new(1, -(Theme.Layout.RailWidth + Theme.Layout.WorkspaceInset * 2), 1, -(Theme.Layout.TitleBarHeight + Theme.Layout.WorkspaceInset * 2)),
         BackgroundTransparency = 1
     })
     local pages = frame("Pages", body, { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 })
     local home = frame("Home", pages, { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Theme.Colors.Panel, Visible = true })
     addPadding(home, Theme.Layout.PagePadding)
-    label("Welcome", home, "Welcome to Hydroxide", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.24, 0), Size = UDim2.new(1, -48, 0, 32), TextSize = 22 })
-    image("Logo", home, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.48, 0), Size = UDim2.new(0, 164, 0, 164) })
-    label("Tagline", home, "forever better than racist dolphin's console", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.70, 0), Size = UDim2.new(1, -48, 0, 32), TextColor3 = Theme.Colors.SecondaryText, TextSize = 16 })
+    local homeContentHeight = Theme.Layout.HomeLogoSize + 64 + Theme.Layout.HomeGap * 2
+    local homeContent = frame("Content", home, {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(1, -48, 0, homeContentHeight),
+        BackgroundTransparency = 1
+    })
+    local homeLayout = listLayout(homeContent, Theme.Layout.HomeGap)
+    homeLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    label("Welcome", homeContent, "Welcome to Hydroxide", { Size = UDim2.new(1, 0, 0, 32), TextSize = 22, LayoutOrder = 1 })
+    image("Logo", homeContent, { Size = UDim2.new(0, Theme.Layout.HomeLogoSize, 0, Theme.Layout.HomeLogoSize), LayoutOrder = 2 })
+    label("Tagline", homeContent, "forever better than racist dolphin's console", { Size = UDim2.new(1, 0, 0, 32), TextColor3 = Theme.Colors.SecondaryText, TextSize = 16, TextWrapped = true, LayoutOrder = 3 })
     spyPage(pages, "RemoteSpy", "RemoteObject", true)
     spyPage(pages, "ClosureSpy", "ClosureObject", false)
     scriptPage(pages)
@@ -707,15 +716,6 @@ local function buildInterface()
     upvaluePage.Results.Size = UDim2.new(1, 0, 1, -(queryContentOffset + 40))
     label("ResultStatus", upvaluePage.Results.Clip, "Results", { Size = UDim2.new(1, 0, 0, 32), TextColor3 = Theme.Colors.MutedText, Visible = false })
     scannerPage(pages, "ConstantScanner", "Closure name or constant...", true)
-
-    local status = label("Status", base, "Status  ·  Home Page", { Position = UDim2.new(0, 0, 1, -Theme.Layout.StatusBarHeight), Size = UDim2.new(1, 0, 0, Theme.Layout.StatusBarHeight), BackgroundColor3 = Theme.Colors.Rail, BackgroundTransparency = 0, TextColor3 = Theme.Colors.MutedText, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left })
-    addCorner(status, 8)
-    frame("SquareTop", status, {
-        Size = UDim2.new(1, 0, 0, 8),
-        BackgroundColor3 = Theme.Colors.Rail,
-        ZIndex = status.ZIndex + 1
-    })
-    addPadding(status, 12, 12, 0, 0)
 
     local prompts = frame("Prompts", base, { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 60 })
     frame("PromptShadow", prompts, { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, Visible = false, ZIndex = 60 })

@@ -21,7 +21,6 @@ local function isHydroxideInterface(instance)
 		and instance:FindFirstChild("Open") ~= nil
 		and base:FindFirstChild("Drag") ~= nil
 		and base:FindFirstChild("Tabs") ~= nil
-		and base:FindFirstChild("Status") ~= nil
 end
 
 local function destroyPreviousInterfaces(parent)
@@ -34,14 +33,14 @@ end
 
 VisualAssets.Load()
 local Base = Interface.Base
-local Status = Base.Status
+local currentStatus = "Home Page"
 
 function oh.setStatus(text)
-	Status.Text = 'Status  ·  ' .. text
+	currentStatus = text
 end
 
 function oh.getStatus()
-	return Status.Text:gsub('Status  ·  ', '')
+	return currentStatus
 end
 
 local TabSelector = import("ui/controls/TabSelector")

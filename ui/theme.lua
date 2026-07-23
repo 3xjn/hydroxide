@@ -22,10 +22,11 @@ Theme.Layout = {
     MinimumWindowSize = Vector2.new(720, 420),
     TitleBarHeight = 44,
     RailWidth = 52,
-    StatusBarHeight = 24,
     WorkspaceInset = 12,
     MinimumPageWidth = 400,
     PagePadding = 12,
+    HomeLogoSize = 164,
+    HomeGap = 12,
     QueryHeight = 36,
     TabTargetSize = 40,
     TabIconSize = 22,
@@ -132,7 +133,6 @@ function Theme.Apply(interface, assets)
     styleSurface(base, Theme.Colors.Canvas, 8)
     addStroke(base, Theme.Colors.Border)
     styleSurface(base.Drag, Theme.Colors.Rail)
-    styleSurface(base.Status, Theme.Colors.Rail)
     styleSurface(body, Theme.Colors.Canvas)
     styleSurface(tabs, Theme.Colors.Rail)
 

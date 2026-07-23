@@ -156,7 +156,6 @@ function Window.Attach(interface)
         assert(stroke and stroke:IsA("UIStroke"), "Hydroxide window must retain its shell stroke")
         corner.CornerRadius = UDim.new(0, value and 0 or 8)
         drag.HydroxideCorner.CornerRadius = UDim.new(0, value and 0 or 8)
-        base.Status.HydroxideCorner.CornerRadius = UDim.new(0, value and 0 or 8)
         stroke.Transparency = value and 1 or 0
     end
 
@@ -192,11 +191,54 @@ function Window.Attach(interface)
         open.BackgroundColor3 = Theme.Colors.Elevated
     end)
 
-    local resizeHandle = createControl(base, "Resize", "Resize", -4)
+    local resizeHandle = Instance.new("Frame")
+    resizeHandle.Name = "Resize"
     resizeHandle.AnchorPoint = Vector2.new(1, 1)
     resizeHandle.Position = UDim2.new(1, -4, 1, -4)
     resizeHandle.Size = UDim2.new(0, 28, 0, 28)
-    resizeHandle.Icon.Size = UDim2.new(0, 13, 0, 13)
+    resizeHandle.BackgroundTransparency = 1
+    resizeHandle.BorderSizePixel = 0
+    resizeHandle.Active = true
+    resizeHandle.ZIndex = 20
+    resizeHandle.Parent = base
+
+    local resizeIcon = Instance.new("ImageLabel")
+    resizeIcon.Name = "Icon"
+    resizeIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+    resizeIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    resizeIcon.Size = UDim2.new(0, 13, 0, 13)
+    resizeIcon.BackgroundTransparency = 1
+    resizeIcon.ImageColor3 = Theme.Colors.SecondaryText
+    resizeIcon.ZIndex = 21
+    resizeIcon.Parent = resizeHandle
+    VisualAssets.ApplyWindowIcon(resizeIcon, "Resize")
+
+    local resizeHovered = false
+    local previousCursor
+    local function showResizeCursor()
+        if previousCursor == nil and not maximized then
+            previousCursor = UserInput.MouseIcon
+            UserInput.MouseIcon = VisualAssets.Load().ResizeCursor
+        end
+    end
+    local function restoreResizeCursor()
+        if previousCursor ~= nil then
+            UserInput.MouseIcon = previousCursor
+            previousCursor = nil
+        end
+    end
+
+    oh.Events.WindowResizeEnter = resizeHandle.MouseEnter:Connect(function()
+        resizeHovered = true
+        showResizeCursor()
+    end)
+    oh.Events.WindowResizeLeave = resizeHandle.MouseLeave:Connect(function()
+        resizeHovered = false
+        if not resizing then
+            restoreResizeCursor()
+        end
+    end)
+    oh.Events.WindowResizeCursorCleanup = { Disconnect = restoreResizeCursor }
 
     local function setMaximized(value)
         if value == maximized then
@@ -204,6 +246,7 @@ function Window.Attach(interface)
         end
 
         if value then
+            restoreResizeCursor()
             restorePosition = base.Position
             restoreSize = base.Size
             local viewport = viewportSize()
@@ -260,6 +303,9 @@ function Window.Attach(interface)
             oh.Events.WindowResizeEnd = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     resizing = false
+                    if not resizeHovered then
+                        restoreResizeCursor()
+                    end
                     oh.Events.WindowResizeEnd:Disconnect()
                     oh.Events.WindowResizeEnd = nil
                 end
@@ -291,6 +337,7 @@ function Window.Attach(interface)
     end)
 
     oh.Events.WindowExit = exit.MouseButton1Click:Connect(function()
+        restoreResizeCursor()
         oh.Exit()
     end)
 
@@ -300,6 +347,7 @@ function Window.Attach(interface)
         end
 
         collapsed = true
+        restoreResizeCursor()
         collapsedPosition = base.Position
         base.Visible = false
         open.Position = UDim2.new(0.5, 0, 0, -layout.LauncherSize - layout.WorkspaceInset)

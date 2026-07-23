@@ -102,6 +102,7 @@ function Assets.Load()
         Atlas = installAsset("hydroxide-icons.png"),
         RemoteAtlas = installAsset("hydroxide-remote-icons.png"),
         WindowAtlas = installAsset("hydroxide-window-icons.png"),
+        ResizeCursor = installAsset("hydroxide-resize-cursor.png"),
         Logo = installAsset("hydroxide-logo.png")
     }
 

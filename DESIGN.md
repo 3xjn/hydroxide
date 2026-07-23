@@ -33,14 +33,13 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 - Minimum size: 720 by 420 pixels, reduced only when the viewport itself is smaller.
 - Title bar: 44 pixels.
 - Tool rail: 52 pixels.
-- Status bar: 24 pixels.
 - Title bar anatomy: generated 24-pixel mark, `Hydroxide` wordmark, and subdued `c.1` version label at the left, then 36-pixel window controls at the right. Do not repeat the product title in the center.
 - Tool rail anatomy: 40-pixel tab targets with 22-pixel generated icons and 6-pixel vertical rhythm. Targets never compact below 36 pixels.
 - Workspace anatomy: rail tools and the primary page begin on the same 12-pixel top line beneath the title bar. The primary page owns the full remaining workspace. The inert legacy Explorer pane and its nonfunctional filter are not part of the shell.
 - Page anatomy: tool controls and results sit inside a 12-pixel page inset. Query bars are 36 pixels high. The page does not receive its own rounded card, outline, or elevation; layout grouping comes from spacing, restrained input surfaces, and one-pixel dividers.
-- Home composition: the welcome label, generated mark, and tagline share one centered vertical axis at approximately 24, 48, and 70 percent of the page height.
-- The title bar, tool rail, and status bar remain fixed. Page-owned lists keep their own scrolling.
-- The bottom-right resize handle is a transparent 28-pixel target with a small generated grip contained inside the shell corner; it never creates a colored block over the status bar. Title-bar controls are collapse, maximize/restore, and exit. They share identical target geometry, corner treatment, raster-icon family, and hover behavior; exit alone uses the danger color. Collapse creates the compact reopen target, maximize toggles a viewport-filling state, and exit fully shuts Hydroxide down.
+- Home composition: the welcome label, generated mark, and tagline form one centered vertical stack with a 12-pixel rhythm. Resizing preserves their order and spacing instead of positioning each element at an independent percentage of the page.
+- The title bar and tool rail remain fixed. Page-owned lists keep their own scrolling. The workspace continues to the shell's bottom edge without a separate status strip.
+- The bottom-right resize handle is a transparent 28-pixel target with a small generated grip contained inside the shell corner. Hovering it replaces the default pointer with the matching generated diagonal resize cursor and shutdown restores the cursor that was active before Hydroxide took ownership. Title-bar controls are collapse, maximize/restore, and exit. They share identical target geometry, corner treatment, raster-icon family, and hover behavior; exit alone uses the danger color. Collapse creates the compact reopen target, maximize toggles a viewport-filling state, and exit fully shuts Hydroxide down.
 - Normal windows retain the 16-pixel viewport margin, eight-pixel corner radius, and outer stroke. Maximized windows sit flush at viewport origin, fill the complete viewport, and temporarily remove the outer radius and stroke so game pixels cannot leak around or beneath the shell.
 - If the Roblox viewport changes while maximized, restored bounds are reclamped so the complete window remains inside the current 16-pixel margin.
 - Every shell region uses scale-plus-offset geometry or is recomputed from the current window bounds. Resizing the outer window must never leave legacy 650-by-350 geometry inside it.
@@ -48,7 +47,7 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 ## Window lifecycle
 
 - The collapse control condenses Hydroxide into a 36-by-36 top-center reopen target containing an optically centered 18-by-18 generated Hydroxide mark.
-- Closing atomically hides the full window before the compact control enters; no title, page, status, border, or resize-handle pixels may remain onscreen during or after the transition.
+- Closing atomically hides the full window before the compact control enters; no title, page, border, or resize-handle pixels may remain onscreen during or after the transition.
 - Reopening atomically hides the compact control and restores the previous normal or maximized bounds.
 - The reopen control has a dark elevated surface, mineral-mint border, visible focus treatment, and a 36-pixel minimum interactive target.
 - The exit control is the only destructive title-bar action. It disconnects every Hydroxide-owned global listener, restores every installed hook and injected environment method, destroys the entire interface including the compact launcher, and clears the active `oh` session. A later execution must start from a clean environment.
@@ -62,6 +61,8 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 `assets/ui/hydroxide-remote-icons.png` is a 256 by 128 transparent atlas for the four Remote Spy type filters and query actions. `assets/ui/hydroxide-remote-icons-source.png` preserves the generated raster source. Remote type filters are icon-only 40-pixel controls with white class artwork, a quiet tinted enabled surface, and no underline or navigation marker; executor class names do not appear as permanent filter labels.
 
 `assets/ui/hydroxide-window-icons.png` is a 256 by 128 transparent atlas for collapse, maximize, restore, exit, and resize. `assets/ui/hydroxide-window-icons-source.png` preserves the generated raster source. Window controls never depend on font glyph coverage or switch visual families between normal and maximized states.
+
+`assets/ui/hydroxide-resize-cursor.png` is the centered 64-pixel cursor derived from the generated resize cell. It is loaded through the same required `getcustomasset` path as the rest of the raster set.
 
 The runtime asset path is `hydroxide/assets/<branch>/ui-v1/<filename>`. Stable `master` builds reuse their validated local files. Development builds refresh code and artwork from `dev` on every launch, so testers do not see stale assets. Files are written as binary strings and loaded through Volt's required `getcustomasset` API. Missing filesystem or custom-asset support is a startup error. There is no legacy image fallback.
 
@@ -82,7 +83,7 @@ All interface instances, row templates, prompts, overlays, menus, and window con
 - Compact controls keep a 36-pixel pointer target even when their visible glyph is 14 to 22 pixels.
 - Primary and secondary text must remain legible over their declared surfaces; muted text is reserved for metadata and inactive chrome.
 - Long tool names and object values truncate inside their owned region instead of expanding the shell.
-- The title bar, tool rail, and status bar stay fixed. Only page-owned result lists may scroll.
+- The title bar and tool rail stay fixed. Only page-owned result lists may scroll.
 - The minimum-size shell must retain a usable main pane without horizontal overflow.
 
 ## Verification
@@ -91,6 +92,6 @@ The local Volt and Roblox clients are available for executor-owned rendering. So
 
 ## Implementation boundary
 
-The complete interface is source-built. `ui/runtime.lua` owns the live instance tree and reusable templates; feature modules consume that local contract. The title bar, tool rail, workspace, Home composition, status bar, resize handle, reopen state, prompts, menus, list rows, and scanner pages must not depend on `rbxassetid://11389137937`, `rbxassetid://5042114982`, or any other imported UI model.
+The complete interface is source-built. `ui/runtime.lua` owns the live instance tree and reusable templates; feature modules consume that local contract. The title bar, tool rail, workspace, Home composition, resize handle, reopen state, prompts, menus, list rows, and scanner pages must not depend on `rbxassetid://11389137937`, `rbxassetid://5042114982`, or any other imported UI model.
 
 Reusable primitives are: `Surface`, `ActionButton`, `QueryBar`, `ScrollList`, `ObjectLabel`, `Dropdown`, `CheckBox`, `Prompt`, `MessageBox`, `ContextMenu`, `Tab`, and `RowTemplate`. Each primitive has default, hover, selected, focused, and disabled styling where applicable and uses the token palette above.
