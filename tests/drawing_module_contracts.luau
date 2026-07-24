@@ -230,6 +230,51 @@ inputEnded:Fire({
 }, false)
 assert(circleClicks == 1, "Circle hit-testing must use its radius")
 
+local potassiumSurface = Drawing.new({
+    Connect = function(signal, callback)
+        return signal:Connect(callback)
+    end,
+    DestroyObject = function(object)
+        object:Destroy()
+    end,
+    GetInputBegan = function()
+        return inputBegan
+    end,
+    GetInputChanged = function()
+        return inputChanged
+    end,
+    GetInputEnded = function()
+        return inputEnded
+    end,
+    GetPosition = function(input)
+        return input.Position
+    end,
+    GetProperty = function(object, property)
+        if property == "__OBJECT_EXISTS" then
+            error("invalid drawing property __OBJECT_EXISTS")
+        end
+        return object[property]
+    end,
+    IsPointerMovement = function(input)
+        return input.Kind == "move"
+    end,
+    IsPrimaryPointer = function(input)
+        return input.Kind == "primary"
+    end,
+    NewObject = newObject,
+}).createSurface()
+local potassiumButton = potassiumSurface:create("Square", {
+    Position = { X = 400, Y = 400 },
+    Size = { X = 100, Y = 40 },
+    Visible = true,
+    ZIndex = 1,
+})
+assert(
+    potassiumSurface:hitTest({ X = 420, Y = 420 }) == potassiumButton,
+    "Hit-testing must tolerate executors without Volt's __OBJECT_EXISTS property"
+)
+potassiumSurface:destroy()
+
 surface:destroy()
 for _, object in ipairs(objects) do
     assert(object.__OBJECT_EXISTS == false, "Destroying a surface must destroy only its tracked drawings")

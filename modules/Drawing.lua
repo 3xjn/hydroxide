@@ -105,6 +105,10 @@ function DrawingModule.new(context)
     local setProperty = context.SetProperty or function(object, property, value)
         object[property] = value
     end
+    local function objectExists(object)
+        local success, exists = pcall(getProperty, object, "__OBJECT_EXISTS")
+        return not success or exists ~= false
+    end
     local drawing = {}
 
     function drawing.createSurface(options)
@@ -137,7 +141,7 @@ function DrawingModule.new(context)
             if
                 not record
                 or record.pointerEvents == false
-                or getProperty(record.object, "__OBJECT_EXISTS") == false
+                or not objectExists(record.object)
             then
                 return false
             end
