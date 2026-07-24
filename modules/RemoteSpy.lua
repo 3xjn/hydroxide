@@ -1,5 +1,6 @@
 local RemoteSpy = {}
 local Remote = import("objects/Remote")
+local ThreadTrace = import("modules/ThreadTrace")
 
 local requiredMethods = {
     ["checkCaller"] = true,
@@ -60,20 +61,13 @@ local function getFunctionFromThread(thread)
         return nil
     end
 
-    for level = 1, 16 do
-        local succeeded, func = pcall(debug.info, thread, level, "f")
-        if not succeeded or not func then
-            return nil
-        end
-
-        local isGameClosure = not isExecutorClosure or not isExecutorClosure(func)
-        local isLuaClosure = not isLClosure or isLClosure(func)
-        if isGameClosure and isLuaClosure then
-            return func
-        end
-    end
-
-    return nil
+    return ThreadTrace.resolveFunction(thread, {
+        GetStackFunction = function(value, level)
+            return debug.info(value, level, "f")
+        end,
+        IsExecutorClosure = isExecutorClosure,
+        IsLClosure = isLClosure,
+    })
 end
 
 local function inspectCall(instance, vargs, callingScript, callingFunction, emit)
