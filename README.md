@@ -9,6 +9,12 @@ loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/3xjn/hydroxide/d
 That is the complete install and launch path. It downloads the current `dev`
 build and its modules directly from GitHub.
 
+Gun and Knife validation overlay only, without the Hydroxide UI:
+
+```lua
+loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/3xjn/hydroxide/dev/weapons.lua"), "weapons.lua")()
+```
+
 ## Testing local changes with Volt
 
 The `dev` loader above reads `origin/dev` from GitHub. It does not include
