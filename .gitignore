@@ -4,3 +4,4 @@ roblox.toml
 .vscode
 .idea
 /user
+tools/live-mcp/node_modules/

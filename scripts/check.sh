@@ -33,7 +33,7 @@ definitions=(
     --definitions "@hydroxide=types/hydroxide.d.luau"
 )
 
-luau-lsp analyze "${definitions[@]}" dev.lua weapons.lua local.lua examples/gun_validation.lua examples/knife_validation.lua examples/weapon_validation.lua ui/controls/ContextMenu.lua ui/controls/FilterPopover.lua ui/remote_row_geometry.lua modules/InstancePath.lua modules/ScannerFilter.lua modules/ScannerResults.lua modules/ScriptScanner.lua modules/ModuleScanner.lua modules/ScriptBuilder.lua modules/ReactiveState.lua modules/ActorStateRegistry.lua modules/SignalSpy.lua modules/Helpers.lua modules/Closure.lua modules/ThreadTrace.lua modules/Targeting.lua modules/Lifecycle.lua modules/Drawing.lua
+luau-lsp analyze "${definitions[@]}" dev.lua weapons.lua local.lua tools/live-mcp/volt-agent.lua examples/gun_validation.lua examples/knife_validation.lua examples/weapon_validation.lua ui/controls/ContextMenu.lua ui/controls/FilterPopover.lua ui/remote_row_geometry.lua modules/InstancePath.lua modules/ScannerFilter.lua modules/ScannerResults.lua modules/ScriptScanner.lua modules/ModuleScanner.lua modules/ScriptBuilder.lua modules/ReactiveState.lua modules/ActorStateRegistry.lua modules/SignalSpy.lua modules/Helpers.lua modules/Closure.lua modules/ThreadTrace.lua modules/Targeting.lua modules/Lifecycle.lua modules/Drawing.lua
 printf 'ui-typecheck-ok\n'
 
 set +e
