@@ -37,9 +37,10 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 - Tool rail anatomy: 40-pixel tab targets with 22-pixel generated icons and 6-pixel vertical rhythm. Targets never compact below 36 pixels.
 - Workspace anatomy: rail tools and the primary page begin on the same 12-pixel top line beneath the title bar. The primary page owns the full remaining workspace. The inert legacy Explorer pane and its nonfunctional filter are not part of the shell.
 - Page anatomy: tool controls and results sit inside a 12-pixel page inset. Query bars are 36 pixels high. The page does not receive its own rounded card, outline, or elevation; layout grouping comes from spacing, restrained input surfaces, and one-pixel dividers.
+- Signal Spy anatomy: an exact-instance QueryBar precedes the selected-target summary and event filter. It accepts canonical Roblox paths such as `workspace.Door` and `game:GetService("Players").LocalPlayer`, resolves only instance traversal syntax, and submits from either Enter or its 36-pixel `Inspect` action. Invalid paths keep the current target intact and explain the failing segment.
 - Home composition: the welcome label, generated mark, and tagline form one centered vertical stack with a 12-pixel rhythm. Resizing preserves their order and spacing instead of positioning each element at an independent percentage of the page.
 - The title bar and tool rail remain fixed. Page-owned lists keep their own scrolling. The workspace continues to the shell's bottom edge without a separate status strip.
-- The bottom-right resize handle is a transparent 28-pixel target with a small generated grip contained inside the shell corner. Hovering it replaces the default pointer with a compact double-headed NW–SE arrow; the cursor is directional artwork, not an enlarged copy of the grip. Shutdown restores the cursor that was active before Hydroxide took ownership. Title-bar controls are collapse, maximize/restore, and exit. They share identical target geometry, corner treatment, raster-icon family, and hover behavior; exit alone uses the danger color. Collapse creates the compact reopen target, maximize toggles a viewport-filling state, and exit fully shuts Hydroxide down.
+- The bottom-right resize handle is a transparent 28-pixel target with a small generated grip contained inside the shell corner. Hovering it replaces the default pointer with a compact double-headed NW–SE arrow; the cursor is directional artwork, not an enlarged copy of the grip. Because Roblox overrides `UserInputService.MouseIcon` above interactive GUI, Hydroxide renders this arrow in a pointer-following top-level image while temporarily hiding the system cursor. The arrow remains visible for the complete hover and drag lifecycle, including clamped resizing, then restores the cursor visibility state Hydroxide inherited. Title-bar controls are collapse, maximize/restore, and exit. They share identical target geometry, corner treatment, raster-icon family, and hover behavior; exit alone uses the danger color. Collapse creates the compact reopen target, maximize toggles a viewport-filling state, and exit fully shuts Hydroxide down.
 - Normal windows retain the 16-pixel viewport margin, eight-pixel corner radius, and outer stroke. Maximized windows sit flush at viewport origin, fill the complete viewport, and temporarily remove the outer radius and stroke so game pixels cannot leak around or beneath the shell.
 - If the Roblox viewport changes while maximized, restored bounds are reclamped so the complete window remains inside the current 16-pixel margin.
 - Every shell region uses scale-plus-offset geometry or is recomputed from the current window bounds. Resizing the outer window must never leave legacy 650-by-350 geometry inside it.
@@ -74,9 +75,29 @@ All interface instances, row templates, prompts, overlays, menus, and window con
 - Hover: quiet `Hover` surface with secondary text; hover must not imitate selection.
 - Selected tab: rail-colored surface, mint icon, and a two-pixel mint marker on the leading edge. Selected tabs do not add a border, shadow, or raised card.
 - Focus: visible mint outline.
+- Resize affordance: the corner grip is secondary gray at rest, white on hover, and mint for the complete mouse-down drag. The cursor remains the same directional resize arrow across hover and active states.
 - Disabled: muted text at 55 percent opacity.
 - Destructive: reserve `Danger` for destructive actions only.
 - Transitions: 120 to 180 milliseconds, limited to color, opacity, and position.
+
+## Weapon validation overlay
+
+- Generated weapon validation uses a compact 236-by-228 Drawing surface at the
+  upper-right viewport margin. It is a separate testing overlay, not a second
+  Hydroxide application window.
+- A read-only Weapon row identifies the currently equipped Gun, Knife, or
+  no-weapon state. Switching tools updates it automatically; there are no
+  weapon tabs.
+- FOV, Silent Aim, Trigger Bot, and Wallbang are shared between Gun and Knife.
+  The three toggles are full-width 36-pixel option targets using Accent Surface
+  when enabled and Elevated when inactive.
+- Player boxes remain visible while the overlay runs: Accent indicates a
+  camera-visible target and Danger indicates an on-screen target blocked by
+  geometry. Their bounds come from the character's direct body-part hitboxes,
+  excluding accessory and tool geometry. Wallbang changes target eligibility
+  without changing that status color.
+- Hovering or dragging any overlay control captures primary pointer input so
+  configuring the panel cannot activate the equipped weapon underneath it.
 
 ## Accessibility and resilience
 
@@ -94,4 +115,4 @@ The local Volt and Roblox clients are available for executor-owned rendering. So
 
 The complete interface is source-built. `ui/runtime.lua` owns the live instance tree and reusable templates; feature modules consume that local contract. The title bar, tool rail, workspace, Home composition, resize handle, reopen state, prompts, menus, list rows, and scanner pages must not depend on `rbxassetid://11389137937`, `rbxassetid://5042114982`, or any other imported UI model.
 
-Reusable primitives are: `Surface`, `ActionButton`, `QueryBar`, `ScrollList`, `ObjectLabel`, `Dropdown`, `CheckBox`, `Prompt`, `MessageBox`, `ContextMenu`, `Tab`, and `RowTemplate`. Each primitive has default, hover, selected, focused, and disabled styling where applicable and uses the token palette above.
+Reusable primitives are: `Surface`, `ActionButton`, `QueryBar`, `FilterPopover`, `Tooltip`, `ScrollList`, `ObjectLabel`, `Dropdown`, `CheckBox`, `Prompt`, `MessageBox`, `ContextMenu`, `Tab`, and `RowTemplate`. `FilterPopover` anchors below its query-bar action, uses a full-width 36-pixel option target, closes on outside click, and reflects shared scanner state. `Tooltip` is the rail's compact hover label: it centers above the hovered tab, falls below only when title-bar clearance would be violated, uses the elevated surface and border treatment, and renders above every page-owned popover, including an open FilterPopover. Each primitive has default, hover, selected, focused, and disabled styling where applicable and uses the token palette above.

@@ -1,6 +1,7 @@
 local fs = require("@lune/fs")
 
 local initSource = fs.readFile("init.lua")
+local closureSpySource = fs.readFile("modules/ClosureSpy.lua")
 local contextMenuSource = fs.readFile("ui/controls/ContextMenu.lua")
 local uiMainSource = fs.readFile("ui/main.lua")
 local windowSource = fs.readFile("ui/window.lua")
@@ -10,12 +11,18 @@ assert(
     "A failed previous-session cleanup must not abort the next Hydroxide startup"
 )
 assert(
-    initSource:find("restoreFunction(hook)", 1, true),
+    initSource:find("restoreFunction(target)", 1, true),
     "Hook cleanup must use Volt's restorefunction instead of reverse-hooking"
 )
 assert(
     not initSource:find("hookFunction(hook, original)", 1, true),
     "Reverse-hook cleanup can fail when the original closure has more upvalues"
+)
+assert(closureSpySource:find("hook.Target = data", 1, true), "Closure Spy must retain the function actually passed to hookfunction")
+assert(closureSpySource:find("oh.Hooks[data] = data", 1, true), "Closure Spy hooks must be owned by session cleanup")
+assert(
+    closureSpySource:find("restoreFunction(hook.Target)", 1, true),
+    "Explicit Closure Spy removal must restore the hooked target"
 )
 assert(
     initSource:find("local interface = session.Interface", 1, true),

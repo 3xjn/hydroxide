@@ -53,7 +53,9 @@ local constants = {
 }
 
 local function actionGlyph(text: string): string
-    if text:find("Script") then
+    if text:find("Signal") then
+        return "SignalSpy"
+    elseif text:find("Script") then
         return "ScriptScanner"
     elseif text:find("Closure") or text:find("Function") then
         return "ClosureSpy"

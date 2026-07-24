@@ -46,8 +46,51 @@ end
 local TabSelector = import("ui/controls/TabSelector")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 
+oh.State = {}
+oh.state = oh.State
+local ReactiveState = import("modules/ReactiveState")
+oh.State.ScannerFilters = ReactiveState.new({
+	ShowExecutor = false,
+	ShowGame = true,
+	ShowRoblox = false,
+})
+if hasMethods({
+	getActorStates = true,
+	getLuaState = true,
+	actorStateCreated = true
+}) then
+	local ActorStateRegistry = import("modules/ActorStateRegistry")
+	local actorStates = ActorStateRegistry.new({
+		GetActorStates = getActorStates,
+		GetLuaState = getLuaState,
+		ActorStateCreated = actorStateCreated
+	})
+
+	oh.State.ActorStates = actorStates
+	table.insert(oh.Resources, actorStates)
+end
+
+local SignalSpy = import("modules/SignalSpy")
+if hasMethods(SignalSpy.RequiredMethods) then
+	local ReflectionService = game:GetService("ReflectionService")
+	local signalSpy = SignalSpy.new({
+		GetEventsOfClass = function(className)
+			return ReflectionService:GetEventsOfClass(className)
+		end,
+		GetConnections = getConnections,
+		GetSignalArgumentsInfo = getSignalArgumentsInfo,
+		GetScriptFromThread = getScriptFromThread,
+		GetLuaState = getLuaState,
+		ActorStates = oh.State.ActorStates
+	})
+
+	oh.State.SignalSpy = signalSpy
+	table.insert(oh.Resources, signalSpy)
+end
+
 local moduleLoaders = {
 	{ Name = "RemoteSpy", Label = "Remote Spy", Path = "ui/modules/RemoteSpy" },
+	{ Name = "SignalSpy", Label = "Signal Spy", Path = "ui/modules/SignalSpy" },
 	{ Name = "ClosureSpy", Label = "Closure Spy", Path = "ui/modules/ClosureSpy" },
 	{ Name = "ScriptScanner", Label = "Script Scanner", Path = "ui/modules/ScriptScanner" },
 	{ Name = "ModuleScanner", Label = "Module Scanner", Path = "ui/modules/ModuleScanner" },

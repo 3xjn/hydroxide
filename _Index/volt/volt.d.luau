@@ -8,9 +8,6 @@ type VoltEnvironment = { [string]: any }
 type VoltFunction = (...any) -> ...any
 type VoltObject = any
 type VoltKey = string | number
-type VoltByteArray = { number }
-type VoltPacketData = buffer | string | VoltByteArray
-
 type DecompilerFormatter = {
 	IndentWidth: number?,
 	UseTabs: boolean?,
@@ -44,8 +41,7 @@ type DebugInfo = {
 }
 
 type ProtoProxy = {
-	Closure: VoltFunction?,
-	Index: number?,
+	CodeHash: number,
 	[ string ]: any,
 }
 
@@ -65,6 +61,34 @@ type VoltSignalConstructor = {
 	new: () -> VoltSignal,
 }
 
+type SignalConnection = {
+	Enabled: boolean,
+	ForeignState: boolean,
+	LuaConnection: boolean,
+	LuaWaitConnection: boolean,
+	Function: VoltFunction?,
+	Thread: thread?,
+	Fire: (self: SignalConnection, ...any) -> (),
+	Defer: (self: SignalConnection, ...any) -> (),
+	Disconnect: (self: SignalConnection) -> (),
+	Disable: (self: SignalConnection) -> (),
+	Enable: (self: SignalConnection) -> (),
+}
+
+type GcFilterOptions = {
+	Name: string?,
+	Constants: { any }?,
+	Upvalues: { any }?,
+	Hash: string?,
+	IgnoreExecutor: boolean?,
+	Environment: VoltEnvironment?,
+	StartLine: number?,
+	Source: string?,
+	UpvalueCount: number?,
+	ConstantCount: number?,
+	[ string ]: any,
+}
+
 type WebSocketConnection = {
 	OnMessage: VoltSignal,
 	OnClose: VoltSignal,
@@ -75,28 +99,6 @@ type WebSocketConnection = {
 
 type WebSocketLibrary = {
 	connect: (url: string, headers: { [string]: string }?) -> WebSocketConnection,
-}
-
-type RakNetPacket = {
-	AsBuffer: buffer,
-	AsString: string,
-	AsArray: VoltByteArray,
-	PacketId: number,
-	Priority: number,
-	Reliability: number,
-	OrderingChannel: number,
-	Size: number,
-	SetData: (self: RakNetPacket, data: VoltPacketData) -> (),
-	Block: (self: RakNetPacket) -> (),
-}
-
-type RakNetSendHook = (packet: RakNetPacket) -> ()
-
-type RakNetLibrary = {
-	add_send_hook: (hook: RakNetSendHook) -> (),
-	remove_send_hook: (hook: RakNetSendHook) -> (),
-	send: (data: VoltPacketData, priority: number?, reliability: number?, orderingChannel: number?) -> (),
-	is_enabled: () -> boolean,
 }
 
 type DrawingObject = {
@@ -110,8 +112,45 @@ type DrawingObject = {
 	[ string ]: any,
 }
 
+type DrawingFonts = {
+	UI: number,
+	System: number,
+	Plex: number,
+	Monospace: number,
+}
+
 type DrawingLibrary = {
+	Fonts: DrawingFonts,
 	new: (kind: "Line" | "Circle" | "Square" | "Triangle" | "Text" | "Image" | "Quad") -> DrawingObject,
+}
+
+type RegisteredDrawFont = {
+	GetTextBounds: (self: RegisteredDrawFont, size: number, text: string) -> Vector2,
+}
+
+type DrawFontOptions = {
+	PixelSize: number,
+	Glyphs: { { number } }?,
+}
+
+type DrawFontLibrary = {
+	Register: (data: string, options: DrawFontOptions) -> RegisteredDrawFont?,
+}
+
+type DrawingImmediateLibrary = {
+	Fonts: DrawingFonts,
+	GetPaint: (zIndex: number?) -> VoltSignal,
+	Line: (p1: Vector2, p2: Vector2, color: Color3, opacity: number, thickness: number) -> (),
+	Circle: (center: Vector2, radius: number, color: Color3, opacity: number, numSides: number, thickness: number) -> (),
+	FilledCircle: (center: Vector2, radius: number, color: Color3, opacity: number, numSides: number) -> (),
+	Triangle: (p1: Vector2, p2: Vector2, p3: Vector2, color: Color3, opacity: number, thickness: number) -> (),
+	FilledTriangle: (p1: Vector2, p2: Vector2, p3: Vector2, color: Color3, opacity: number) -> (),
+	Rectangle: (topLeft: Vector2, size: Vector2, color: Color3, opacity: number, rounding: number, thickness: number) -> (),
+	FilledRectangle: (topLeft: Vector2, size: Vector2, color: Color3, opacity: number, rounding: number) -> (),
+	Quad: (p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, color: Color3, opacity: number, thickness: number) -> (),
+	FilledQuad: (p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, color: Color3, opacity: number) -> (),
+	Text: (position: Vector2, font: RegisteredDrawFont | number, fontSize: number, color: Color3, opacity: number, text: string, center: boolean) -> (),
+	OutlinedText: (position: Vector2, font: RegisteredDrawFont | number, fontSize: number, color: Color3, opacity: number, outlineColor: Color3, outlineOpacity: number, text: string, center: boolean) -> (),
 }
 
 type HttpRequest = {
@@ -171,9 +210,9 @@ type CacheLibrary = {
 
 type OthLibrary = {
 	hook: (target: VoltFunction, callback: VoltFunction) -> VoltFunction,
-	unhook: (target: VoltFunction) -> (),
+	unhook: (target: VoltFunction) -> boolean,
 	get_original_thread: () -> thread?,
-	get_root_callback: (target: VoltFunction) -> VoltFunction?,
+	get_root_callback: () -> VoltFunction?,
 	is_hook_thread: () -> boolean,
 }
 
@@ -181,7 +220,7 @@ type LuaStateProxy = {
 	Id: number,
 	IsActorState: boolean,
 	Event: VoltSignal,
-	Execute: (self: LuaStateProxy, source: string) -> ...any,
+	Execute: (self: LuaStateProxy, source: string, ...any) -> (),
 	GetActors: (self: LuaStateProxy) -> { VoltObject },
 }
 
@@ -189,12 +228,18 @@ type LuaStateProxyConstructor = {
 	new: () -> LuaStateProxy,
 }
 
+type ActorChannel = {
+	Event: VoltSignal,
+	Fire: (self: ActorChannel, ...any) -> (),
+}
+
 declare VoltSignal: VoltSignalConstructor
 declare Signal: VoltSignalConstructor
 declare WebSocket: WebSocketLibrary
 declare websocket: WebSocketLibrary
 declare Drawing: DrawingLibrary
-declare raknet: RakNetLibrary
+declare DrawingImmediate: DrawingImmediateLibrary
+declare DrawFont: DrawFontLibrary
 declare crypt: CryptLibrary
 declare bit: BitLibrary
 declare cache: CacheLibrary
@@ -274,7 +319,7 @@ declare function setrawmetatable(target: VoltObject, metatable: { [any]: any }):
 declare function setreadonly(target: { [any]: any }, readonly: boolean): ()
 
 -- Environments and scripts
-declare function filtergc(predicate: (value: any) -> boolean): { any }
+declare function filtergc(kind: "function" | "table", options: GcFilterOptions, returnOne: boolean?): any
 declare function getallthreads(): { thread }
 declare function getgc(includeTables: boolean?): { any }
 declare function getgenv(): VoltEnvironment
@@ -288,7 +333,7 @@ declare function getloadedmodules(): { VoltObject }
 declare function getmodules(): { VoltObject }
 declare function getrunningscripts(): { VoltObject }
 declare function getscriptbytecode(target: VoltObject): string
-declare function getscriptclosure(target: VoltObject): VoltFunction
+declare function getscriptclosure(target: VoltObject): VoltFunction | string
 declare function getscriptfromthread(target: thread): VoltObject?
 declare function getscripthash(target: VoltObject): string
 declare function getscripts(): { VoltObject }
@@ -309,24 +354,24 @@ declare function gethui(): VoltObject
 declare function getinstancecache(): { VoltObject }
 declare function getinstances(): { VoltObject }
 declare function getnilinstances(): { VoltObject }
-declare function getrendersteppedlist(): { VoltConnection }
+declare function getrendersteppedlist(): { SignalConnection }
 declare function cansignalreplicate(signal: VoltObject): boolean
 declare function firesignal(signal: VoltObject, ...: any): ()
-declare function getconnections(signal: VoltObject): { VoltConnection }
+declare function getconnections(signal: VoltObject): { SignalConnection }
 declare function getsignalarguments(signal: VoltObject): { string }
 declare function getsignalargumentsinfo(signal: VoltObject): { [string]: any }
 declare function getsignalwhitelist(): { VoltObject }
 declare function replicatesignal(signal: VoltObject, ...: any): ()
-declare function create_comm_channel(name: string): VoltObject
-declare function get_comm_channel(name: string): VoltObject?
+declare function create_comm_channel(name: string?): (string, ActorChannel)
+declare function get_comm_channel(id: string): ActorChannel
 declare function get_current_actor(): VoltObject?
 declare function getactors(): { VoltObject }
 declare function getactorstates(): { LuaStateProxy }
 declare function getgamestate(): LuaStateProxy
-declare function getluastate(target: VoltObject): LuaStateProxy?
+declare function getluastate(target: VoltObject?): LuaStateProxy?
 declare function isparallel(): boolean
-declare function on_actor_state_created(callback: (state: LuaStateProxy) -> ()): VoltConnection
-declare function run_on_actor(actor: VoltObject, callback: VoltFunction, ...: any): ...any
+declare on_actor_state_created: VoltSignal
+declare function run_on_actor(actor: VoltObject, source: string, ...: any): ()
 
 -- Filesystem
 declare function appendfile(path: string, data: string): ()
@@ -378,8 +423,6 @@ declare function cleardrawcache(): ()
 declare function getrenderproperty(target: DrawingObject, property: string): any
 declare function isrenderobj(target: any): boolean
 declare function setrenderproperty(target: DrawingObject, property: string, value: any): ()
-declare DrawFont: { Register: (data: string, name: string?) -> any }
-declare function DrawingImmediate(callback: () -> ()): VoltConnection
 declare function clearqueueonteleport(): ()
 declare function get_process_identifier(): number
 declare function getfflag(name: string): string?

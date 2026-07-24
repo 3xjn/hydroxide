@@ -33,7 +33,7 @@ definitions=(
     --definitions "@hydroxide=types/hydroxide.d.luau"
 )
 
-luau-lsp analyze "${definitions[@]}" ui/controls/ContextMenu.lua
+luau-lsp analyze "${definitions[@]}" local.lua examples/gun_validation.lua examples/knife_validation.lua examples/weapon_validation.lua ui/controls/ContextMenu.lua ui/controls/FilterPopover.lua ui/remote_row_geometry.lua modules/InstancePath.lua modules/ScannerFilter.lua modules/ScannerResults.lua modules/ScriptScanner.lua modules/ModuleScanner.lua modules/ScriptBuilder.lua modules/ReactiveState.lua modules/ActorStateRegistry.lua modules/SignalSpy.lua modules/Helpers.lua modules/Closure.lua modules/Targeting.lua modules/Lifecycle.lua modules/Drawing.lua
 printf 'ui-typecheck-ok\n'
 
 set +e
@@ -56,3 +56,20 @@ printf 'ui-negative-type-contract-ok\n'
 lune run tests/ui_runtime_contracts.luau
 lune run tests/window_geometry_contracts.luau
 lune run tests/shutdown_runtime_contracts.luau
+lune run tests/volt_compatibility_contracts.luau
+lune run tests/script_builder_contracts.luau
+lune run tests/weapon_validation_launchers_contracts.luau
+lune run tests/gun_validation_example_contracts.luau
+lune run tests/helper_loader_contracts.luau
+lune run tests/closure_module_contracts.luau
+lune run tests/targeting_module_contracts.luau
+lune run tests/lifecycle_module_contracts.luau
+lune run tests/drawing_module_contracts.luau
+lune run tests/drawing_default_adapter_contracts.luau
+lune run tests/actor_state_registry_contracts.luau
+lune run tests/signal_spy_contracts.luau
+lune run tests/instance_path_contracts.luau
+lune run tests/scanner_filter_contracts.luau
+lune run tests/scanner_inventory_contracts.luau
+lune run tests/scanner_results_contracts.luau
+lune run tests/remote_row_geometry_contracts.luau

@@ -129,11 +129,12 @@ local function scrollingContent(parent, name)
     return results, clip, content
 end
 
-local function queryBar(parent, placeholder, buttonSearch)
+local function queryBar(parent, placeholder, buttonSearch, withFilter)
     local queryHeight = Theme.Layout.QueryHeight
     local query = frame("Query", parent, {
         Size = UDim2.new(1, 0, 0, queryHeight),
-        BackgroundTransparency = 1
+        BackgroundTransparency = 1,
+        ZIndex = withFilter and 70 or 1
     })
 
     if buttonSearch then
@@ -162,7 +163,7 @@ local function queryBar(parent, placeholder, buttonSearch)
         })
     else
         local search = create("TextBox", "Search", query, {
-            Size = UDim2.new(1, -44, 0, queryHeight),
+            Size = UDim2.new(1, withFilter and -88 or -44, 0, queryHeight),
             BackgroundColor3 = Theme.Colors.Elevated,
             BorderSizePixel = 0,
             ClearTextOnFocus = false,
@@ -177,6 +178,68 @@ local function queryBar(parent, placeholder, buttonSearch)
         addCorner(search, 5)
         addStroke(search)
         addPadding(search, 12, 12, 0, 0)
+        if withFilter then
+            local filter = imageButton("Filter", query, {
+                Position = UDim2.new(1, -80, 0, 0),
+                Size = UDim2.new(0, Theme.Layout.ControlTargetSize, 0, queryHeight),
+                BackgroundColor3 = Theme.Colors.Elevated
+            })
+            image("Icon", filter, {
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.new(0.5, 0, 0.5, 0),
+                Size = UDim2.new(0, 18, 0, 18),
+                ImageColor3 = Theme.Colors.SecondaryText
+            })
+
+            local popover = frame("FilterPopover", query, {
+                AnchorPoint = Vector2.new(1, 0),
+                Position = UDim2.new(1, 0, 1, 8),
+                Size = UDim2.new(0, Theme.Layout.FilterPopoverWidth, 0, 148),
+                BackgroundColor3 = Theme.Colors.Elevated,
+                Visible = false,
+                ZIndex = Theme.Layout.FilterPopoverZIndex
+            })
+            addCorner(popover, 5)
+            addStroke(popover)
+
+            local function filterOption(name, text, layoutOrder)
+                local option = textButton(name, popover, "", {
+                    Position = UDim2.new(0, 8, 0, 8 + ((layoutOrder - 1) * 44)),
+                    Size = UDim2.new(1, -16, 0, Theme.Layout.ControlTargetSize),
+                    BackgroundColor3 = Theme.Colors.Hover,
+                    BackgroundTransparency = 1,
+                    Text = "",
+                    ZIndex = Theme.Layout.FilterPopoverZIndex + 1
+                })
+                option.HydroxideStroke.Transparency = 1
+                local indicator = frame("Indicator", option, {
+                    Position = UDim2.new(0, 8, 0.5, -10),
+                    Size = UDim2.new(0, 20, 0, 20),
+                    BackgroundColor3 = Theme.Colors.Elevated,
+                    ZIndex = Theme.Layout.FilterPopoverZIndex + 2
+                })
+                addCorner(indicator, 4)
+                addStroke(indicator)
+                label("Checkmark", indicator, "", {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    TextColor3 = Theme.Colors.Accent,
+                    TextSize = 14,
+                    ZIndex = Theme.Layout.FilterPopoverZIndex + 3
+                })
+                label("Label", option, text, {
+                    Position = UDim2.new(0, 40, 0, 0),
+                    Size = UDim2.new(1, -48, 1, 0),
+                    TextColor3 = Theme.Colors.SecondaryText,
+                    TextXAlignment = Enum.TextXAlignment.Left,
+                    ZIndex = Theme.Layout.FilterPopoverZIndex + 2
+                })
+            end
+
+            filterOption("ShowGame", "Show game code", 1)
+            filterOption("ShowRoblox", "Show Roblox code", 2)
+            filterOption("ShowExecutor", "Show executor code", 3)
+        end
+
         local refresh = imageButton("Refresh", query, {
             Position = UDim2.new(1, -36, 0, 0),
             Size = UDim2.new(0, 36, 0, queryHeight),
@@ -314,15 +377,72 @@ local function dropdown(parent, name, options)
     return root
 end
 
-local function scannerPage(pages, name, placeholder, buttonSearch)
+local function scannerPage(pages, name, placeholder, buttonSearch, withFilter)
     local page = frame(name, pages, {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = Theme.Colors.Panel,
         Visible = false
     })
     addPadding(page, Theme.Layout.PagePadding)
-    queryBar(page, placeholder, buttonSearch)
+    queryBar(page, placeholder, buttonSearch, withFilter)
     scrollingContent(page)
+    return page
+end
+
+local function signalPage(pages)
+    local page = frame("SignalSpy", pages, {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = Theme.Colors.Panel,
+        Visible = false
+    })
+    addPadding(page, Theme.Layout.PagePadding)
+
+    local targetQuery = queryBar(
+        page,
+        'Instance path, e.g. game:GetService("Players").LocalPlayer',
+        true
+    )
+    targetQuery.Name = "TargetQuery"
+    targetQuery.Query.Name = "Path"
+    targetQuery.Search.Name = "Inspect"
+    targetQuery.Inspect.Text = "Inspect"
+
+    local target = frame("Target", page, {
+        Position = UDim2.new(0, 0, 0, 44),
+        Size = UDim2.new(1, 0, 0, 36),
+        BackgroundColor3 = Theme.Colors.Elevated
+    })
+    addCorner(target, 5)
+    addStroke(target)
+    image("Icon", target, {
+        Position = UDim2.new(0, 10, 0.5, -9),
+        Size = UDim2.new(0, 18, 0, 18),
+        ImageColor3 = Theme.Colors.Accent
+    })
+    label("Name", target, "No instance selected", {
+        Position = UDim2.new(0, 38, 0, 0),
+        Size = UDim2.new(0, 180, 1, 0),
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    label("Path", target, "Open an instance from another tool", {
+        Position = UDim2.new(0, 226, 0, 0),
+        Size = UDim2.new(1, -238, 1, 0),
+        Font = Enum.Font.Code,
+        TextColor3 = Theme.Colors.MutedText,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+
+    local query = queryBar(page, "Filter events...", false)
+    query.Position = UDim2.new(0, 0, 0, 88)
+
+    local results, clip = scrollingContent(page)
+    results.Position = UDim2.new(0, 0, 0, 132)
+    results.Size = UDim2.new(1, 0, 1, -132)
+    label("ResultStatus", clip, "Open an instance from Remote, Script, or Module Scanner", {
+        Size = UDim2.new(1, 0, 0, 36),
+        TextColor3 = Theme.Colors.MutedText,
+        Visible = true
+    })
     return page
 end
 
@@ -392,7 +512,13 @@ local function infoSection(parent, name)
         BackgroundTransparency = 1,
         Visible = name == "Protos"
     })
-    queryBar(section, "Filter " .. name:lower() .. "...", false)
+    local placeholders = {
+        Protos = "Search nested function name...",
+        Constants = "Search literal value...",
+        Environment = "Search global name or value...",
+        Source = "Search source details...",
+    }
+    queryBar(section, placeholders[name], false)
     local _, clip = scrollingContent(section)
     label("ResultStatus", clip, "No results", {
         Size = UDim2.new(1, 0, 0, 32),
@@ -410,7 +536,7 @@ local function scriptPage(pages)
     })
     addPadding(page, Theme.Layout.PagePadding)
     local list = frame("List", page, { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1 })
-    queryBar(list, "Filter scripts...", false)
+    queryBar(list, "Filter scripts...", false, true)
     scrollingContent(list)
 
     local info = frame("Info", page, { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Visible = false })
@@ -557,6 +683,18 @@ local function buildTemplates(interface)
     arg.Name = "Arg"
     arg.Parent = closure
 
+    local signal = create("Folder", "SignalSpy", templates)
+    local signalLog = rowTemplate(signal, "SignalLog", 40)
+    image("Icon", signalLog, { Position = UDim2.new(0, 8, 0.5, -9), Size = UDim2.new(0, 18, 0, 18), ImageColor3 = Theme.Colors.Accent })
+    label("Name", signalLog, "", { Position = UDim2.new(0, 36, 0, 0), Size = UDim2.new(0, 180, 1, 0), TextXAlignment = Enum.TextXAlignment.Left })
+    label("Signature", signalLog, "", { Position = UDim2.new(0, 220, 0, 0), Size = UDim2.new(1, -308, 1, 0), Font = Enum.Font.Code, TextColor3 = Theme.Colors.SecondaryText, TextXAlignment = Enum.TextXAlignment.Left })
+    label("Connections", signalLog, "0", { Position = UDim2.new(1, -80, 0, 0), Size = UDim2.new(0, 72, 1, 0), Font = Enum.Font.Code, TextColor3 = Theme.Colors.MutedText })
+
+    local connectionLog = rowTemplate(signal, "ConnectionLog", 36)
+    label("Index", connectionLog, "", { Position = UDim2.new(0, 16, 0, 0), Size = UDim2.new(0, 48, 1, 0), Font = Enum.Font.Code, TextColor3 = Theme.Colors.Accent })
+    label("Flags", connectionLog, "", { Position = UDim2.new(0, 68, 0, 0), Size = UDim2.new(0, 210, 1, 0), Font = Enum.Font.Code, TextColor3 = Theme.Colors.SecondaryText, TextXAlignment = Enum.TextXAlignment.Left })
+    label("Relationship", connectionLog, "", { Position = UDim2.new(0, 286, 0, 0), Size = UDim2.new(1, -294, 1, 0), Font = Enum.Font.Code, TextColor3 = Theme.Colors.MutedText, TextXAlignment = Enum.TextXAlignment.Left })
+
     local function conditionTemplate(parent)
         local condition = rowTemplate(parent, "ConditionPod", 34)
         local content = frame("Content", condition, { Size = UDim2.new(1, -72, 1, 0), BackgroundTransparency = 1 })
@@ -678,11 +816,26 @@ local function buildInterface()
     local tabs = frame("Tabs", base, { Position = UDim2.new(0, 0, 0, Theme.Layout.TitleBarHeight), Size = UDim2.new(0, Theme.Layout.RailWidth, 1, -Theme.Layout.TitleBarHeight), BackgroundColor3 = Theme.Colors.Rail })
     local tabContainer = frame("Container", tabs, { Position = UDim2.new(0, 6, 0, Theme.Layout.WorkspaceInset), Size = UDim2.new(1, -12, 1, -(Theme.Layout.WorkspaceInset * 2)), BackgroundTransparency = 1 })
     listLayout(tabContainer, Theme.Layout.TabGap)
-    for index, tabName in ipairs({ "Home", "RemoteSpy", "ClosureSpy", "ScriptScanner", "ModuleScanner", "UpvalueScanner", "ConstantScanner" }) do
+    for index, tabName in ipairs({ "Home", "RemoteSpy", "SignalSpy", "ClosureSpy", "ScriptScanner", "ModuleScanner", "UpvalueScanner", "ConstantScanner" }) do
         local tab = imageButton(tabName, tabContainer, { Size = UDim2.new(0, Theme.Layout.TabTargetSize, 0, Theme.Layout.TabTargetSize), BackgroundColor3 = Theme.Colors.Rail, LayoutOrder = index })
         frame("Selection", tab, { AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.new(0, 2, 0, 20), BackgroundColor3 = Theme.Colors.Accent, Visible = false, ZIndex = 2 })
         image("Icon", tab, { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, Theme.Layout.TabIconSize, 0, Theme.Layout.TabIconSize) })
     end
+
+    local tooltip = frame("Tooltip", base, {
+        Size = UDim2.new(0, 0, 0, Theme.Layout.TooltipHeight),
+        BackgroundColor3 = Theme.Colors.Elevated,
+        Visible = false,
+        ZIndex = Theme.Layout.TooltipZIndex,
+    })
+    addCorner(tooltip, 5)
+    addStroke(tooltip)
+    label("Label", tooltip, "", {
+        Size = UDim2.new(1, 0, 1, 0),
+        TextColor3 = Theme.Colors.SecondaryText,
+        TextSize = 12,
+        ZIndex = Theme.Layout.TooltipZIndex + 1,
+    })
 
     local body = frame("Body", base, {
         Position = UDim2.new(0, Theme.Layout.RailWidth + Theme.Layout.WorkspaceInset, 0, Theme.Layout.TitleBarHeight + Theme.Layout.WorkspaceInset),
@@ -715,17 +868,18 @@ local function buildInterface()
         TextWrapped = true
     })
     spyPage(pages, "RemoteSpy", "RemoteObject", true)
+    signalPage(pages)
     spyPage(pages, "ClosureSpy", "ClosureObject", false)
     scriptPage(pages)
-    scannerPage(pages, "ModuleScanner", "Filter modules...", false)
-    local upvaluePage = scannerPage(pages, "UpvalueScanner", "Closure name or constant...", true)
+    scannerPage(pages, "ModuleScanner", "Filter modules...", false, true)
+    local upvaluePage = scannerPage(pages, "UpvalueScanner", "Search captured value or closure name...", true)
     local queryContentOffset = Theme.Layout.QueryHeight + 8
     local filters = frame("Filters", upvaluePage, { Position = UDim2.new(0, 0, 0, queryContentOffset), Size = UDim2.new(1, 0, 0, 32), BackgroundTransparency = 1 })
     checkbox(filters, "SearchInTables", "Search in tables", false)
     upvaluePage.Results.Position = UDim2.new(0, 0, 0, queryContentOffset + 40)
     upvaluePage.Results.Size = UDim2.new(1, 0, 1, -(queryContentOffset + 40))
     label("ResultStatus", upvaluePage.Results.Clip, "Results", { Size = UDim2.new(1, 0, 0, 32), TextColor3 = Theme.Colors.MutedText, Visible = false })
-    scannerPage(pages, "ConstantScanner", "Closure name or constant...", true)
+    scannerPage(pages, "ConstantScanner", "Search literal value or closure name...", true)
 
     local prompts = frame("Prompts", base, { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, ZIndex = 60 })
     frame("PromptShadow", prompts, { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0.35, Visible = false, ZIndex = 60 })

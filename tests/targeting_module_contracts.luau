@@ -1,0 +1,207 @@
+local Targeting = require("../modules/Targeting")
+
+assert(type(Targeting.observePlayers) == "function", "The default targeting module must expose observations")
+
+local bodyPart = {
+    IsA = function(_part, className)
+        return className == "BasePart"
+    end,
+}
+local nestedAccessory = {
+    IsA = function()
+        return false
+    end,
+}
+local hitboxParts = Targeting.getCharacterHitboxParts({
+    GetChildren = function()
+        return {
+            bodyPart,
+            nestedAccessory,
+        }
+    end,
+})
+assert(#hitboxParts == 1 and hitboxParts[1] == bodyPart, "Hitboxes must use direct character body parts only")
+
+local vectorMetatable = {}
+local function vector(x, y, z)
+    return setmetatable({
+        X = x,
+        Y = y,
+        Z = z,
+    }, vectorMetatable)
+end
+function vectorMetatable.__add(left, right)
+    return vector(left.X + right.X, left.Y + right.Y, left.Z + right.Z)
+end
+function vectorMetatable.__sub(left, right)
+    return vector(left.X - right.X, left.Y - right.Y, left.Z - right.Z)
+end
+function vectorMetatable.__mul(left, right)
+    if type(left) == "number" then
+        return vector(left * right.X, left * right.Y, left * right.Z)
+    end
+    return vector(left.X * right, left.Y * right, left.Z * right)
+end
+function vectorMetatable.__index(value, key)
+    if key == "Dot" then
+        return function(_self, other)
+            return value.X * other.X + value.Y * other.Y + value.Z * other.Z
+        end
+    end
+end
+
+local predicted, flightTime = Targeting.predictIntercept(
+    vector(0, 0, 0),
+    vector(78, 0, 0),
+    vector(10, 0, 0),
+    78
+)
+assert(math.abs(flightTime - 78 / 68) < 1e-6, "Prediction must solve the moving-target intercept time")
+assert(math.abs(predicted.X - (78 + 10 * flightTime)) < 1e-6, "Prediction must lead the moving target")
+
+local localPlayer = {
+    Name = "Local",
+}
+local hiddenPlayer = {
+    Name = "Hidden",
+}
+local farPlayer = {
+    Name = "Far",
+}
+local nearPlayer = {
+    Name = "Near",
+}
+local ineligiblePlayer = {
+    Name = "Friendly",
+}
+
+local characters = {
+    [hiddenPlayer] = { Name = "HiddenCharacter" },
+    [farPlayer] = { Name = "FarCharacter" },
+    [nearPlayer] = { Name = "NearCharacter" },
+    [ineligiblePlayer] = { Name = "FriendlyCharacter" },
+}
+local distances = {
+    [characters[farPlayer]] = 90,
+    [characters[nearPlayer]] = 30,
+}
+local visibleAims = {
+    [characters[farPlayer]] = {
+        part = "Head",
+        position = "FarPosition",
+        screenPosition = { X = 20, Y = 0 },
+        visibility = 1,
+    },
+    [characters[nearPlayer]] = {
+        part = "UpperTorso",
+        position = "NearPosition",
+        screenPosition = { X = 100, Y = 0 },
+        visibility = 0.8,
+    },
+}
+local observations = {
+    [characters[hiddenPlayer]] = {
+        bounds = "HiddenBounds",
+        part = "HiddenHead",
+        position = "HiddenPosition",
+        screenPosition = { X = 5, Y = 0 },
+        visible = false,
+    },
+    [characters[farPlayer]] = {
+        bounds = "FarBounds",
+        visible = true,
+    },
+    [characters[nearPlayer]] = {
+        bounds = "NearBounds",
+        visible = true,
+    },
+}
+local eligibilityChecks = 0
+local targeting = Targeting.new({
+    GetCharacter = function(player)
+        return characters[player]
+    end,
+    GetDistance = function(_localPlayer, character)
+        return distances[character]
+    end,
+    GetLocalPlayer = function()
+        return localPlayer
+    end,
+    GetPlayers = function()
+        return {
+            localPlayer,
+            hiddenPlayer,
+            farPlayer,
+            nearPlayer,
+            ineligiblePlayer,
+        }
+    end,
+    GetVisibleAim = function(_localPlayer, character)
+        return visibleAims[character]
+    end,
+    GetPlayerObservation = function(_localPlayer, _player, character)
+        return observations[character]
+    end,
+    IsEligible = function(_localPlayer, player)
+        eligibilityChecks = eligibilityChecks + 1
+        return player ~= localPlayer and player ~= ineligiblePlayer
+    end,
+})
+
+local nearest = targeting.nearestVisiblePlayer()
+assert(nearest, "A visible eligible target must be selected")
+assert(nearest.player == nearPlayer, "The nearest visible eligible player must win")
+assert(nearest.character == characters[nearPlayer], "The target must retain its character")
+assert(nearest.part == "UpperTorso", "The target must retain its most visible body part")
+assert(nearest.position == "NearPosition", "The target must retain the visible aim position")
+assert(nearest.visibility == 0.8, "The target must expose its visibility score")
+assert(nearest.distance == 30, "The target must expose its measured distance")
+assert(eligibilityChecks == 5, "Every player must pass through the eligibility policy")
+
+local screenNearest = targeting.nearestVisiblePlayer({
+    screenOrigin = { X = 0, Y = 0 },
+    maxScreenDistance = 50,
+})
+assert(screenNearest and screenNearest.player == farPlayer, "FOV targeting must prefer screen-space proximity")
+assert(screenNearest.screenDistance == 20)
+
+local outsideFov = targeting.nearestVisiblePlayer({
+    screenOrigin = { X = 0, Y = 0 },
+    maxScreenDistance = 10,
+})
+assert(outsideFov == nil, "Visible players outside the FOV must be rejected")
+
+local observed = targeting.observePlayers()
+assert(#observed == 3, "Every eligible on-screen player must be observed")
+assert(observed[1].player == hiddenPlayer and observed[1].visible == false)
+assert(observed[2].player == farPlayer and observed[2].bounds == "FarBounds")
+assert(observed[3].player == nearPlayer and observed[3].character == characters[nearPlayer])
+
+local wallbangNearest = targeting.nearestPlayer({
+    includeBlocked = true,
+    maxScreenDistance = 10,
+    screenOrigin = { X = 0, Y = 0 },
+})
+assert(wallbangNearest and wallbangNearest.player == hiddenPlayer)
+assert(wallbangNearest.position == "HiddenPosition")
+
+local visiblePolicy = targeting.nearestPlayer({
+    includeBlocked = false,
+    maxScreenDistance = 10,
+    screenOrigin = { X = 0, Y = 0 },
+})
+assert(visiblePolicy == nil, "Blocked targets must remain excluded unless wallbang is enabled")
+
+local limited = targeting.nearestVisiblePlayer({
+    maxDistance = 20,
+})
+assert(limited == nil, "Targets beyond the requested distance must be rejected")
+
+visibleAims[characters[nearPlayer]] = nil
+local fallback = targeting.nearestVisiblePlayer()
+assert(fallback and fallback.player == farPlayer, "Hidden players must be skipped instead of blocking other targets")
+
+visibleAims[characters[farPlayer]] = nil
+assert(targeting.nearestVisiblePlayer() == nil, "No visible eligible player must return nil")
+
+print("targeting-module-contracts-ok")

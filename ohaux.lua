@@ -4,10 +4,10 @@ local getGc = getgc
 local getInfo = debug.getinfo or getinfo
 local getUpvalue = debug.getupvalue or getupvalue or getupval
 local getConstants = debug.getconstants or getconstants or getconsts
-local isXClosure = is_synapse_function or issentinelclosure or is_protosmasher_closure or is_sirhurt_closure or istempleclosure or checkclosure
+local isExecutorClosure = isexecutorclosure or is_synapse_function or issentinelclosure or is_protosmasher_closure or is_sirhurt_closure or istempleclosure or checkclosure
 local isLClosure = islclosure or is_l_closure or (iscclosure and function(f) return not iscclosure(f) end)
 
-assert(getGc and getInfo and getConstants and isXClosure, "Your exploit is not supported")
+assert(getGc and getInfo and getConstants and isExecutorClosure, "Your exploit is not supported")
 
 local placeholderUserdataConstant = newproxy(false)
 
@@ -33,7 +33,7 @@ local function searchClosure(script, name, upvalueIndex, constants)
 
         if type(v) == "function" and 
             isLClosure(v) and 
-            not isXClosure(v) and 
+            not isExecutorClosure(v) and
             (
                 (script == nil and parentScript.Parent == nil) or script == parentScript
             ) 

@@ -7,8 +7,8 @@ local requiredMethods = {
     ["getProtos"] = true,
     ["getUpvalues"] = true,
     ["getUpvalue"] = true,
-    ["getContext"] = true,
-    ["setContext"] = true,
+    ["getThreadIdentity"] = true,
+    ["setThreadIdentity"] = true,
     ["setUpvalue"] = true,
     ["getConstants"] = true,
     ["getConstant"] = true,
@@ -67,6 +67,7 @@ function Hook.new(closure)
 
     closure.Data = hookCache[data]
 
+    hook.Target = data
     hook.Closure = closure
     hook.Calls = 0
     hook.Logs = {}
@@ -86,12 +87,20 @@ function Hook.new(closure)
     hook.DecrementCalls = Hook.decrementCalls
 
     hookMap[data] = hook
+    oh.Hooks[data] = data
 
     return hook
 end
 
 function Hook.remove(hook)
-    hookMap[hook.Closure.Data] = nil
+    if hook.Target then
+        restoreFunction(hook.Target)
+        oh.Hooks[hook.Target] = nil
+        hookMap[hook.Target] = nil
+        hookCache[hook.Target] = nil
+        hook.Closure.Data = hook.Target
+        hook.Target = nil
+    end
 end
 
 function Hook.clear(hook)

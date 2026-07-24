@@ -49,111 +49,204 @@ local function connectEvent(callback)
     end
 end
 
-local namecallTarget = getMetatable(game).__namecall
-local nmcTrampoline
-nmcTrampoline = hookMetaMethod(game, "__namecall", function(...)
-    local instance = ...
-    
-    if typeof(instance) ~= "Instance" then
-        return nmcTrampoline(...)
-    end
-
-    local method = getNamecallMethod()
-
-    if method == "fireServer" then
-        method = "FireServer"
-    elseif method == "invokeServer" then
-        method = "InvokeServer"
-    end
-        
-    if remotesViewing[instance.ClassName] and instance ~= remoteDataEvent and remoteMethods[method] then
-        local remote = currentRemotes[instance]
-        local vargs = {select(2, ...)}
-            
-        if not remote then
-            remote = Remote.new(instance)
-            currentRemotes[instance] = remote
-        end
-
-        local remoteIgnored = remote.Ignored
-        local remoteBlocked = remote.Blocked
-        local argsIgnored = remote.AreArgsIgnored(remote, vargs)
-        local argsBlocked = remote.AreArgsBlocked(remote, vargs)
-
-        if eventSet and (not remoteIgnored and not argsIgnored) then
-            local call = {
-                script = getCallingScript((PROTOSMASHER_LOADED ~= nil and 2) or nil),
-                args = vargs,
-                func = getInfo(3).func
-            }
-
-            remote.IncrementCalls(remote, call)
-            remoteDataEvent.Fire(remoteDataEvent, instance, call)
-        end
-
-        if remoteBlocked or argsBlocked then
-            return
-        end
-    end
-
-    return nmcTrampoline(...)
-end)
-oh.Hooks[nmcTrampoline] = namecallTarget
-
--- vuln fix
-
 local pcall = pcall
 
 local function checkPermission(instance)
     if (instance.ClassName) then end
 end
 
-for _name, hook in pairs(methodHooks) do
-    local originalMethod
-    originalMethod = hookFunction(hook, newCClosure(function(...)
+local function getFunctionFromThread(thread)
+    if not thread or not debug.info then
+        return nil
+    end
+
+    for level = 1, 16 do
+        local succeeded, func = pcall(debug.info, thread, level, "f")
+        if not succeeded or not func then
+            return nil
+        end
+
+        local isGameClosure = not isExecutorClosure or not isExecutorClosure(func)
+        local isLuaClosure = not isLClosure or isLClosure(func)
+        if isGameClosure and isLuaClosure then
+            return func
+        end
+    end
+
+    return nil
+end
+
+local function inspectCall(instance, vargs, callingScript, callingFunction, emit)
+    local remote = currentRemotes[instance]
+
+    if not remote then
+        remote = Remote.new(instance)
+        currentRemotes[instance] = remote
+    end
+
+    local remoteIgnored = remote.Ignored
+    local argsIgnored = remote:AreArgsIgnored(vargs)
+
+    if eventSet and not remoteIgnored and not argsIgnored then
+        local call = {
+            script = callingScript,
+            args = vargs,
+            func = callingFunction
+        }
+
+        remote:IncrementCalls(call)
+        emit(instance, call)
+    end
+
+    return remote.Blocked or remote:AreArgsBlocked(vargs)
+end
+
+local useOthHooks = type(othHook) == "function"
+    and type(othUnhook) == "function"
+
+if useOthHooks then
+    local hookedTargets = {}
+    local originalBindableFire
+
+    local function emit(instance, call)
+        originalBindableFire(remoteDataEvent, instance, call)
+    end
+
+    for className, target in pairs(methodHooks) do
+        local originalMethod
+        originalMethod = othHook(target, function(...)
+            local instance = ...
+
+            if typeof(instance) ~= "Instance" then
+                return originalMethod(...)
+            end
+
+            local success = pcall(checkPermission, instance)
+            if not success then
+                return originalMethod(...)
+            end
+
+            if instance.ClassName == className
+                and remotesViewing[instance.ClassName]
+                and instance ~= remoteDataEvent then
+                local originalThread = getOriginalThread and getOriginalThread()
+                local callingScript = originalThread
+                    and getScriptFromThread
+                    and getScriptFromThread(originalThread)
+                    or nil
+                local callingFunction = getFunctionFromThread(originalThread)
+                local vargs = {select(2, ...)}
+
+                if inspectCall(instance, vargs, callingScript, callingFunction, emit) then
+                    return
+                end
+            end
+
+            return originalMethod(...)
+        end)
+
+        if className == "BindableEvent" then
+            originalBindableFire = originalMethod
+        end
+
+        table.insert(hookedTargets, target)
+    end
+
+    local hookResource = {}
+
+    function hookResource:Destroy()
+        local failedTarget
+
+        for _index, target in ipairs(hookedTargets) do
+            if not othUnhook(target) then
+                failedTarget = failedTarget or target
+            end
+        end
+
+        table.clear(hookedTargets)
+        assert(not failedTarget, "Failed to remove an OTH Remote Spy hook")
+    end
+
+    table.insert(oh.Resources, hookResource)
+else
+    local namecallTarget = getMetatable(game).__namecall
+    local nmcTrampoline
+    nmcTrampoline = hookMetaMethod(game, "__namecall", function(...)
         local instance = ...
 
         if typeof(instance) ~= "Instance" then
-            return originalMethod(...)
-        end
-                
-        do
-            local success = pcall(checkPermission, instance)
-            if (not success) then return originalMethod(...) end
+            return nmcTrampoline(...)
         end
 
-        if instance.ClassName == _name and remotesViewing[instance.ClassName] and instance ~= remoteDataEvent then
-            local remote = currentRemotes[instance]
+        local method = getNamecallMethod()
+
+        if method == "fireServer" then
+            method = "FireServer"
+        elseif method == "invokeServer" then
+            method = "InvokeServer"
+        end
+
+        if remotesViewing[instance.ClassName]
+            and instance ~= remoteDataEvent
+            and remoteMethods[method] then
             local vargs = {select(2, ...)}
+            local blocked = inspectCall(
+                instance,
+                vargs,
+                getCallingScript(),
+                getInfo(3).func,
+                function(remoteInstance, call)
+                    remoteDataEvent.Fire(remoteDataEvent, remoteInstance, call)
+                end
+            )
 
-            if not remote then
-                remote = Remote.new(instance)
-                currentRemotes[instance] = remote
-            end
-
-            local remoteIgnored = remote.Ignored 
-            local argsIgnored = remote:AreArgsIgnored(vargs)
-            
-            if eventSet and (not remoteIgnored and not argsIgnored) then
-                local call = {
-                    script = getCallingScript((PROTOSMASHER_LOADED ~= nil and 2) or nil),
-                    args = vargs,
-                    func = getInfo(3).func
-                }
-    
-                remote:IncrementCalls(call)
-                remoteDataEvent:Fire(instance, call)
-            end
-
-            if remote.Blocked or remote:AreArgsBlocked(vargs) then
+            if blocked then
                 return
             end
         end
-        
-        return originalMethod(...)
-    end))
 
-    oh.Hooks[originalMethod] = hook
+        return nmcTrampoline(...)
+    end)
+    oh.Hooks[nmcTrampoline] = namecallTarget
+
+    for className, target in pairs(methodHooks) do
+        local originalMethod
+        originalMethod = hookFunction(target, newCClosure(function(...)
+            local instance = ...
+
+            if typeof(instance) ~= "Instance" then
+                return originalMethod(...)
+            end
+
+            local success = pcall(checkPermission, instance)
+            if not success then
+                return originalMethod(...)
+            end
+
+            if instance.ClassName == className
+                and remotesViewing[instance.ClassName]
+                and instance ~= remoteDataEvent then
+                local vargs = {select(2, ...)}
+                local blocked = inspectCall(
+                    instance,
+                    vargs,
+                    getCallingScript(),
+                    getInfo(3).func,
+                    function(remoteInstance, call)
+                        remoteDataEvent:Fire(remoteInstance, call)
+                    end
+                )
+
+                if blocked then
+                    return
+                end
+            end
+
+            return originalMethod(...)
+        end))
+
+        oh.Hooks[originalMethod] = target
+    end
 end
 
 RemoteSpy.RemotesViewing = remotesViewing

@@ -213,27 +213,52 @@ function Window.Attach(interface)
     resizeIcon.Parent = resizeHandle
     VisualAssets.ApplyWindowIcon(resizeIcon, "Resize")
 
+    local resizeCursor = Instance.new("ImageLabel")
+    resizeCursor.Name = "ResizeCursor"
+    resizeCursor.AnchorPoint = Vector2.new(0.5, 0.5)
+    resizeCursor.Size = UDim2.new(0, 24, 0, 24)
+    resizeCursor.BackgroundTransparency = 1
+    resizeCursor.Image = VisualAssets.Load().ResizeCursor
+    resizeCursor.Visible = false
+    resizeCursor.ZIndex = 1000
+    resizeCursor.Parent = interface
+
     local resizeHovered = false
-    local previousCursor
+    local previousCursorEnabled
+    local function updateResizeGrip()
+        resizeIcon.ImageColor3 = resizing and Theme.Colors.Accent or (resizeHovered and Theme.Colors.Text or Theme.Colors.SecondaryText)
+    end
+    local function positionResizeCursor(position)
+        resizeCursor.Position = UDim2.new(0, position.X, 0, position.Y)
+    end
     local function showResizeCursor()
-        if previousCursor == nil and not maximized then
-            previousCursor = UserInput.MouseIcon
-            UserInput.MouseIcon = VisualAssets.Load().ResizeCursor
+        if maximized then
+            return
         end
+
+        if previousCursorEnabled == nil then
+            previousCursorEnabled = UserInput.MouseIconEnabled
+        end
+        UserInput.MouseIconEnabled = false
+        positionResizeCursor(UserInput:GetMouseLocation())
+        resizeCursor.Visible = true
     end
     local function restoreResizeCursor()
-        if previousCursor ~= nil then
-            UserInput.MouseIcon = previousCursor
-            previousCursor = nil
+        resizeCursor.Visible = false
+        if previousCursorEnabled ~= nil then
+            UserInput.MouseIconEnabled = previousCursorEnabled
+            previousCursorEnabled = nil
         end
     end
 
     oh.Events.WindowResizeEnter = resizeHandle.MouseEnter:Connect(function()
         resizeHovered = true
+        updateResizeGrip()
         showResizeCursor()
     end)
     oh.Events.WindowResizeLeave = resizeHandle.MouseLeave:Connect(function()
         resizeHovered = false
+        updateResizeGrip()
         if not resizing then
             restoreResizeCursor()
         end
@@ -241,6 +266,7 @@ function Window.Attach(interface)
     oh.Events.WindowResizeFocusReleased = UserInput.WindowFocusReleased:Connect(function()
         resizeHovered = false
         resizing = false
+        updateResizeGrip()
         restoreResizeCursor()
         if oh.Events.WindowResizeEnd then
             oh.Events.WindowResizeEnd:Disconnect()
@@ -302,6 +328,8 @@ function Window.Attach(interface)
     oh.Events.WindowResizeStart = resizeHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 and not maximized then
             resizing = true
+            updateResizeGrip()
+            showResizeCursor()
             resizeStart = input.Position
             resizeSize = base.AbsoluteSize
 
@@ -312,6 +340,7 @@ function Window.Attach(interface)
             oh.Events.WindowResizeEnd = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     resizing = false
+                    updateResizeGrip()
                     if not resizeHovered then
                         restoreResizeCursor()
                     end
@@ -325,6 +354,10 @@ function Window.Attach(interface)
     oh.Events.WindowInput = UserInput.InputChanged:Connect(function(input)
         if input.UserInputType ~= Enum.UserInputType.MouseMovement then
             return
+        end
+
+        if resizeCursor.Visible then
+            positionResizeCursor(UserInput:GetMouseLocation())
         end
 
         if dragging then

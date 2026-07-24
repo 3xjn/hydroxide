@@ -1,21 +1,54 @@
 local ModuleScanner = {}
 local ModuleScript = import("objects/ModuleScript")
+local ScannerFilter = import("modules/ScannerFilter")
 
 local requiredMethods = {
     ["getMenv"] = true,
     ["getProtos"] = true,
     ["getConstants"] = true,
     ["getScriptClosure"] = true,
-    ["getLoadedModules"] = true
+    ["getScripts"] = true,
+    ["getScriptThread"] = true,
+    ["isExecutorThread"] = true,
 }
 
-local function scan(query)
+local function defaultContext()
+    local methods = getgenv().oh.Methods
+    return {
+        GetScripts = methods.getScripts,
+        GetScriptThread = methods.getScriptThread,
+        GetHiddenProperty = methods.getHiddenProperty,
+        IsInstance = function(value)
+            return typeof(value) == "Instance"
+        end,
+        IsExecutorThread = methods.isExecutorThread,
+        NewModuleScript = ModuleScript.new,
+    }
+end
+
+local function scan(query, options, context)
     local modules = {}
-    query = query or ""
-    
-    for _i, module in pairs(getLoadedModules()) do
-        if module.Name:lower():find(query) then
-            modules[module] = ModuleScript.new(module)
+    query = (query or ""):lower()
+
+    context = context or defaultContext()
+    for _index, module in pairs(context.GetScripts()) do
+        if
+            context.IsInstance(module)
+            and module:IsA("ModuleScript")
+            and module.Name:lower():find(query, 1, true)
+        then
+            local scriptThread = context.GetScriptThread(module)
+            local filterContext = {
+                GetHiddenProperty = context.GetHiddenProperty,
+                IsExecutor = scriptThread ~= nil and context.IsExecutorThread(scriptThread),
+            }
+
+            if ScannerFilter.ShouldInclude(module, options, filterContext) then
+                local success, result = pcall(context.NewModuleScript, module)
+                if success then
+                    modules[module] = result
+                end
+            end
         end
     end
 

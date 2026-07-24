@@ -303,8 +303,8 @@ function Log.new(hook)
     end
 
     listButton:SetCallback(function()
-        local oldContext = getContext()
-        setContext(7)
+        local oldContext = getThreadIdentity()
+        setThreadIdentity(7)
 
         if selected.hookLog ~= log then
             if #hook.Logs > 400 then
@@ -322,12 +322,12 @@ function Log.new(hook)
 
         selected.hookLog = log
 
-        setContext(oldContext)
+        setThreadIdentity(oldContext)
     end)
 
     listButton:SetRightCallback(function()
-        local oldContext = getContext()
-        setContext(7)
+        local oldContext = getThreadIdentity()
+        setThreadIdentity(7)
 
         ignoreContext:SetIcon((hook.Ignored and icons.unignore) or icons.ignore)
         ignoreContext:SetText((hook.Ignored and "Unignore Calls") or "Ignore Calls")
@@ -336,7 +336,7 @@ function Log.new(hook)
 
         selected.logContext = log
 
-        setContext(oldContext)
+        setThreadIdentity(oldContext)
     end)
 
     listButton:SetSelectedCallback(function()
@@ -838,15 +838,15 @@ conditionValueType:SetCallback(function(_dropdown, selected)
 end)
 
 Methods.SetEvent(function(hook, call)
-    local oldContext = getContext()
-    setContext(7)
+    local oldContext = getThreadIdentity()
+    setThreadIdentity(7)
 
     if not removed[hook] then
         local log = currentLogs[hook] or Log.new(hook)
         log:IncrementCalls(call)
     end
     
-    setContext(oldContext)
+    setThreadIdentity(oldContext)
 end)
 
 return ClosureSpy

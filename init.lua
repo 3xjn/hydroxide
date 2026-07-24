@@ -8,10 +8,12 @@ if previousSession then
     end
 end
 
-local web = true
 local configuration = environment.HydroxideConfig or {}
+local web = configuration.Web ~= false
+local localRoot = configuration.LocalRoot or "hydroxide"
 local user = configuration.Owner or "3xjn"
 local branch = configuration.Branch or "master"
+local sourceRepositoryUrl = "https://github.com/" .. user .. "/Hydroxide"
 local sourceBaseUrl = "https://raw.githubusercontent.com/" .. user .. "/Hydroxide/" .. branch .. "/"
 local importCache = {}
 local previousMethods = {}
@@ -41,24 +43,48 @@ local function useMethods(module)
     end
 end
 
-if Window and PROTOSMASHER_LOADED then
-    getgenv().get_script_function = nil
-end
+local resolvedGetThreadIdentity = getthreadidentity
+    or getthreadcontext
+    or get_thread_context
+    or (syn and syn.get_thread_identity)
+local resolvedSetThreadIdentity = setthreadidentity
+    or setthreadcontext
+    or set_thread_context
+    or (syn and syn.set_thread_identity)
+local resolvedIsExecutorClosure = isexecutorclosure
+    or is_synapse_function
+    or issentinelclosure
+    or is_protosmasher_closure
+    or is_sirhurt_closure
+    or iselectronfunction
+    or istempleclosure
+    or checkclosure
 
 local globalMethods = {
     checkCaller = checkcaller,
     newCClosure = newcclosure,
     hookFunction = hookfunction or detour_function,
     restoreFunction = restorefunction,
+    othHook = oth and oth.hook,
+    othUnhook = oth and oth.unhook,
+    getOriginalThread = oth and oth.get_original_thread,
     getGc = getgc or get_gc_objects,
     getInfo = debug.getinfo or getinfo,
     getSenv = getsenv,
-    getMenv = getmenv or getsenv,
-    getContext = getthreadcontext or get_thread_context or (syn and syn.get_thread_identity),
-    getConnections = get_signal_cons or getconnections,
+    getMenv = getsenv or getmenv,
+    getThreadIdentity = resolvedGetThreadIdentity,
+    getContext = resolvedGetThreadIdentity,
+    getConnections = getconnections or get_signal_cons,
+    getHiddenProperty = gethiddenproperty,
+    getSignalArgumentsInfo = getsignalargumentsinfo,
     getScriptClosure = getscriptclosure or get_script_function,
+    getScriptFromThread = getscriptfromthread,
+    getScripts = getscripts,
+    getScriptThread = getscriptthread,
     getNamecallMethod = getnamecallmethod or get_namecall_method,
     getCallingScript = getcallingscript or get_calling_script,
+    getActorStates = getactorstates,
+    getLuaState = getluastate,
     getLoadedModules = getloadedmodules or get_loaded_modules,
     getConstants = debug.getconstants or getconstants or getconsts,
     getUpvalues = debug.getupvalues or getupvalues or getupvals,
@@ -71,13 +97,17 @@ local globalMethods = {
     getHui = get_hidden_gui or gethui,
     setClipboard = setclipboard or writeclipboard,
     setConstant = debug.setconstant or setconstant or setconst,
-    setContext = setthreadcontext or set_thread_context or (syn and syn.set_thread_identity),
+    setThreadIdentity = resolvedSetThreadIdentity,
+    setContext = resolvedSetThreadIdentity,
     setUpvalue = debug.setupvalue or setupvalue or setupval,
     setStack = debug.setstack or setstack,
     setReadOnly = setreadonly or (make_writeable and function(table, readonly) if readonly then make_readonly(table) else make_writeable(table) end end),
+    actorStateCreated = on_actor_state_created,
     isLClosure = islclosure or is_l_closure or (iscclosure and function(closure) return not iscclosure(closure) end),
     isReadOnly = isreadonly or is_readonly,
-    isXClosure = is_synapse_function or issentinelclosure or is_protosmasher_closure or is_sirhurt_closure or iselectronfunction or istempleclosure or checkclosure,
+    isExecutorClosure = resolvedIsExecutorClosure,
+    isExecutorThread = isexecutorthread,
+    isXClosure = resolvedIsExecutorClosure,
     hookMetaMethod = hookmetamethod or (hookfunction and function(object, method, hook) return hookfunction(getMetatable(object)[method], hook) end),
     readFile = readfile,
     writeFile = writefile,
@@ -86,12 +116,6 @@ local globalMethods = {
     isFile = isfile,
     getCustomAsset = getcustomasset,
 }
-
-if PROTOSMASHER_LOADED then
-    globalMethods.getConstant = function(closure, index)
-        return globalMethods.getConstants(closure)[index]
-    end
-end
 
 local oldGetUpvalue = globalMethods.getUpvalue
 local oldGetUpvalues = globalMethods.getUpvalues
@@ -122,8 +146,11 @@ session = {
     Constants = {
         AssetBaseUrl = sourceBaseUrl .. "assets/ui/",
         IsDevelopment = branch == "dev",
+        IsLocal = not web,
+        LocalRoot = localRoot,
         SourceBaseUrl = sourceBaseUrl,
         SourceBranch = branch,
+        SourceRepositoryUrl = sourceRepositoryUrl,
         Types = {
             ["nil"] = true,
             table = true,
@@ -164,15 +191,15 @@ session = {
             end)
         end
 
-        for original, hook in pairs(session.Hooks) do
-            local hookType = type(hook)
-            if hookType == "function" then
-                cleanup("hook " .. tostring(original), function()
-                    restoreFunction(hook)
+        for owner, target in pairs(session.Hooks) do
+            local targetType = type(target)
+            if targetType == "function" then
+                cleanup("hook " .. tostring(owner), function()
+                    restoreFunction(target)
                 end)
-            elseif hookType == "table" then
-                cleanup("hook " .. tostring(original), function()
-                    restoreFunction(hook.Closure.Data)
+            elseif targetType == "table" then
+                cleanup("hook " .. tostring(owner), function()
+                    restoreFunction(target.Target or target.Closure.Data)
                 end)
             end
         end
@@ -280,7 +307,7 @@ if readFile and writeFile then
                     assets = { loadstring(game:HttpGetAsync(sourceBaseUrl .. asset .. ".lua"), asset .. '.lua')() }
                 end
             else
-                assets = { loadstring(readFile("hydroxide/" .. asset .. ".lua"), asset .. '.lua')() }
+                assets = { loadstring(readFile(localRoot .. "/" .. asset .. ".lua"), asset .. '.lua')() }
             end
 
             importCache[asset] = assets
@@ -309,7 +336,7 @@ if readFile and writeFile then
 
                 assets = { loadstring(content, asset .. '.lua')() }
             else
-                assets = { loadstring(readFile("hydroxide/" .. asset .. ".lua"), asset .. '.lua')() }
+                assets = { loadstring(readFile(localRoot .. "/" .. asset .. ".lua"), asset .. '.lua')() }
             end
 
             importCache[asset] = assets
@@ -325,5 +352,9 @@ useMethods(import("methods/string"))
 useMethods(import("methods/table"))
 useMethods(import("methods/userdata"))
 useMethods(import("methods/environment"))
+
+import("modules/Helpers").attach(session, {
+    import = environment.import,
+})
 
 --import("ui/main")

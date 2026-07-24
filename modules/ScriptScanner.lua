@@ -1,31 +1,53 @@
 local ScriptScanner = {}
 local LocalScript = import("objects/LocalScript")
+local ScannerFilter = import("modules/ScannerFilter")
 
 local requiredMethods = {
-    ["getGc"] = true,
     ["getSenv"] = true,
     ["getProtos"] = true,
     ["getConstants"] = true,
     ["getScriptClosure"] = true,
-    ["isXClosure"] = true
+    ["getScripts"] = true,
+    ["getScriptThread"] = true,
+    ["isExecutorThread"] = true,
 }
 
-local function scan(query)
+local function defaultContext()
+    local methods = getgenv().oh.Methods
+    return {
+        GetScripts = methods.getScripts,
+        GetScriptThread = methods.getScriptThread,
+        GetHiddenProperty = methods.getHiddenProperty,
+        IsInstance = function(value)
+            return typeof(value) == "Instance"
+        end,
+        IsExecutorThread = methods.isExecutorThread,
+        NewLocalScript = LocalScript.new,
+    }
+end
+
+local function scan(query, options, context)
     local scripts = {}
-    query = query or ""
+    query = (query or ""):lower()
+    context = context or defaultContext()
 
-    for _i, v in pairs(getGc()) do
-        if type(v) == "function" and not isXClosure(v) then
-            local script = rawget(getfenv(v), "script")
+    for _index, script in pairs(context.GetScripts()) do
+        if
+            context.IsInstance(script)
+            and script:IsA("LocalScript")
+            and script.Name:lower():find(query, 1, true)
+        then
+            local scriptThread = context.GetScriptThread(script)
+            local filterContext = {
+                GetHiddenProperty = context.GetHiddenProperty,
+                IsExecutor = scriptThread ~= nil and context.IsExecutorThread(scriptThread),
+            }
 
-            if typeof(script) == "Instance" and 
-                not scripts[script] and 
-                script:IsA("LocalScript") and 
-                script.Name:lower():find(query) and
-                getScriptClosure(script) and
-                pcall(function() getsenv(script) end)
-            then
-                scripts[script] = LocalScript.new(script)
+            if ScannerFilter.ShouldInclude(script, options, filterContext) then
+                local success, result = pcall(context.NewLocalScript, script)
+                if success then
+                    scripts[script] = result
+                end
             end
         end
     end

@@ -1,11 +1,14 @@
 local ConstantScanner = {}
 local Closure = import("objects/Closure")
 local Constant = import("objects/Constant")
+local Helpers = import("modules/Helpers")
+local ClosureTools = Helpers.load({ import = import, modules = { "closure" } }).closure
 
 local requiredMethods = {
     ["getGc"] = true,
     ["getInfo"] = true,
-    ["isXClosure"] = true,
+    ["isExecutorClosure"] = true,
+    ["isLClosure"] = true,
     ["getConstant"] = true,
     ["setConstant"] = true,
     ["getConstants"] = true
@@ -28,9 +31,14 @@ end
 
 local function scan(query)
     local constants = {}
+    local helpers = ClosureTools.new({
+        GetGc = getGc,
+        IsExecutorClosure = isExecutorClosure,
+        IsLClosure = isLClosure,
+    })
 
-    for _i, closure in pairs(getGc()) do
-        if type(closure) == "function" and not isXClosure(closure) and isLClosure(closure) and not constants[closure] then
+    helpers.forEachGameClosure(function(closure)
+        if not constants[closure] then
             for index, constant in pairs(getConstants(closure)) do
                 if compareConstant(query, constant) then
                     local storage = constants[closure]
@@ -45,7 +53,7 @@ local function scan(query)
                 end
             end
         end
-    end
+    end)
 
     return constants
 end

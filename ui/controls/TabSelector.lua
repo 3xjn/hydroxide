@@ -8,6 +8,18 @@ local Tabs = Base.Tabs.Container
 local Pages = Base.Body.Pages
 
 local MessageBox, MessageType = import("ui/controls/MessageBox")
+local Tooltip = import("ui/controls/Tooltip")
+
+local tabLabels = {
+    Home = "Home",
+    RemoteSpy = "Remote Spy",
+    SignalSpy = "Signal Spy",
+    ClosureSpy = "Closure Spy",
+    ScriptScanner = "Script Scanner",
+    ModuleScanner = "Module Scanner",
+    UpvalueScanner = "Upvalue Scanner",
+    ConstantScanner = "Constant Scanner",
+}
 
 local requiredMethods = {
     ConstantScanner = import("modules/ConstantScanner").RequiredMethods,
@@ -15,7 +27,8 @@ local requiredMethods = {
     ScriptScanner = import("modules/ScriptScanner").RequiredMethods,
     ModuleScanner = import("modules/ModuleScanner").RequiredMethods,
     ClosureSpy = import("modules/ClosureSpy").RequiredMethods,
-    RemoteSpy = import("modules/RemoteSpy").RequiredMethods
+    RemoteSpy = import("modules/RemoteSpy").RequiredMethods,
+    SignalSpy = import("modules/SignalSpy").RequiredMethods
 }
 
 local constants = {
@@ -101,6 +114,7 @@ for _i, tab in pairs(Tabs:GetChildren()) do
         end)
 
         tab.MouseEnter:Connect(function()
+            Tooltip.Show(tab, tabLabels[tab.Name] or tab.Name)
             if selectedPage ~= Pages:FindFirstChild(tab.Name) then
                 hovered:Play()
                 iconHovered:Play()
@@ -108,6 +122,7 @@ for _i, tab in pairs(Tabs:GetChildren()) do
         end)
 
         tab.MouseLeave:Connect(function()
+            Tooltip.Hide()
             if selectedPage ~= Pages:FindFirstChild(tab.Name) then
                 unselected:Play()
                 iconUnselected:Play()
