@@ -110,6 +110,25 @@ function DrawingModule.new(context)
         return not success or exists ~= false
     end
     local drawing = {}
+    local supportedKinds = {}
+
+    function drawing.supports(kind)
+        local cached = supportedKinds[kind]
+        if cached ~= nil then
+            return cached
+        end
+
+        local object
+        local success = pcall(function()
+            object = context.NewObject(kind)
+        end)
+        local supported = success and object ~= nil
+        if object then
+            pcall(context.DestroyObject, object)
+        end
+        supportedKinds[kind] = supported
+        return supported
+    end
 
     function drawing.createSurface(options)
         options = options or {}
@@ -460,6 +479,9 @@ end
 
 DrawingModule.createSurface = function(...)
     return getDefaultDrawing().createSurface(...)
+end
+DrawingModule.supports = function(...)
+    return getDefaultDrawing().supports(...)
 end
 
 return DrawingModule

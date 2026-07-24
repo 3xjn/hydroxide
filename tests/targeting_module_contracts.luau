@@ -84,6 +84,7 @@ local characters = {
 local distances = {
     [characters[farPlayer]] = 90,
     [characters[nearPlayer]] = 30,
+    [characters[ineligiblePlayer]] = 45,
 }
 local visibleAims = {
     [characters[farPlayer]] = {
@@ -97,6 +98,12 @@ local visibleAims = {
         position = "NearPosition",
         screenPosition = { X = 100, Y = 0 },
         visibility = 0.8,
+    },
+    [characters[ineligiblePlayer]] = {
+        part = "Head",
+        position = "FriendlyPosition",
+        screenPosition = { X = 15, Y = 0 },
+        visibility = 1,
     },
 }
 local observations = {
@@ -112,7 +119,15 @@ local observations = {
         visible = true,
     },
     [characters[nearPlayer]] = {
+        bodyParts = {
+            { name = "Head", visible = true },
+            { name = "UpperTorso", visible = false },
+        },
         bounds = "NearBounds",
+        visible = true,
+    },
+    [characters[ineligiblePlayer]] = {
+        bounds = "FriendlyBounds",
         visible = true,
     },
 }
@@ -176,6 +191,63 @@ assert(#observed == 3, "Every eligible on-screen player must be observed")
 assert(observed[1].player == hiddenPlayer and observed[1].visible == false)
 assert(observed[2].player == farPlayer and observed[2].bounds == "FarBounds")
 assert(observed[3].player == nearPlayer and observed[3].character == characters[nearPlayer])
+assert(
+    #observed[3].bodyParts == 2 and observed[3].bodyParts[1].visible == true,
+    "Targeting observations must preserve per-body-part visibility"
+)
+
+local observedCharacter = targeting.observeCharacter(characters[hiddenPlayer], {
+    screenOrigin = { X = 0, Y = 0 },
+})
+assert(observedCharacter.character == characters[hiddenPlayer])
+assert(observedCharacter.bounds == "HiddenBounds")
+assert(observedCharacter.screenDistance == 5)
+
+local genericNearest = targeting.nearestObservation({
+    {
+        position = "FarGenericPosition",
+        screenDistance = 30,
+        visible = true,
+    },
+    {
+        position = "NearGenericPosition",
+        screenDistance = 5,
+        visible = true,
+    },
+}, {
+    maxScreenDistance = 10,
+})
+assert(
+    genericNearest and genericNearest.position == "NearGenericPosition",
+    "Generic model observations must use the same screen-space selection policy as players"
+)
+
+local scoped = targeting.observePlayers({
+    isEligible = function(player)
+        return player == nearPlayer
+    end,
+})
+assert(#scoped == 1 and scoped[1].player == nearPlayer, "Callers must be able to scope eligible targets")
+
+local overrideObserved = targeting.observePlayers({
+    isEligible = function(player)
+        return player == ineligiblePlayer
+    end,
+})
+assert(
+    #overrideObserved == 1 and overrideObserved[1].player == ineligiblePlayer,
+    "A caller eligibility policy must replace the default team policy"
+)
+
+local overrideNearest = targeting.nearestVisiblePlayer({
+    isEligible = function(player)
+        return player == ineligiblePlayer
+    end,
+})
+assert(
+    overrideNearest and overrideNearest.player == ineligiblePlayer,
+    "Nearest targeting must honor a caller policy that admits a default-ineligible player"
+)
 
 local wallbangNearest = targeting.nearestPlayer({
     includeBlocked = true,

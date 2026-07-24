@@ -96,6 +96,27 @@ local drawing = Drawing.new({
     NewObject = newObject,
 })
 
+local probeCalls = {}
+local probeDestroyCalls = 0
+local capabilityDrawing = Drawing.new({
+    DestroyObject = function(object)
+        probeDestroyCalls += 1
+        object:Destroy()
+    end,
+    NewObject = function(kind)
+        probeCalls[kind] = (probeCalls[kind] or 0) + 1
+        if kind == "Quad" then
+            error("unsupported drawing primitive")
+        end
+        return newObject(kind)
+    end,
+})
+assert(capabilityDrawing.supports("Square") == true)
+assert(capabilityDrawing.supports("Quad") == false)
+assert(capabilityDrawing.supports("Square") == true)
+assert(probeCalls.Square == 1, "Drawing capability probes must be cached per primitive")
+assert(probeDestroyCalls == 1, "Successful drawing capability probes must destroy their object")
+
 local surface = drawing.createSurface()
 local paintedWith
 surface:paint(4, function(renderer)

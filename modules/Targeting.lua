@@ -102,10 +102,66 @@ local function defaultContext()
         return localTeam == nil or playerTeam == nil or playerTeam ~= localTeam
     end
 
+    local function projectPart(camera, part)
+        local halfSize = part.Size / 2
+        local minimumX = math.huge
+        local minimumY = math.huge
+        local maximumX = -math.huge
+        local maximumY = -math.huge
+        local projected = false
+        local localCorners = {
+            Vector3.new(-halfSize.X, -halfSize.Y, -halfSize.Z),
+            Vector3.new(halfSize.X, -halfSize.Y, -halfSize.Z),
+            Vector3.new(halfSize.X, halfSize.Y, -halfSize.Z),
+            Vector3.new(-halfSize.X, halfSize.Y, -halfSize.Z),
+            Vector3.new(-halfSize.X, -halfSize.Y, halfSize.Z),
+            Vector3.new(halfSize.X, -halfSize.Y, halfSize.Z),
+            Vector3.new(halfSize.X, halfSize.Y, halfSize.Z),
+            Vector3.new(-halfSize.X, halfSize.Y, halfSize.Z),
+        }
+        local projectedCorners = {}
+        local allCornersProjected = true
+
+        for index, localPoint in ipairs(localCorners) do
+            local worldPoint = part.CFrame:PointToWorldSpace(localPoint)
+            local viewportPoint = camera:WorldToViewportPoint(worldPoint)
+            if viewportPoint.Z > 0 then
+                projected = true
+                minimumX = math.min(minimumX, viewportPoint.X)
+                minimumY = math.min(minimumY, viewportPoint.Y)
+                maximumX = math.max(maximumX, viewportPoint.X)
+                maximumY = math.max(maximumY, viewportPoint.Y)
+                projectedCorners[index] = Vector2.new(viewportPoint.X, viewportPoint.Y)
+            else
+                allCornersProjected = false
+            end
+        end
+
+        if not projected then
+            return nil
+        end
+
+        local viewportSize = camera.ViewportSize
+        minimumX = math.max(minimumX, 0)
+        minimumY = math.max(minimumY, 0)
+        maximumX = math.min(maximumX, viewportSize.X)
+        maximumY = math.min(maximumY, viewportSize.Y)
+        if maximumX <= minimumX or maximumY <= minimumY then
+            return nil
+        end
+
+        local bounds = {
+            position = Vector2.new(minimumX, minimumY),
+            size = Vector2.new(maximumX - minimumX, maximumY - minimumY),
+        }
+
+        return bounds, allCornersProjected and projectedCorners or nil
+    end
+
     local function getVisibleAim(localPlayer, character)
         local camera = Workspace.CurrentCamera
         if not camera then
-            return nil
+            return nil, {}
         end
 
         local raycastParams = RaycastParams.new()
@@ -117,6 +173,7 @@ local function defaultContext()
         local bestPart
         local bestPosition
         local bestVisibleSamples = 0
+        local bodyParts = {}
 
         for _index, partName in ipairs(partNames) do
             local part = character:FindFirstChild(partName)
@@ -142,6 +199,18 @@ local function defaultContext()
                     end
                 end
 
+                local bounds, corners = projectPart(camera, part)
+                if bounds and partName ~= "HumanoidRootPart" then
+                    table.insert(bodyParts, {
+                        bounds = bounds,
+                        corners = corners,
+                        name = partName,
+                        part = part,
+                        visibility = visibleSamples / #sampleOffsets,
+                        visible = visibleSamples > 0,
+                    })
+                end
+
                 if visibleSamples > bestVisibleSamples then
                     bestPart = part
                     bestPosition = visiblePosition / visibleSamples
@@ -151,16 +220,17 @@ local function defaultContext()
         end
 
         if not bestPart then
-            return nil
+            return nil, bodyParts
         end
 
         local viewportPoint = camera:WorldToViewportPoint(bestPosition)
         return {
-            part = bestPart,
-            position = bestPosition,
-            screenPosition = Vector2.new(viewportPoint.X, viewportPoint.Y),
-            visibility = bestVisibleSamples / #sampleOffsets,
-        }
+                part = bestPart,
+                position = bestPosition,
+                screenPosition = Vector2.new(viewportPoint.X, viewportPoint.Y),
+                visibility = bestVisibleSamples / #sampleOffsets,
+            },
+            bodyParts
     end
 
     local function getDistance(localPlayer, character, position)
@@ -230,7 +300,7 @@ local function defaultContext()
             return nil
         end
 
-        local aim = getVisibleAim(localPlayer, character)
+        local aim, bodyParts = getVisibleAim(localPlayer, character)
         local fallbackPart
         local fallbackPosition
         local fallbackScreenPosition
@@ -262,6 +332,7 @@ local function defaultContext()
         local center = camera:WorldToViewportPoint(worldPosition)
 
         return {
+            bodyParts = bodyParts,
             bounds = {
                 position = Vector2.new(minimumX, minimumY),
                 size = Vector2.new(maximumX - minimumX, maximumY - minimumY),
@@ -309,28 +380,50 @@ function Targeting.new(context)
         return math.sqrt(deltaX * deltaX + deltaY * deltaY)
     end
 
+    local function isPlayerEligible(options, localPlayer, player, character)
+        if options.isEligible then
+            return options.isEligible(player, character)
+        end
+
+        return context.IsEligible(localPlayer, player, character)
+    end
+
+    local function observeCharacter(localPlayer, character, options)
+        local getPlayerObservation = assert(
+            context.GetPlayerObservation,
+            "Targeting observations require GetPlayerObservation"
+        )
+        local source = getPlayerObservation(localPlayer, nil, character, options)
+        if not source or options.maxDistance and source.distance and source.distance > options.maxDistance then
+            return nil
+        end
+
+        local observation = {}
+        for key, value in pairs(source) do
+            observation[key] = value
+        end
+        observation.character = character
+        observation.screenDistance = getScreenDistance(options.screenOrigin, source.screenPosition)
+        return observation
+    end
+
+    function targeting.observeCharacter(character, options)
+        options = options or {}
+        return observeCharacter(context.GetLocalPlayer(), character, options)
+    end
+
     function targeting.observePlayers(options)
         options = options or {}
 
         local localPlayer = context.GetLocalPlayer()
         local observed = {}
-        local getPlayerObservation = assert(
-            context.GetPlayerObservation,
-            "Targeting observations require GetPlayerObservation"
-        )
 
         for _index, player in ipairs(context.GetPlayers()) do
             local character = context.GetCharacter(player)
-            if context.IsEligible(localPlayer, player, character) then
-                local source = getPlayerObservation(localPlayer, player, character, options)
-                if source and (not options.maxDistance or not source.distance or source.distance <= options.maxDistance) then
-                    local observation = {}
-                    for key, value in pairs(source) do
-                        observation[key] = value
-                    end
-                    observation.character = character
+            if isPlayerEligible(options, localPlayer, player, character) then
+                local observation = observeCharacter(localPlayer, character, options)
+                if observation then
                     observation.player = player
-                    observation.screenDistance = getScreenDistance(options.screenOrigin, source.screenPosition)
                     table.insert(observed, observation)
                 end
             end
@@ -347,7 +440,7 @@ function Targeting.new(context)
 
         for _index, player in ipairs(context.GetPlayers()) do
             local character = context.GetCharacter(player)
-            if context.IsEligible(localPlayer, player, character) then
+            if isPlayerEligible(options, localPlayer, player, character) then
                 local aim = context.GetVisibleAim(localPlayer, character, options)
                 if aim then
                     local distance = context.GetDistance(localPlayer, character, aim.position)
@@ -377,11 +470,11 @@ function Targeting.new(context)
         return nearest
     end
 
-    function targeting.nearestPlayer(options)
+    function targeting.nearestObservation(observations, options)
         options = options or {}
         local nearest
 
-        for _index, observation in ipairs(targeting.observePlayers(options)) do
+        for _index, observation in ipairs(observations) do
             if observation.position and (observation.visible or options.includeBlocked) then
                 local metric = observation.screenDistance or observation.distance or math.huge
                 if
@@ -397,6 +490,11 @@ function Targeting.new(context)
         end
 
         return nearest
+    end
+
+    function targeting.nearestPlayer(options)
+        options = options or {}
+        return targeting.nearestObservation(targeting.observePlayers(options), options)
     end
 
     return targeting
@@ -416,6 +514,12 @@ Targeting.nearestVisiblePlayer = function(...)
 end
 Targeting.nearestPlayer = function(...)
     return getDefaultTargeting().nearestPlayer(...)
+end
+Targeting.nearestObservation = function(...)
+    return getDefaultTargeting().nearestObservation(...)
+end
+Targeting.observeCharacter = function(...)
+    return getDefaultTargeting().observeCharacter(...)
 end
 Targeting.observePlayers = function(...)
     return getDefaultTargeting().observePlayers(...)
