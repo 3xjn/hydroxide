@@ -1,20 +1,13 @@
 ## Script
+
+Current development build:
+
 ```lua
-local owner = "3xjn"
-local branch = "master" -- use "dev" for development builds
-
-getgenv().HydroxideConfig = {
-    Owner = owner,
-    Branch = branch
-}
-
-local function webImport(file)
-    return loadstring(game:HttpGetAsync(("https://raw.githubusercontent.com/%s/Hydroxide/%s/%s.lua"):format(owner, branch, file)), file .. '.lua')()
-end
-
-webImport("init")
-webImport("ui/main")
+loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/3xjn/hydroxide/dev/dev.lua"), "dev.lua")()
 ```
+
+That is the complete install and launch path. It downloads the current `dev`
+build and its modules directly from GitHub.
 
 ## Testing local changes with Volt
 
