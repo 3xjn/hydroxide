@@ -2,6 +2,7 @@ local Helpers = {}
 
 local moduleFiles = {
     closure = "Closure",
+    controls = "DrawingControls",
     drawing = "Drawing",
     lifecycle = "Lifecycle",
     remote = "Remote",
