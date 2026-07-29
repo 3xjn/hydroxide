@@ -23,18 +23,6 @@ assert(oh.closure == importedClosure, "Runtime helpers must resolve through Hydr
 assert(oh.closure == importedClosure, "Runtime helper access must be stable")
 assert(importedCount == 1, "Runtime helpers must cache each imported module")
 
-local drawingAsset
-local importedDrawing = {}
-local drawingOh = Helpers.load({
-    import = function(asset)
-        drawingAsset = asset
-        return importedDrawing
-    end,
-    modules = { "drawing" },
-})
-assert(drawingOh.drawing == importedDrawing, "Drawing must use the lowercase oh.drawing consumer interface")
-assert(drawingAsset == "modules/Drawing", "Drawing must resolve through the shared helper loader")
-
 local attachedSession = {
     Constants = {
         Source = "full-session",
@@ -48,9 +36,8 @@ Helpers.attach(attachedSession, {
             Asset = asset,
         }
     end,
-    modules = { "drawing", "lifecycle", "targeting" },
+    modules = { "lifecycle", "targeting" },
 })
-assert(attachedSession.drawing.Asset == "modules/Drawing")
 assert(attachedSession.lifecycle.Asset == "modules/Lifecycle")
 assert(attachedSession.targeting.Asset == "modules/Targeting")
 assert(attachedSession.constants == attachedSession.Constants)
@@ -90,6 +77,10 @@ assert(
 
 local invalidNameSucceeded = pcall(oh.load, "../Closure")
 assert(not invalidNameSucceeded, "Only named Hydroxide helper modules may be loaded")
+local drawingSucceeded = pcall(oh.load, "drawing")
+assert(not drawingSucceeded, "Hydroxide must not expose the removed drawing runtime")
+local controlsSucceeded = pcall(oh.load, "controls")
+assert(not controlsSucceeded, "Hydroxide must not expose the removed drawing controls")
 
 local missingSourceSucceeded = pcall(Helpers.load, {})
 assert(not missingSourceSucceeded, "A helper bundle must declare a real source adapter")
