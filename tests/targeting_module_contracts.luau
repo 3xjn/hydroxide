@@ -42,11 +42,16 @@ function vectorMetatable.__mul(left, right)
     end
     return vector(left.X * right, left.Y * right, left.Z * right)
 end
+function vectorMetatable.__div(left, right)
+    return vector(left.X / right, left.Y / right, left.Z / right)
+end
 function vectorMetatable.__index(value, key)
     if key == "Dot" then
         return function(_self, other)
             return value.X * other.X + value.Y * other.Y + value.Z * other.Z
         end
+    elseif key == "Magnitude" then
+        return math.sqrt(value.X * value.X + value.Y * value.Y + value.Z * value.Z)
     end
 end
 
@@ -275,5 +280,200 @@ assert(fallback and fallback.player == farPlayer, "Hidden players must be skippe
 
 visibleAims[characters[farPlayer]] = nil
 assert(targeting.nearestVisiblePlayer() == nil, "No visible eligible player must return nil")
+
+local localCharacter = {
+    FindFirstChild = function()
+        return nil
+    end,
+}
+local defaultLocalPlayer = {
+    Character = localCharacter,
+    GetAttribute = function()
+        return nil
+    end,
+}
+local targetPart = {
+    Position = vector(10, 10, 10),
+    Size = vector(2, 2, 2),
+}
+targetPart.CFrame = {
+    PointToWorldSpace = function(_cframe, point)
+        return targetPart.Position + point
+    end,
+}
+targetPart.IsA = function(_part, className)
+    return className == "BasePart"
+end
+local targetCharacter = {
+    FindFirstChild = function(_character, name)
+        if name == "Head" then
+            return targetPart
+        end
+        return nil
+    end,
+    FindFirstChildOfClass = function(_character, className)
+        if className == "Humanoid" then
+            return {
+                Health = 100,
+            }
+        end
+        return nil
+    end,
+    GetChildren = function()
+        return {
+            targetPart,
+        }
+    end,
+}
+local targetPlayer = {
+    Character = targetCharacter,
+    GetAttribute = function()
+        return nil
+    end,
+}
+local defaultPlayers = {
+    LocalPlayer = defaultLocalPlayer,
+    GetPlayers = function()
+        return {
+            defaultLocalPlayer,
+            targetPlayer,
+        }
+    end,
+}
+local raycastCalls = {}
+local defaultWorkspace = {
+    CurrentCamera = {
+        ViewportSize = {
+            X = 1000,
+            Y = 1000,
+        },
+        GetRenderCFrame = function()
+            return {
+                Position = vector(0, 0, 0),
+            }
+        end,
+        WorldToViewportPoint = function(_camera, point)
+            return {
+                X = point.X + 100,
+                Y = point.Y + 100,
+                Z = 10,
+            }, true
+        end,
+    },
+    Raycast = function(_workspace, _origin, _direction, params)
+        table.insert(raycastCalls, params.FilterDescendantsInstances)
+        return nil
+    end,
+}
+
+Vector2 = {
+    new = function(x, y)
+        return {
+            X = x,
+            Y = y,
+        }
+    end,
+}
+Vector3 = {
+    new = vector,
+    zero = vector(0, 0, 0),
+}
+Enum = {
+    RaycastFilterType = {
+        Exclude = "Exclude",
+    },
+}
+RaycastParams = {
+    new = function()
+        return {}
+    end,
+}
+game = {
+    GetService = function(_game, name)
+        if name == "Players" then
+            return defaultPlayers
+        elseif name == "Workspace" then
+            return defaultWorkspace
+        end
+        error("Unexpected service: " .. name)
+    end,
+}
+
+local function assertRaycastFilters(expectedIgnore)
+    assert(#raycastCalls == 5, "One body part must retain the five-sample visibility budget")
+    for _index, filter in ipairs(raycastCalls) do
+        assert(filter[1] == localCharacter, "The local character must always remain excluded")
+        assert(#filter == #expectedIgnore + 1, "The visibility filter must contain only unique exclusions")
+        for index, ignored in ipairs(expectedIgnore) do
+            assert(filter[index + 1] == ignored, "Caller exclusions must be merged into visibility raycasts")
+        end
+    end
+end
+
+raycastCalls = {}
+local defaultObservation = Targeting.observeCharacter(targetCharacter)
+assert(defaultObservation and defaultObservation.visible, "Default observation behavior must remain visible")
+assertRaycastFilters({})
+
+local ignoredAccessory = {}
+local ignoredEffect = {}
+local callerIgnore = {
+    [1] = ignoredAccessory,
+    [2] = ignoredAccessory,
+    [4] = ignoredEffect,
+}
+local raycastOptions = {
+    raycastIgnore = callerIgnore,
+}
+
+raycastCalls = {}
+local ignoredObservation = Targeting.observeCharacter(targetCharacter, raycastOptions)
+assert(ignoredObservation and ignoredObservation.visible, "Raycast exclusions must not change projection")
+assertRaycastFilters({
+    ignoredAccessory,
+    ignoredEffect,
+})
+assert(callerIgnore[1] == ignoredAccessory and callerIgnore[2] == ignoredAccessory)
+assert(callerIgnore[3] == nil and callerIgnore[4] == ignoredEffect)
+local callerIgnoreKeyCount = 0
+for _key in pairs(callerIgnore) do
+    callerIgnoreKeyCount = callerIgnoreKeyCount + 1
+end
+assert(callerIgnoreKeyCount == 3, "Targeting must not mutate the caller's raycastIgnore list")
+
+raycastCalls = {}
+local defaultObservedPlayers = Targeting.observePlayers(raycastOptions)
+assert(#defaultObservedPlayers == 1 and defaultObservedPlayers[1].player == targetPlayer)
+assertRaycastFilters({
+    ignoredAccessory,
+    ignoredEffect,
+})
+
+raycastCalls = {}
+local defaultNearest = Targeting.nearestPlayer(raycastOptions)
+assert(defaultNearest and defaultNearest.player == targetPlayer)
+assertRaycastFilters({
+    ignoredAccessory,
+    ignoredEffect,
+})
+
+raycastCalls = {}
+local defaultVisibleNearest = Targeting.nearestVisiblePlayer(raycastOptions)
+assert(defaultVisibleNearest and defaultVisibleNearest.player == targetPlayer)
+assertRaycastFilters({
+    ignoredAccessory,
+    ignoredEffect,
+})
+
+raycastCalls = {}
+local selectionOnly = Targeting.nearestObservation({
+    {
+        distance = 10,
+        position = vector(10, 10, 10),
+        visible = true,
+    },
+}, raycastOptions)
+assert(selectionOnly and selectionOnly.distance == 10)
+assert(#raycastCalls == 0, "Generic observation selection must never consume visibility raycasts")
 
 print("targeting-module-contracts-ok")
