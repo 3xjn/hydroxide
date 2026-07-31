@@ -24,6 +24,27 @@ local partNames = {
     "Right Leg",
 }
 
+local function getRaycastIgnore(localPlayer, options)
+    local ignored = {}
+    local seen = {}
+
+    local function add(instance)
+        if instance and not seen[instance] then
+            seen[instance] = true
+            table.insert(ignored, instance)
+        end
+    end
+
+    add(localPlayer.Character)
+    if options and options.raycastIgnore then
+        for _index, instance in pairs(options.raycastIgnore) do
+            add(instance)
+        end
+    end
+
+    return ignored
+end
+
 function Targeting.getCharacterHitboxParts(character)
     local parts = {}
     for _index, child in ipairs(character:GetChildren()) do
@@ -158,7 +179,7 @@ local function defaultContext()
         return bounds, allCornersProjected and projectedCorners or nil
     end
 
-    local function getVisibleAim(localPlayer, character)
+    local function getVisibleAim(localPlayer, character, options)
         local camera = Workspace.CurrentCamera
         if not camera then
             return nil, {}
@@ -166,7 +187,7 @@ local function defaultContext()
 
         local raycastParams = RaycastParams.new()
         raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-        raycastParams.FilterDescendantsInstances = localPlayer.Character and { localPlayer.Character } or {}
+        raycastParams.FilterDescendantsInstances = getRaycastIgnore(localPlayer, options)
         raycastParams.IgnoreWater = true
 
         local origin = camera:GetRenderCFrame().Position
@@ -300,7 +321,7 @@ local function defaultContext()
             return nil
         end
 
-        local aim, bodyParts = getVisibleAim(localPlayer, character)
+        local aim, bodyParts = getVisibleAim(localPlayer, character, options)
         local fallbackPart
         local fallbackPosition
         local fallbackScreenPosition
