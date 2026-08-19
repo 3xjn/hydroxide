@@ -6,6 +6,7 @@ local otherScript = { Parent = {} }
 local orphanedScript = { Parent = nil }
 
 local function targetClosure() end
+local function secondTargetClosure() end
 local function otherClosure() end
 local function executorClosure() end
 local function cClosure() end
@@ -13,12 +14,14 @@ local function nestedClosure() end
 
 local environments = {
     [targetClosure] = { script = targetScript },
+    [secondTargetClosure] = { script = targetScript },
     [otherClosure] = { script = otherScript },
     [executorClosure] = { script = targetScript },
     [cClosure] = { script = targetScript },
 }
 local names = {
     [targetClosure] = "Shoot",
+    [secondTargetClosure] = "Other",
     [otherClosure] = "Shoot",
 }
 local constants = {
@@ -28,6 +31,7 @@ local constants = {
 }
 local upvalueCounts = {
     [targetClosure] = 4,
+    [secondTargetClosure] = 1,
     [otherClosure] = 4,
 }
 local expectedUpvalue = {
@@ -125,7 +129,7 @@ local batchHelper = Closure.new({
     end,
     GetGc = function()
         gcTraversals += 1
-        return { targetClosure, otherClosure }
+        return { targetClosure, secondTargetClosure, otherClosure }
     end,
     GetInfo = function(value)
         return { name = names[value] }
@@ -144,9 +148,9 @@ local batchHelper = Closure.new({
 })
 local batch = batchHelper.searchClosures(targetScript, {
     shoot = { name = "Shoot", upvalueIndex = 4 },
-    missing = { name = "Reload", upvalueIndex = 1 },
+    other = { name = "Other", upvalueIndex = 1 },
 })
-assert(batch.shoot == targetClosure and batch.missing == nil)
+assert(batch.shoot == targetClosure and batch.other == secondTargetClosure)
 assert(gcTraversals == 1, "Batch closure search must traverse getgc once")
 
 assert(

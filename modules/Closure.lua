@@ -146,7 +146,10 @@ function Closure.new(context)
                     remaining -= 1
                 end
             end
-            return remaining > 0 and nil or false
+            if remaining == 0 then
+                return false
+            end
+            return nil
         end)
         return found
     end
