@@ -115,6 +115,40 @@ local found = helper.searchClosure(targetScript, "Shoot", 4, {
 })
 assert(found == targetClosure, "Closure search must combine script, name, upvalue, and constant evidence")
 
+local gcTraversals = 0
+local batchHelper = Closure.new({
+    GetConstants = function(value)
+        return constants[value]
+    end,
+    GetEnvironment = function(value)
+        return environments[value]
+    end,
+    GetGc = function()
+        gcTraversals += 1
+        return { targetClosure, otherClosure }
+    end,
+    GetInfo = function(value)
+        return { name = names[value] }
+    end,
+    GetUpvalue = function(value, index)
+        if index > upvalueCounts[value] then
+            error("upvalue does not exist")
+        end
+    end,
+    IsExecutorClosure = function()
+        return false
+    end,
+    IsLClosure = function()
+        return true
+    end,
+})
+local batch = batchHelper.searchClosures(targetScript, {
+    shoot = { name = "Shoot", upvalueIndex = 4 },
+    missing = { name = "Reload", upvalueIndex = 1 },
+})
+assert(batch.shoot == targetClosure and batch.missing == nil)
+assert(gcTraversals == 1, "Batch closure search must traverse getgc once")
+
 assert(
     helper.searchClosure(targetScript, "Shoot", 5, constants[targetClosure]) == nil,
     "Closure search must reject a missing upvalue"

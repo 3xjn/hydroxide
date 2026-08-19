@@ -122,6 +122,35 @@ function Closure.new(context)
         return found
     end
 
+    function helper.searchClosures(script, queries)
+        local getInfo = requireMethod(context, "GetInfo")
+        local getUpvalue = requireMethod(context, "GetUpvalue")
+        local found = {}
+        local remaining = 0
+        for _key in pairs(queries or {}) do
+            remaining += 1
+        end
+
+        helper.forEachGameClosure(function(closure)
+            if not matchesScript(closure, script) then
+                return
+            end
+            local closureName = getInfo(closure).name
+            for key, query in pairs(queries or {}) do
+                if found[key] == nil
+                    and (not query.name or query.name == closureName)
+                    and (not query.upvalueIndex or pcall(getUpvalue, closure, query.upvalueIndex))
+                    and matchesConstants(closure, query.constants)
+                then
+                    found[key] = closure
+                    remaining -= 1
+                end
+            end
+            return remaining > 0 and nil or false
+        end)
+        return found
+    end
+
     function helper.findStringConstants(script, pattern)
         local getConstants = requireMethod(context, "GetConstants")
         local getProtos = requireMethod(context, "GetProtos")
@@ -221,6 +250,9 @@ Closure.findUpvalue = function(...)
 end
 Closure.searchClosure = function(...)
     return getDefaultHelper().searchClosure(...)
+end
+Closure.searchClosures = function(...)
+    return getDefaultHelper().searchClosures(...)
 end
 
 return Closure
