@@ -20,12 +20,17 @@ local eventCallback
 -- Define as global function in order to reduce upvalue count in hooks
 function log(hook, callingScript, ...)
     local vargs = {...}
-    
-    if eventCallback and not hook:AreArgsIgnored(vargs) then
-        local call = {
-            script = callingScript,
-            args = vargs
-        }
+
+    if hook.Ignored or hook:AreArgsIgnored(vargs) then
+        return
+    end
+
+    local call = {
+        script = callingScript,
+        args = vargs
+    }
+    table.insert(hook.Logs, call)
+    if eventCallback then
         eventCallback(hook, call)
     end
 end
@@ -194,6 +199,51 @@ function Hook.decrementCalls(hook, vargs)
     table.remove(logs, table.find(logs, vargs))
 end
 
+function ClosureSpy.GetScript(closure, context)
+    context = context or {}
+    local data = type(closure) == "table" and closure.Data or closure
+    local getEnvironment = context.GetEnvironment or getfenv
+    local succeeded, environment = pcall(getEnvironment, data)
+    if not succeeded or type(environment) ~= "table" then
+        return nil
+    end
+
+    local script = rawget(environment, "script")
+    local isInstance = context.IsInstance
+        or function(value)
+            return typeof(value) == "Instance"
+        end
+    if script ~= nil and isInstance(script) then
+        return script
+    end
+
+    return nil
+end
+
+function ClosureSpy.GetScriptPath(closure, context)
+    local script = ClosureSpy.GetScript(closure, context)
+    if not script then
+        return nil
+    end
+
+    local getPath = context and context.GetInstancePath
+    if not getPath then
+        getPath = getgenv().getInstancePath
+    end
+    return getPath(script)
+end
+
+function ClosureSpy.List()
+    local hooks = {}
+    for _data, hook in pairs(hookMap) do
+        if hook.Target then
+            table.insert(hooks, hook)
+        end
+    end
+    return hooks
+end
+
+ClosureSpy.Hooks = hookMap
 ClosureSpy.Hook = Hook
 ClosureSpy.SetEvent = setEvent
 ClosureSpy.RequiredMethods = requiredMethods

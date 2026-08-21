@@ -243,6 +243,16 @@ else
     end
 end
 
+local ScriptGraph = import("modules/ScriptGraph")
+
+function RemoteSpy.CallsFrom(scriptInstance, remotes)
+    return ScriptGraph.CallsFrom(scriptInstance, remotes or currentRemotes)
+end
+
+function RemoteSpy.DescribeCall(call, context)
+    return ScriptGraph.DescribeCall(call, context)
+end
+
 RemoteSpy.RemotesViewing = remotesViewing
 RemoteSpy.CurrentRemotes = currentRemotes
 RemoteSpy.ConnectEvent = connectEvent

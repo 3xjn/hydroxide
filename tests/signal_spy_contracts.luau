@@ -169,6 +169,15 @@ assert(
 )
 
 subscription:Disconnect()
+
+local other = instance("Other", "Part", "Workspace.Other")
+local committed = registry:Get()
+local preview = registry:Summarize(other)
+assert(preview.Target.Name == "Other", "Summarize must describe a target without opening it in the UI")
+assert(preview.Signals[1].Name == "Changed", "Summarize must reuse the same signal discovery as Inspect")
+assert(registry:Get() == committed, "Summarize must not replace the inspected Signal Spy snapshot")
+assert(registry:Get().Target.Name == "Target", "The person's current Signal Spy target must stay selected")
+
 registry:Destroy()
 assert(registry:Inspect(target).Revision == 2, "Destroyed registries must reject later inspections")
 

@@ -31,9 +31,10 @@ local signalContext = ContextMenuButton.new(nil, "Inspect Signals")
 moduleList:BindContextMenu(ContextMenu.new({ pathContext, signalContext }))
 
 pathContext:SetCallback(function()
-    local selectedInstance = selectedLog.ModuleScript.Instance
+    local description = ScannerResults.Describe(selectedLog.ModuleScript)
+    local selectedInstance = description.Instance
 
-    setClipboard(getInstancePath(selectedInstance))
+    setClipboard(description.Path)
     MessageBox.Show("Success", ("%s's path was copied to your clipboard."):format(selectedInstance.Name), MessageType.OK)
 end)
 

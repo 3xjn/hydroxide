@@ -7,7 +7,10 @@ This bridge lets Codex inspect the Roblox client currently attached to Volt. It 
 - an authenticated Volt auto-execute agent;
 - Volt's documented script inventory and decompiler functions.
 
-It does not load the Hydroxide UI and does not use RakNet.
+It does not load the Hydroxide UI, does not catalog Hydroxide scanners or spies,
+and does not use RakNet. Hydroxide's own module methods (`oh.Api`) stay in the
+Roblox session so a person can click the UI while an in-session script calls the
+same APIs.
 
 ## 1. Choose a shared token
 

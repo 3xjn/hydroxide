@@ -13,6 +13,7 @@ local CheckBox = import("ui/controls/CheckBox")
 local Dropdown = import("ui/controls/Dropdown")
 local List, ListButton = import("ui/controls/List")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
+local ScriptGraph = import("modules/ScriptGraph")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
 local VisualAssets = import("ui/assets")
 
@@ -795,9 +796,13 @@ end)
 
 callingScriptContext:SetCallback(function()
     local oldStatus = oh.getStatus()
+    local description = ScriptGraph.DescribeCall({
+        script = selected.callingScript,
+        args = selected.args,
+    })
 
     oh.setStatus("Copying " .. selected.callingScript.Name .. "'s path")
-    setClipboard(getInstancePath(selected.callingScript))
+    setClipboard(description.ScriptPath)
     wait(0.25)
     oh.setStatus(oldStatus)
 end)

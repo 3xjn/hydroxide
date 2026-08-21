@@ -100,9 +100,10 @@ local inspectSourceSignalsContext = ContextMenuButton.new(nil, "Inspect Script S
 sourceList:BindContextMenu(ContextMenu.new({ copySourcePathContext, inspectSourceSignalsContext }))
 
 pathContext:SetCallback(function()
-    local selectedInstance = selected.logContext.LocalScript.Instance
+    local description = ScannerResults.Describe(selected.logContext.LocalScript)
+    local selectedInstance = description.Instance
 
-    setClipboard(getInstancePath(selectedInstance))
+    setClipboard(description.Path)
     MessageBox.Show("Success", ("%s's path was copied to your clipboard."):format(selectedInstance.Name), MessageType.OK)
 end)
 
@@ -152,8 +153,7 @@ end)
 copyProtoNameContext:SetCallback(function()
     local proto = selected.proto
     if proto then
-        local functionName = getInfo(proto.Value).name or ""
-        copyValue(functionName ~= "" and functionName or "Unnamed function", "Function name")
+        copyValue(proto.Name or ScannerResults.ClosureName(proto.Value), "Function name")
     end
 end)
 
@@ -173,6 +173,11 @@ end)
 
 copyEnvironmentPathContext:SetCallback(function()
     local environment = selected.environment
+    if environment and environment.Path then
+        copyValue(environment.Path, "Instance path")
+        return
+    end
+
     local instance = environment and requireSelectedInstance(environment.Value)
     if instance then
         copyValue(getInstancePath(instance), "Instance path")
@@ -190,7 +195,7 @@ end)
 copySourcePathContext:SetCallback(function()
     local source = selected.source
     if source then
-        copyValue(getInstancePath(source.Instance), "Script path")
+        copyValue(source.Path or getInstancePath(source.Instance), "Script path")
     end
 end)
 
@@ -201,14 +206,13 @@ inspectSourceSignalsContext:SetCallback(function()
     end
 end)
 
-local function createProto(index, value)
+local function createProto(index, value, functionName)
     local instance = Assets.ProtoPod:Clone()
     local information = instance.Information
-    local functionName = getInfo(value).name or ''
+    functionName = functionName or ScannerResults.ClosureName(value)
     local indexWidth = TextService:GetTextSize(index, 18, "SourceSans", constants.textWidth).X + 8
 
-    if functionName == '' then
-        functionName = "Unnamed function"
+    if functionName == "Unnamed function" then
         information.Label.TextColor3 = oh.Constants.Syntax["unnamed_function"]
     end
     
@@ -222,11 +226,11 @@ local function createProto(index, value)
 
     local listButton = ListButton.new(instance, protosList)
     listButton:SetRightCallback(function()
-        selected.proto = { Index = index, Value = value }
+        selected.proto = { Index = index, Value = value, Name = functionName }
     end)
 end
 
-local function createConstant(index, value)
+local function createConstant(index, value, described)
     local instance = Assets.ConstantPod:Clone()
     local information = instance.Information
     local valueType = type(value)
@@ -240,16 +244,15 @@ local function createConstant(index, value)
     information.Label.Position = UDim2.new(0, indexWidth + 20, 0, 0)
 
     if valueType == "function" then
-        local functionName = getInfo(value).name or ''
+        local functionName = described and described.Name or ScannerResults.ClosureName(value)
 
-        if functionName == '' then
-            functionName = "Unnamed function"
+        if functionName == "Unnamed function" then
             information.Label.TextColor3 = oh.Constants.Syntax["unnamed_function"]
         end
         
         information.Label.Text = functionName
     else
-        information.Label.Text = toString(value)
+        information.Label.Text = described and described.Text or toString(value)
     end
     
     local listButton = ListButton.new(instance, constantsList)
@@ -277,15 +280,15 @@ local function createValueEntry(list, index, value, onRightClick)
     listButton:SetRightCallback(onRightClick)
 end
 
-local function createEnvironment(key, value)
+local function createEnvironment(key, value, described)
     createValueEntry(environmentList, key, value, function()
-        selected.environment = { Key = key, Value = value }
+        selected.environment = described or { Key = key, Value = value }
     end)
 end
 
-local function createSource(scriptInstance)
-    createValueEntry(sourceList, "Path", getInstancePath(scriptInstance), function()
-        selected.source = { Instance = scriptInstance }
+local function createSource(scriptInstance, path)
+    createValueEntry(sourceList, "Path", path, function()
+        selected.source = { Instance = scriptInstance, Path = path }
     end)
 end
 
@@ -345,19 +348,22 @@ function Log.new(localScript, layoutOrder)
             InfoScript.Label.Size = UDim2.new(0, nameLength, 0, 20)
             InfoScript.Position = UDim2.new(1, -nameLength, 0, 0)
 
-            for i,v in pairs(localScript.Protos) do
-                createProto(i, v)
+            local description = ScannerResults.Describe(localScript)
+            log.Description = description
+
+            for _, proto in ipairs(description.Protos) do
+                createProto(proto.Index, proto.Value, proto.Name)
             end 
 
-            for i,v in pairs(localScript.Constants) do
-                createConstant(i, v)
+            for _, constant in ipairs(description.Constants) do
+                createConstant(constant.Index, constant.Value, constant)
             end
 
-            for key, value in pairs(localScript.Environment) do
-                createEnvironment(key, value)
+            for _, environment in ipairs(description.Environment) do
+                createEnvironment(environment.Key, environment.Value, environment)
             end
 
-            createSource(scriptInstance)
+            createSource(scriptInstance, description.Path)
 
             protosList:Recalculate()
             constantsList:Recalculate()

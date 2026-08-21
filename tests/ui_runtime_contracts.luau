@@ -140,6 +140,8 @@ assert(not themeSource:find("StatusBarHeight", 1, true), "The removed status bar
 assert(not themeSource:find("styleSurface(base.Status", 1, true), "The theme must not expect a removed status bar")
 assert(not mainSource:find("Base.Status", 1, true), "The status API must not depend on removed UI")
 assert(mainSource:find('local currentStatus = "Home Page"', 1, true), "Transient status state must remain available to feature modules")
+assert(mainSource:find("oh.Api = {", 1, true), "In-session agents must share the same Hydroxide methods as the UI")
+assert(mainSource:find("ScriptGraph = import(\"modules/ScriptGraph\")", 1, true), "The session API must expose the script relationship graph")
 assert(runtimeSource:find('local homeContent = frame("Content", home', 1, true), "Home content must use one responsive composition container")
 assert(not runtimeSource:find("listLayout(homeContent", 1, true), "Home geometry must update synchronously during live resize")
 assert(runtimeSource:find("local homeLogoY = 32 + Theme.Layout.HomeGap", 1, true), "Home elements must use deterministic vertical spacing")
