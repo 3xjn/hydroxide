@@ -14,6 +14,6 @@ Before pushing, we can run the same command as CI:
 bash scripts/check.sh
 ```
 
-The command performs four checks: the real context-menu source must pass strict analysis, an intentionally invalid `ImageButton.TextWrapped` fixture must fail for the expected reason, the Lune UI/runtime contracts must pass, and stale-session shutdown must remain non-fatal. Roblox API definitions are downloaded from the commit matching the pinned `luau-lsp` release and verified by SHA-256 before use.
+The command typechecks with `luau-lsp`, rejects the invalid `ImageButton.TextWrapped` fixture, and runs `tests/*_contracts.luau` with Lune. Roblox API definitions are pinned at [`types/roblox.d.luau`](roblox.d.luau) from [luau-lsp 1.62.0](https://github.com/JohnnyMorganz/luau-lsp/blob/cfa5c378c6370f0eca852910e6fbdf8e4d8921c6/scripts/globalTypes.d.luau).
 
 For editor support, add `_Index/volt/volt.d.luau` and `types/hydroxide.d.luau` as custom definitions in the Luau plugin. Dynamic Volt values whose documented shape is incomplete remain `any` so diagnostics stay useful without inventing runtime contracts.

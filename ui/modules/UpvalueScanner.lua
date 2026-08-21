@@ -16,6 +16,7 @@ local Prompt = import("ui/controls/Prompt")
 local CheckBox = import("ui/controls/CheckBox")
 local Dropdown = import("ui/controls/Dropdown")
 local List, ListButton = import("ui/controls/List")
+local QueryBar = import("ui/controls/QueryBar")
 local TabSelector = import("ui/controls/TabSelector")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
@@ -28,9 +29,11 @@ local Assets = Runtime.GetTemplates().UpvalueScanner
 local Prompts = Base.Prompts
 local Page = Base.Body.Pages.UpvalueScanner
 
-local Query = Page.Query
-local Search = Query.Search
-local SearchBox = Query.Query
+local Query = QueryBar.new(Page.Query, {
+    placeholder = "Search captured value or closure name...",
+    action = "search",
+    actionLabel = "Search",
+})
 local Filters = Page.Filters
 local ResultsClip = Page.Results.Clip
 local ResultStatus = ResultsClip.ResultStatus
@@ -275,7 +278,7 @@ function Log.update(log)
 end
 
 local function addUpvalues()
-    local query = SearchBox.Text
+    local query = Query:GetText()
 
     if query:gsub(' ', '') ~= '' then
         if not tonumber(query) and query:len() <= 1 then
@@ -309,7 +312,7 @@ local function addUpvalues()
         MessageBox.Show("Invalid query", "Your query is too short", MessageType.OK)
     end
 
-    SearchBox.Text = ""
+    Query:SetText("")
 end
 
 upvalueList:BindContextMenu(closureContextMenu)
@@ -322,11 +325,9 @@ deepSearch:SetCallback(function(enabled)
     end
 end)
 
-Search.MouseButton1Click:Connect(addUpvalues)
-SearchBox.FocusLost:Connect(function(returned)
-    if returned then
-        addUpvalues()
-    end
+Query:OnAction(addUpvalues)
+Query:OnSubmit(function()
+    addUpvalues()
 end)
 
 local function setValue(valueText, value, dropdown)

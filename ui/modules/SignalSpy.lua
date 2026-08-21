@@ -9,6 +9,7 @@ end
 local ClosureSpy = import("modules/ClosureSpy")
 local Closure = import("objects/Closure")
 local List, ListButton = import("ui/controls/List")
+local QueryBar = import("ui/controls/QueryBar")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
 local MessageBox = import("ui/controls/MessageBox")
 local TabSelector = import("ui/controls/TabSelector")
@@ -19,12 +20,15 @@ local Page = Runtime.GetInterface().Base.Body.Pages.SignalSpy
 local Assets = Runtime.GetTemplates().SignalSpy
 local State = oh.State.SignalSpy
 local Target = Page.Target
-local TargetQuery = Page.TargetQuery
-local TargetPath = TargetQuery.Path
-local Inspect = TargetQuery.Inspect
-local Query = Page.Query
-local Search = Query.Search
-local Refresh = Query.Refresh
+local TargetQuery = QueryBar.new(Page.TargetQuery, {
+    placeholder = 'Instance path, e.g. game:GetService("Players").LocalPlayer',
+    action = "inspect",
+    actionLabel = "Inspect",
+})
+local Query = QueryBar.new(Page.Query, {
+    placeholder = "Filter events...",
+    action = "refresh",
+})
 local ResultsClip = Page.Results.Clip
 local Results = ResultsClip.Content
 local ResultStatus = ResultsClip.ResultStatus
@@ -104,7 +108,7 @@ local function render(snapshot)
         Target.Path.Text = "Open an instance from another tool"
     end
 
-    local query = Search.Text:lower()
+    local query = Query:GetText():lower()
     local renderedRows = 0
 
     for _, signal in ipairs(snapshot.Signals) do
@@ -168,16 +172,15 @@ spyClosureContext:SetCallback(function()
     end
 end)
 
-oh.Events.SignalSpySearch = Search:GetPropertyChangedSignal("Text"):Connect(function()
+Query:OnChange(function()
     render(State:Get())
 end)
-
-oh.Events.SignalSpyRefresh = Refresh.MouseButton1Click:Connect(function()
+Query:OnAction(function()
     State:Refresh()
 end)
 
 local function inspectPath()
-    local instance, resolveError = InstancePath.Resolve(TargetPath.Text, {
+    local instance, resolveError = InstancePath.Resolve(TargetQuery:GetText(), {
         Game = game,
         Workspace = workspace,
         GetService = function(name)
@@ -196,19 +199,19 @@ local function inspectPath()
         return
     end
 
-    TargetPath.Text = getInstancePath(instance)
+    TargetQuery:SetText(getInstancePath(instance))
     State:Inspect(instance)
 end
 
-oh.Events.SignalSpyInspect = Inspect.MouseButton1Click:Connect(inspectPath)
-oh.Events.SignalSpyTargetPath = TargetPath.FocusLost:Connect(function(returned)
-    if returned then
-        inspectPath()
-    end
+TargetQuery:OnSubmit(function()
+    inspectPath()
+end)
+TargetQuery:OnAction(function()
+    inspectPath()
 end)
 
 function SignalSpy.Open(instance)
-    TargetPath.Text = getInstancePath(instance)
+    TargetQuery:SetText(getInstancePath(instance))
     State:Inspect(instance)
     return TabSelector.SelectTab("SignalSpy")
 end

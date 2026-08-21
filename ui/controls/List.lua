@@ -1,143 +1,207 @@
 local UserInput = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local Theme = import("ui/theme")
+local RunService = game:GetService("RunService")
+local Prism = import("ui/prism")
 
 local List = {}
 local ListButton = {}
 
 local lists = {}
 local ctrlHeld = false
-local constants = {
-    tweenTime = TweenInfo.new(0.15),
-    selected = Theme.Colors.AccentSurface,
-    deselected = Theme.Colors.Elevated
-}
+
+local function textOf(instance)
+    if instance and (instance:IsA("TextLabel") or instance:IsA("TextButton") or instance:IsA("TextBox")) then
+        return instance.Text
+    end
+    return nil
+end
+
+local function childText(instance, name)
+    local child = instance:FindFirstChild(name, true)
+    return textOf(child)
+end
+
+local function describeRow(instance, selected)
+    local title = childText(instance, "Name") or childText(instance, "Label") or childText(instance, "Index") or instance.Name
+    local subtitle = childText(instance, "Signature") or childText(instance, "Flags") or childText(instance, "Value") or childText(instance, "Relationship")
+    if subtitle == title then
+        subtitle = childText(instance, "Path")
+    end
+    local meta = childText(instance, "Calls") or childText(instance, "Connections")
+    if not meta then
+        local protos = childText(instance, "Protos")
+        local constants = childText(instance, "Constants")
+        if protos or constants then
+            meta = table.concat({ protos or "0", constants or "0" }, " / ")
+        end
+    end
+    local indent = 0
+    if string.find(instance.Name, "Connection", 1, true) or string.sub(tostring(childText(instance, "Index") or ""), 1, 1) == "↳" then
+        indent = 1
+    end
+    return {
+        id = tostring(instance),
+        title = title,
+        subtitle = subtitle,
+        meta = meta,
+        selected = selected == true,
+        indent = indent,
+        visible = instance.Visible,
+    }
+end
+
+local function selectedSet(list)
+    local selected = {}
+    if list.Selected then
+        for _, listButton in pairs(list.Selected) do
+            selected[listButton] = true
+        end
+    end
+    return selected
+end
+
+local function sync(list)
+    local selected = selectedSet(list)
+    local rows = {}
+    for _, instance in ipairs(list.Order) do
+        local listButton = list.Buttons[instance]
+        if listButton and instance.Parent then
+            table.insert(rows, describeRow(instance, selected[listButton] == true))
+        end
+    end
+    list.Handle.update({
+        kind = "list",
+        rows = rows,
+        emptyText = list.EmptyText,
+        onPress = function(id)
+            for instance, listButton in pairs(list.Buttons) do
+                if tostring(instance) == id then
+                    if not ctrlHeld and listButton.Callback then
+                        listButton.Callback()
+                    elseif list.MultiClickEnabled and ctrlHeld then
+                        if not list.Selected then
+                            list.Selected = {}
+                        end
+                        if listButton.SelectedCallback then
+                            listButton.SelectedCallback()
+                        end
+                        local foundButton = table.find(list.Selected, listButton)
+                        if not foundButton then
+                            table.insert(list.Selected, listButton)
+                        else
+                            table.remove(list.Selected, foundButton)
+                        end
+                        sync(list)
+                    end
+                    return
+                end
+            end
+        end,
+        onRightPress = function(id)
+            for instance, listButton in pairs(list.Buttons) do
+                if tostring(instance) == id then
+                    if not ctrlHeld and listButton.RightCallback then
+                        listButton.RightCallback()
+                    end
+                    if list.BoundContextMenuSelected and list.Selected then
+                        list.BoundContextMenuSelected:Show()
+                    elseif list.BoundContextMenu and not list.Selected then
+                        list.BoundContextMenu:Show()
+                    end
+                    return
+                end
+            end
+        end,
+    })
+    list.Dirty = false
+end
+
+local function storageFor(host)
+    local parent = host.Parent
+    local storage = parent and parent:FindFirstChild("RowStorage")
+    if storage then
+        return storage
+    end
+    storage = Instance.new("Folder")
+    storage.Name = "RowStorage"
+    storage.Parent = parent or host
+    return storage
+end
 
 function List.new(instance, multiClick)
     local list = {}
-
-    instance.CanvasSize = UDim2.new(0, 0, 0, 15)
-
     list.Buttons = {}
+    list.Order = {}
     list.Instance = instance
+    list.Storage = storageFor(instance)
     list.Clear = List.clear
     list.Recalculate = List.recalculate
     list.BindContextMenu = List.bindContextMenu
     list.BindContextMenuSelected = List.bindContextMenuSelected
     list.MultiClickEnabled = multiClick
-
+    list.Handle = Prism.mount(instance, { kind = "list", rows = {} })
     table.insert(lists, list)
-
     return list
+end
+
+local function watch(instance, list)
+    instance:GetPropertyChangedSignal("Visible"):Connect(function()
+        list.Dirty = true
+    end)
+    instance.DescendantAdded:Connect(function(descendant)
+        list.Dirty = true
+        if descendant:IsA("TextLabel") or descendant:IsA("TextButton") then
+            descendant:GetPropertyChangedSignal("Text"):Connect(function()
+                list.Dirty = true
+            end)
+        end
+    end)
+    for _, descendant in ipairs(instance:GetDescendants()) do
+        if descendant:IsA("TextLabel") or descendant:IsA("TextButton") then
+            descendant:GetPropertyChangedSignal("Text"):Connect(function()
+                list.Dirty = true
+            end)
+        end
+    end
 end
 
 function ListButton.new(instance, list)
     local listButton = {}
-    local listInstance = list.Instance
-
     list.Buttons[instance] = listButton
-
-    if instance.Visible then
-        listInstance.CanvasSize = listInstance.CanvasSize + UDim2.new(0, 0, 0, instance.AbsoluteSize.Y + 5)
-    end
-
-    instance.Parent = listInstance
-    instance.MouseButton1Click:Connect(function()
-        if not ctrlHeld and listButton.Callback then
-            listButton.Callback()
-        elseif list.MultiClickEnabled and ctrlHeld then
-            if not list.Selected then
-                list.Selected = {}
-            end
-
-            if listButton.SelectedCallback then
-                listButton.SelectedCallback()
-            end
-
-            local foundButton = table.find(list.Selected, listButton)
-
-            if not foundButton then
-                table.insert(list.Selected, listButton)
-                listButton.SelectAnimation:Play()
-            else
-                table.remove(list.Selected, foundButton)
-                listButton.DeselectAnimation:Play()
-            end
-        end
-    end)
-
-    instance.MouseButton2Click:Connect(function()
-        if not ctrlHeld and listButton.RightCallback then
-            listButton.RightCallback()
-        end
-    end)
-
+    table.insert(list.Order, instance)
+    instance.Parent = list.Storage
+    watch(instance, list)
     listButton.List = list
     listButton.Instance = instance
     listButton.SetCallback = ListButton.setCallback
     listButton.SetRightCallback = ListButton.setRightCallback
     listButton.SetSelectedCallback = ListButton.setSelectedCallback
     listButton.Remove = ListButton.remove
-    listButton.SelectAnimation = TweenService:Create(instance, constants.tweenTime, { BackgroundColor3 = constants.selected })
-    listButton.DeselectAnimation = TweenService:Create(instance, constants.tweenTime, { BackgroundColor3 = constants.deselected })
+    list.Dirty = true
     return listButton
 end
 
 function List.clear(list)
-    local instance = list.Instance
-
-    for _i, listButton in pairs(instance:GetChildren()) do
-        if listButton:IsA("ImageButton") then
-            listButton:Destroy()
-        end
+    for instance in pairs(list.Buttons) do
+        instance:Destroy()
     end
-
-    instance.CanvasSize = UDim2.new(0, 0, 0, 15)
     list.Buttons = {}
+    list.Order = {}
+    list.Selected = nil
+    sync(list)
 end
 
 function List.recalculate(list)
-    local newHeight = 15
-
-    for instance in pairs(list.Buttons) do
-        if instance.Visible then
-            newHeight = newHeight + instance.AbsoluteSize.Y + 5
-        end
-    end
-
-    list.Instance.CanvasSize = UDim2.new(0, 0, 0, newHeight)
+    sync(list)
 end
 
 function List.bindContextMenu(list, contextMenu)
-    if not list.BoundContextMenu then
-        local function showContextMenu()
-            if not list.Selected then
-                contextMenu:Show()
-            end
-        end
-
-        list.Instance.ChildAdded:Connect(function(instance)
-            instance.MouseButton2Click:Connect(showContextMenu)
-        end)
-
-        list.BoundContextMenu = contextMenu
-    end
+    list.BoundContextMenu = contextMenu
+    sync(list)
 end
 
 function List.bindContextMenuSelected(list, contextMenu)
-    if not list.BoundContextMenuSelected then
-        local function showContextMenu()
-            if list.Selected then
-                contextMenu:Show()
-            end
-        end
-
-        list.Instance.ChildAdded:Connect(function(instance)
-            instance.MouseButton2Click:Connect(showContextMenu)
-        end)
-
-        list.BoundContextMenuSelected = contextMenu
-    end
+    list.BoundContextMenuSelected = contextMenu
+    sync(list)
 end
 
 function ListButton.setCallback(listButton, callback)
@@ -155,12 +219,15 @@ end
 function ListButton.remove(listButton)
     local list = listButton.List
     local instance = listButton.Instance
-    local listInstance = list.Instance
-
-    listInstance.CanvasSize = listInstance.CanvasSize - UDim2.new(0, 0, 0, instance.AbsoluteSize.Y + 5)
-    list.Buttons[instance] = nil 
-
+    list.Buttons[instance] = nil
+    for index, ordered in ipairs(list.Order) do
+        if ordered == instance then
+            table.remove(list.Order, index)
+            break
+        end
+    end
     instance:Destroy()
+    sync(list)
 end
 
 oh.Events.ListInputBegan = UserInput.InputBegan:Connect(function(input)
@@ -169,11 +236,8 @@ oh.Events.ListInputBegan = UserInput.InputBegan:Connect(function(input)
     elseif not ctrlHeld and input.UserInputType == Enum.UserInputType.MouseButton1 then
         for _i, list in pairs(lists) do
             if list.Selected then
-                for _k, listButton in pairs(list.Selected) do
-                    listButton.DeselectAnimation:Play()
-                end
-
                 list.Selected = nil
+                list.Dirty = true
             end
         end
     end
@@ -181,7 +245,15 @@ end)
 
 oh.Events.ListInputEnded = UserInput.InputEnded:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftControl then
-        ctrlHeld = false 
+        ctrlHeld = false
+    end
+end)
+
+oh.Events.ListPrismSync = RunService.Heartbeat:Connect(function()
+    for _i, list in pairs(lists) do
+        if list.Dirty then
+            sync(list)
+        end
     end
 end)
 

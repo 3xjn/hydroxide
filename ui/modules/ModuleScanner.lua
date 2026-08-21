@@ -7,6 +7,7 @@ if not hasMethods(Methods.RequiredMethods) then
 end
 
 local List, ListButton = import("ui/controls/List")
+local QueryBar = import("ui/controls/QueryBar")
 local FilterPopover = import("ui/controls/FilterPopover")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
@@ -15,9 +16,11 @@ local Runtime = import("ui/runtime")
 local Page = Runtime.GetInterface().Base.Body.Pages.ModuleScanner
 local Assets = Runtime.GetTemplates().ModuleScanner
 
-local Query = Page.Query
-local Search = Query.Search
-local Refresh = Query.Refresh
+local Query = QueryBar.new(Page.Query, {
+    placeholder = "Filter modules...",
+    action = "refresh",
+    filter = true,
+})
 local Filter = FilterPopover.new(Query, "ModuleScannerFilterPopoverInput")
 local Results = Page.Results.Clip.Content
 
@@ -87,13 +90,10 @@ local function addModules(query)
     moduleList:Recalculate()
 end
 
-Search.FocusLost:Connect(function(returned)
-    if returned then
-        addModules(Search.Text)
-    end
+Query:OnSubmit(function(text)
+    addModules(text)
 end)
-
-Refresh.MouseButton1Click:Connect(function()
+Query:OnAction(function()
     addModules(currentQuery)
 end)
 

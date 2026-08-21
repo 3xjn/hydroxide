@@ -11,6 +11,7 @@ end
 local Constant = import("objects/Constant")
 
 local List, ListButton = import("ui/controls/List")
+local QueryBar = import("ui/controls/QueryBar")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
 local TabSelector = import("ui/controls/TabSelector")
@@ -20,10 +21,12 @@ local Runtime = import("ui/runtime")
 local Page = Runtime.GetInterface().Base.Body.Pages.ConstantScanner
 local Assets = Runtime.GetTemplates().ConstantScanner
 
-local Query = Page.Query
-local Search = Query.Search
-local SearchBox = Query.Query
- 
+local Query = QueryBar.new(Page.Query, {
+    placeholder = "Search literal value or closure name...",
+    action = "search",
+    actionLabel = "Search",
+})
+
 local constantList = List.new(Page.Results.Clip.Content)
 local constantLogs = {}
 local selectedLog 
@@ -109,7 +112,7 @@ end
 
 -- UI Functinoality
 local function addConstants()
-    local query = SearchBox.Text
+    local query = Query:GetText()
 
     if query:gsub(' ', '') ~= '' then
         if not tonumber(query) and query:len() <= 1 then
@@ -128,7 +131,7 @@ local function addConstants()
         MessageBox.Show("Invalid query", "Your query is too short", MessageType.OK)
     end
 
-    SearchBox.Text = ''
+    Query:SetText("")
 end
 
 local SpyHook = ClosureSpy.Hook
@@ -199,11 +202,9 @@ getScriptContext:SetCallback(function()
     end
 end)
 
-Search.MouseButton1Click:Connect(addConstants)
-SearchBox.FocusLost:Connect(function(returned)
-    if returned then
-        addConstants()
-    end
+Query:OnAction(addConstants)
+Query:OnSubmit(function()
+    addConstants()
 end)
 
 return ConstantScanner
