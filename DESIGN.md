@@ -80,25 +80,6 @@ All interface instances, row templates, prompts, overlays, menus, and window con
 - Destructive: reserve `Danger` for destructive actions only.
 - Transitions: 120 to 180 milliseconds, limited to color, opacity, and position.
 
-## Weapon validation overlay
-
-- Generated weapon validation uses a compact 236-by-228 Drawing surface at the
-  upper-right viewport margin. It is a separate testing overlay, not a second
-  Hydroxide application window.
-- A read-only Weapon row identifies the currently equipped Gun, Knife, or
-  no-weapon state. Switching tools updates it automatically; there are no
-  weapon tabs.
-- FOV, Silent Aim, Trigger Bot, and Wallbang are shared between Gun and Knife.
-  The three toggles are full-width 36-pixel option targets using Accent Surface
-  when enabled and Elevated when inactive.
-- Player boxes remain visible while the overlay runs: Accent indicates a
-  camera-visible target and Danger indicates an on-screen target blocked by
-  geometry. Their bounds come from the character's direct body-part hitboxes,
-  excluding accessory and tool geometry. Wallbang changes target eligibility
-  without changing that status color.
-- Hovering or dragging any overlay control captures primary pointer input so
-  configuring the panel cannot activate the equipped weapon underneath it.
-
 ## Accessibility and resilience
 
 - Compact controls keep a 36-pixel pointer target even when their visible glyph is 14 to 22 pixels.

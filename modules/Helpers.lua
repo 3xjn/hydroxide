@@ -2,8 +2,6 @@ local Helpers = {}
 
 local moduleFiles = {
     closure = "Closure",
-    controls = "DrawingControls",
-    drawing = "Drawing",
     lifecycle = "Lifecycle",
     remote = "Remote",
     targeting = "Targeting",
@@ -82,7 +80,6 @@ function Helpers.attach(session, options)
     options.state = options.state or session.State or session.state
     options.modules = options.modules or {
         "closure",
-        "drawing",
         "lifecycle",
         "targeting",
     }

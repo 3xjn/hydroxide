@@ -23,17 +23,15 @@ assert(oh.closure == importedClosure, "Runtime helpers must resolve through Hydr
 assert(oh.closure == importedClosure, "Runtime helper access must be stable")
 assert(importedCount == 1, "Runtime helpers must cache each imported module")
 
-local drawingAsset
-local importedDrawing = {}
-local drawingOh = Helpers.load({
-    import = function(asset)
-        drawingAsset = asset
-        return importedDrawing
-    end,
-    modules = { "drawing" },
-})
-assert(drawingOh.drawing == importedDrawing, "Drawing must use the lowercase oh.drawing consumer interface")
-assert(drawingAsset == "modules/Drawing", "Drawing must resolve through the shared helper loader")
+local drawingFailed = pcall(function()
+    Helpers.load({
+        import = function()
+            return {}
+        end,
+        modules = { "drawing" },
+    })
+end)
+assert(not drawingFailed, "Drawing is not a Hydroxide helper module")
 
 local attachedSession = {
     Constants = {
@@ -48,9 +46,9 @@ Helpers.attach(attachedSession, {
             Asset = asset,
         }
     end,
-    modules = { "drawing", "lifecycle", "targeting" },
+    modules = { "lifecycle", "targeting" },
 })
-assert(attachedSession.drawing.Asset == "modules/Drawing")
+assert(attachedSession.drawing == nil)
 assert(attachedSession.lifecycle.Asset == "modules/Lifecycle")
 assert(attachedSession.targeting.Asset == "modules/Targeting")
 assert(attachedSession.constants == attachedSession.Constants)
