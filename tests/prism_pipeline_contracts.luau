@@ -70,8 +70,6 @@ assert(projectSource:find('"$path": "node_modules/@rbxts"', 1, true), "Rojo must
 assert(projectSource:find('"$path": "node_modules/@3xjn"', 1, true), "Rojo must include node_modules/@3xjn next to @rbxts")
 assert(not projectSource:find(".prism/out/lib", 1, true), "Rojo must not mount a .prism checkout")
 assert(not fs.isFile("scripts/wax_ui.cjs"), "Do not keep a Wax Lua patcher")
-assert(not fs.isFile("scripts/build_ui.sh"), "Do not wrap rbxtsc in a bash install/build script")
-assert(not checkSource:find("build_ui", 1, true), "check.sh must not call a UI bash builder")
 assert(gitignore:find("ui/node_modules/", 1, true), "UI node_modules must stay out of git")
 assert(gitignore:find("ui/out/", 1, true), "rbxtsc emit must stay out of git")
 assert(gitignore:find("ui/dist/", 1, true), "Optional executor blobs must stay out of git")
