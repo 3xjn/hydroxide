@@ -35,10 +35,29 @@ function run(command, args, cwd) {
 }
 
 function gitHead(directory) {
+	if (!fs.existsSync(path.join(directory, ".git"))) {
+		return "unknown";
+	}
 	const result = spawnSync("git", ["-C", directory, "rev-parse", "HEAD"], {
 		encoding: "utf8",
 	});
 	return result.status === 0 ? result.stdout.trim() : "unknown";
+}
+
+function prismCommit(prismRoot) {
+	const fromGit = gitHead(prismRoot);
+	if (fromGit !== "unknown") {
+		return fromGit;
+	}
+	try {
+		const lock = JSON.parse(fs.readFileSync(path.join(uiRoot, "package-lock.json"), "utf8"));
+		const entry = (lock.packages && lock.packages["node_modules/@3xjn/prism"]) || (lock.dependencies && lock.dependencies["@3xjn/prism"]);
+		const resolved = (entry && entry.resolved) || "";
+		const hash = resolved.split("#")[1];
+		return hash || "unknown";
+	} catch {
+		return "unknown";
+	}
 }
 
 function resolveWax() {
@@ -107,7 +126,10 @@ function main() {
 
 	fs.writeFileSync(distLua, output);
 
-	const prismRoot = path.join(uiRoot, ".prism");
+	const prismRoot = path.join(uiRoot, "node_modules", "@3xjn", "prism");
+	if (!fs.existsSync(path.join(prismRoot, "package.json"))) {
+		fail("node_modules/@3xjn/prism is missing. Install github:3xjn/prism or file:../prism first.");
+	}
 	const sha256 = crypto.createHash("sha256").update(fs.readFileSync(distLua)).digest("hex");
 	fs.writeFileSync(
 		provenancePath,
@@ -115,7 +137,7 @@ function main() {
 			"artifact=ui/dist/Hydroxide.lua",
 			`sha256=${sha256}`,
 			"prism_repository=https://github.com/3xjn/prism",
-			`prism_commit=${gitHead(prismRoot)}`,
+			`prism_commit=${prismCommit(prismRoot)}`,
 			`prism_window=${fs.existsSync(path.join(prismRoot, "src/lib/components/Window/index.ts")) ? "available" : "pending"}`,
 			"bundler=https://github.com/latte-soft/wax",
 			"bundler_version=0.4.2",

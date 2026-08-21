@@ -3,14 +3,13 @@
 	"private": true,
 	"version": "0.0.0",
 	"scripts": {
-		"prebuild": "node ../scripts/build_prism_dep.cjs",
 		"build": "rbxtsc",
 		"bundle": "node ../scripts/wax_ui.cjs"
 	},
 	"dependencies": {
+		"@3xjn/prism": "github:3xjn/prism",
 		"@rbxts/react": "17.3.7-ts.1",
 		"@rbxts/react-roblox": "17.3.7-ts.1",
-		"prism": "github:3xjn/prism",
 		"roblox-ts": "3.0.0"
 	},
 	"devDependencies": {

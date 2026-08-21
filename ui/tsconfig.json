@@ -12,14 +12,10 @@
 		"noLib": true,
 		"outDir": "out",
 		"rootDir": "src",
-		"paths": {
-			"@prism": ["./.prism/out/lib"],
-			"@prism/*": ["./.prism/out/lib/*"]
-		},
 		"skipLibCheck": true,
 		"strict": true,
 		"target": "ESNext",
-		"typeRoots": ["node_modules/@rbxts"]
+		"typeRoots": ["node_modules/@rbxts", "node_modules/@3xjn"]
 	},
 	"include": ["src"],
 	"exclude": ["out", "node_modules"]

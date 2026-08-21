@@ -1,7 +1,5 @@
 import React from "@rbxts/react";
-import { Button } from "@prism/components/Button";
-import { Popover } from "@prism/components/Popover";
-import { Stack } from "@prism/components/Stack";
+import { Button, Popover, Stack } from "@3xjn/prism";
 import type { FilterPopoverModel, ScannerFilterValues } from "./contracts";
 import { defaultFilterValues } from "./contracts";
 import { CONTROL_HEIGHT } from "./theme";

@@ -1,5 +1,5 @@
-import { DEFAULT_DARK_THEME } from "@prism/theme";
-import type { ThemeOverride } from "@prism/theme";
+import { DEFAULT_DARK_THEME } from "@3xjn/prism";
+import type { ThemeOverride } from "@3xjn/prism";
 
 const canvas = Color3.fromRGB(11, 14, 18);
 const panel = Color3.fromRGB(17, 23, 29);

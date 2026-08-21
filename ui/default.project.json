@@ -10,9 +10,6 @@
 			"HydroxideUi": {
 				"$path": "out"
 			},
-			"Prism": {
-				"$path": ".prism/out/lib"
-			},
 			"rbxts_include": {
 				"$path": "include",
 				"node_modules": {
@@ -22,6 +19,9 @@
 					},
 					"@rbxts-js": {
 						"$path": "node_modules/@rbxts-js"
+					},
+					"@3xjn": {
+						"$path": "node_modules/@3xjn"
 					}
 				}
 			}

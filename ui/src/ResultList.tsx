@@ -1,10 +1,5 @@
 import React from "@rbxts/react";
-import { Box } from "@prism/components/Box";
-import { Pressable } from "@prism/components/Pressable";
-import { ScrollArea } from "@prism/components/ScrollArea";
-import { Stack } from "@prism/components/Stack";
-import { Text } from "@prism/components/Text";
-import { theme } from "@prism/theme";
+import { Box, Pressable, ScrollArea, Stack, Text, theme } from "@3xjn/prism";
 import type { ListModel, ListRowModel } from "./contracts";
 import { ROW_HEIGHT } from "./theme";
 

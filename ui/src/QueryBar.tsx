@@ -1,7 +1,5 @@
 import React from "@rbxts/react";
-import { Button } from "@prism/components/Button";
-import { Input } from "@prism/components/Input";
-import { Stack } from "@prism/components/Stack";
+import { Button, Input, Stack } from "@3xjn/prism";
 import type { QueryBarModel } from "./contracts";
 import { FilterPopover } from "./FilterPopover";
 import { CONTROL_HEIGHT } from "./theme";
