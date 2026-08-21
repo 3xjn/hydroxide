@@ -101,58 +101,6 @@ type WebSocketLibrary = {
 	connect: (url: string, headers: { [string]: string }?) -> WebSocketConnection,
 }
 
-type DrawingObject = {
-	Visible: boolean,
-	ZIndex: number,
-	Transparency: number,
-	Color: any,
-	__OBJECT_EXISTS: boolean,
-	Remove: (self: DrawingObject) -> (),
-	Destroy: (self: DrawingObject) -> (),
-	[ string ]: any,
-}
-
-type DrawingFonts = {
-	UI: number,
-	System: number,
-	Plex: number,
-	Monospace: number,
-}
-
-type DrawingLibrary = {
-	Fonts: DrawingFonts,
-	new: (kind: "Line" | "Circle" | "Square" | "Triangle" | "Text" | "Image" | "Quad") -> DrawingObject,
-}
-
-type RegisteredDrawFont = {
-	GetTextBounds: (self: RegisteredDrawFont, size: number, text: string) -> Vector2,
-}
-
-type DrawFontOptions = {
-	PixelSize: number,
-	Glyphs: { { number } }?,
-}
-
-type DrawFontLibrary = {
-	Register: (data: string, options: DrawFontOptions) -> RegisteredDrawFont?,
-}
-
-type DrawingImmediateLibrary = {
-	Fonts: DrawingFonts,
-	GetPaint: (zIndex: number?) -> VoltSignal,
-	Line: (p1: Vector2, p2: Vector2, color: Color3, opacity: number, thickness: number) -> (),
-	Circle: (center: Vector2, radius: number, color: Color3, opacity: number, numSides: number, thickness: number) -> (),
-	FilledCircle: (center: Vector2, radius: number, color: Color3, opacity: number, numSides: number) -> (),
-	Triangle: (p1: Vector2, p2: Vector2, p3: Vector2, color: Color3, opacity: number, thickness: number) -> (),
-	FilledTriangle: (p1: Vector2, p2: Vector2, p3: Vector2, color: Color3, opacity: number) -> (),
-	Rectangle: (topLeft: Vector2, size: Vector2, color: Color3, opacity: number, rounding: number, thickness: number) -> (),
-	FilledRectangle: (topLeft: Vector2, size: Vector2, color: Color3, opacity: number, rounding: number) -> (),
-	Quad: (p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, color: Color3, opacity: number, thickness: number) -> (),
-	FilledQuad: (p1: Vector2, p2: Vector2, p3: Vector2, p4: Vector2, color: Color3, opacity: number) -> (),
-	Text: (position: Vector2, font: RegisteredDrawFont | number, fontSize: number, color: Color3, opacity: number, text: string, center: boolean) -> (),
-	OutlinedText: (position: Vector2, font: RegisteredDrawFont | number, fontSize: number, color: Color3, opacity: number, outlineColor: Color3, outlineOpacity: number, text: string, center: boolean) -> (),
-}
-
 type HttpRequest = {
 	Url: string,
 	Method: string?,
@@ -237,9 +185,6 @@ declare VoltSignal: VoltSignalConstructor
 declare Signal: VoltSignalConstructor
 declare WebSocket: WebSocketLibrary
 declare websocket: WebSocketLibrary
-declare Drawing: DrawingLibrary
-declare DrawingImmediate: DrawingImmediateLibrary
-declare DrawFont: DrawFontLibrary
 declare crypt: CryptLibrary
 declare bit: BitLibrary
 declare cache: CacheLibrary
@@ -414,15 +359,11 @@ declare function rconsoletoggle(): ()
 declare function rconsoletop(): ()
 declare function rconsolewarn(message: string): ()
 
--- Encoding, drawing, and general utilities
+-- Encoding and general utilities
 declare function base64decode(data: string): string
 declare function base64encode(data: string): string
 declare function lz4compress(data: string): string
 declare function lz4decompress(data: string): string
-declare function cleardrawcache(): ()
-declare function getrenderproperty(target: DrawingObject, property: string): any
-declare function isrenderobj(target: any): boolean
-declare function setrenderproperty(target: DrawingObject, property: string, value: any): ()
 declare function clearqueueonteleport(): ()
 declare function get_process_identifier(): number
 declare function getfflag(name: string): string?

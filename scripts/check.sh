@@ -33,7 +33,7 @@ definitions=(
     --definitions "@hydroxide=types/hydroxide.d.luau"
 )
 
-luau-lsp analyze "${definitions[@]}" dev.lua weapons.lua local.lua tools/live-mcp/volt-agent.lua examples/gun_validation.lua examples/knife_validation.lua examples/weapon_validation.lua ui/controls/ContextMenu.lua ui/controls/FilterPopover.lua ui/remote_row_geometry.lua modules/InstancePath.lua modules/ScannerFilter.lua modules/ScannerResults.lua modules/ScriptScanner.lua modules/ModuleScanner.lua modules/ScriptBuilder.lua modules/ReactiveState.lua modules/ActorStateRegistry.lua modules/SignalSpy.lua modules/ScriptGraph.lua modules/Helpers.lua modules/Closure.lua modules/ThreadTrace.lua modules/Targeting.lua modules/Lifecycle.lua modules/Drawing.lua modules/DrawingControls.lua
+luau-lsp analyze "${definitions[@]}" dev.lua local.lua tools/live-mcp/volt-agent.lua ui/controls/ContextMenu.lua ui/controls/FilterPopover.lua ui/remote_row_geometry.lua modules/InstancePath.lua modules/ScannerFilter.lua modules/ScannerResults.lua modules/ScriptScanner.lua modules/ModuleScanner.lua modules/ScriptBuilder.lua modules/ReactiveState.lua modules/ActorStateRegistry.lua modules/SignalSpy.lua modules/ScriptGraph.lua modules/Helpers.lua modules/Closure.lua modules/ThreadTrace.lua modules/Targeting.lua modules/Lifecycle.lua
 printf 'ui-typecheck-ok\n'
 
 set +e
@@ -58,18 +58,13 @@ lune run tests/window_geometry_contracts.luau
 lune run tests/shutdown_runtime_contracts.luau
 lune run tests/volt_compatibility_contracts.luau
 lune run tests/script_builder_contracts.luau
-lune run tests/weapon_validation_launchers_contracts.luau
 lune run tests/dev_loader_contracts.luau
-lune run tests/weapons_loader_contracts.luau
 lune run tests/thread_trace_contracts.luau
-lune run tests/gun_validation_example_contracts.luau
 lune run tests/helper_loader_contracts.luau
 lune run tests/closure_module_contracts.luau
 lune run tests/targeting_module_contracts.luau
 lune run tests/lifecycle_module_contracts.luau
-lune run tests/drawing_module_contracts.luau
-lune run tests/drawing_controls_contracts.luau
-lune run tests/drawing_default_adapter_contracts.luau
+lune run tests/no_drawing_api_contracts.luau
 lune run tests/actor_state_registry_contracts.luau
 lune run tests/signal_spy_contracts.luau
 lune run tests/instance_path_contracts.luau
