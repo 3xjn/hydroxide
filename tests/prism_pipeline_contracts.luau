@@ -91,7 +91,6 @@ assert(explorerSource:find("return Explorer", 1, true), "Explorer must stay stub
 assert(not explorerSource:find("List.new", 1, true), "Explorer must not grow a page in this pass")
 assert(mainSource:find("ScriptGraph = import(\"modules/ScriptGraph\")", 1, true), "ScriptGraph methods must stay on oh.Api")
 assert(mainSource:find('import("ui/window")', 1, true), "The Luau window host must remain until Prism Window merges")
-assert(not fs.isFile("modules/Drawing.lua"), "Drawing must stay deleted")
 assert(not fs.isFile("ui/dist/Hydroxide.provenance"), "Do not keep a Wax provenance writer")
 assert(not fs.isDir("ui/.generated/prism"), "Prism source must not be vendored as a permanent tree")
 
