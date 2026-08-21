@@ -192,10 +192,9 @@ end)
 
 getScriptContext:SetCallback(function()
     if selectedLog then
-        local script = getfenv(selectedLog.Closure.Data).script
-            
-        if typeof(script) == "Instance" then
-            setClipboard(getInstancePath(script))
+        local path = ClosureSpy.GetScriptPath(selectedLog.Closure)
+        if path then
+            setClipboard(path)
         end
     end
 end)

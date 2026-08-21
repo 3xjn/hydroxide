@@ -60,6 +60,26 @@ predicate.
 It accepts an injected executor adapter for behavioral tests and uses Volt's
 documented closure/debug functions when loaded directly.
 
+Hydroxide's UI pages call the same module methods an in-session script can
+call. After launch they are also indexed on `oh.Api`. The first slice of that
+surface is the relationship graph a person already follows by clicking:
+
+- `ScriptScanner.Scan` / `ModuleScanner.Scan` plus `ScannerResults.Describe`
+  read a script's path, protos, constants, and environment without a decompile
+  dump.
+- `ScriptGraph.Describe` adds the links the UI already uses: Signal Spy
+  connections on the instance, Remote Spy calls whose `script` is this one,
+  and Closure Spy hooks owned by the script together with their callers.
+- `ClosureSpy.GetScript` / `GetScriptPath` is the Get Script Path action.
+- `RemoteSpy.CallsFrom` / `DescribeCall` is the Get Calling Script action
+  run in reverse: from a script to the remotes it fired.
+- `SignalSpy:Summarize` is Inspect Signals without stealing the person's
+  current Signal Spy target. `Inspect` remains the UI-opening action.
+
+The live MCP bridge stays generic instance inspection (`roblox_status`,
+script list/read, `roblox_eval`). It does not catalog these Hydroxide
+methods.
+
 `oh.targeting.nearestVisiblePlayer(options)` selects the nearest eligible,
 on-screen player and returns the most visible body part, averaged visible aim
 position, distance, and visibility score. `options.maxDistance` can constrain

@@ -117,6 +117,17 @@ end
 
 oh.LoadErrors = failures
 
+oh.Api = {
+	ScriptScanner = import("modules/ScriptScanner"),
+	ModuleScanner = import("modules/ModuleScanner"),
+	ScannerResults = import("modules/ScannerResults"),
+	ScriptGraph = import("modules/ScriptGraph"),
+	ClosureSpy = import("modules/ClosureSpy"),
+	RemoteSpy = import("modules/RemoteSpy"),
+	SignalSpy = oh.State.SignalSpy,
+	InstancePath = import("modules/InstancePath"),
+}
+
 local interfaceParent
 if getHui then
 	interfaceParent = getHui()

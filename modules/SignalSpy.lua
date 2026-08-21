@@ -176,14 +176,7 @@ function SignalSpy.new(options)
         return freezeArray(connections), nil
     end
 
-    function registry:Inspect(target)
-        if destroyed then
-            return snapshotState:Get()
-        end
-
-        assert(target ~= nil, "SignalSpy inspection requires an Instance")
-        currentTarget = target
-
+    local function collect(target)
         local nextTargetById = {}
         local nextSignalById = {}
         local nextConnectionById = {}
@@ -251,17 +244,7 @@ function SignalSpy.new(options)
             return left.Name < right.Name
         end)
 
-        targetById = nextTargetById
-        signalById = nextSignalById
-        connectionById = nextConnectionById
-        functionByConnectionId = nextFunctionByConnectionId
-        threadByConnectionId = nextThreadByConnectionId
-        scriptByConnectionId = nextScriptByConnectionId
-        stateByConnectionId = nextStateByConnectionId
-
-        local currentSnapshot = snapshotState:Get()
-        local nextSnapshot = table.freeze({
-            Revision = currentSnapshot.Revision + 1,
+        return {
             Target = table.freeze({
                 Id = targetId,
                 Name = target.Name or tostring(target),
@@ -270,6 +253,50 @@ function SignalSpy.new(options)
             }),
             Signals = freezeArray(signals),
             DiscoveryError = discoveryError,
+        }, {
+            targetById = nextTargetById,
+            signalById = nextSignalById,
+            connectionById = nextConnectionById,
+            functionByConnectionId = nextFunctionByConnectionId,
+            threadByConnectionId = nextThreadByConnectionId,
+            scriptByConnectionId = nextScriptByConnectionId,
+            stateByConnectionId = nextStateByConnectionId,
+        }
+    end
+
+    function registry:Summarize(target)
+        assert(target ~= nil, "SignalSpy inspection requires an Instance")
+        local snapshot = collect(target)
+        return table.freeze({
+            Revision = snapshotState:Get().Revision,
+            Target = snapshot.Target,
+            Signals = snapshot.Signals,
+            DiscoveryError = snapshot.DiscoveryError,
+        })
+    end
+
+    function registry:Inspect(target)
+        if destroyed then
+            return snapshotState:Get()
+        end
+
+        assert(target ~= nil, "SignalSpy inspection requires an Instance")
+        currentTarget = target
+
+        local snapshot, maps = collect(target)
+        targetById = maps.targetById
+        signalById = maps.signalById
+        connectionById = maps.connectionById
+        functionByConnectionId = maps.functionByConnectionId
+        threadByConnectionId = maps.threadByConnectionId
+        scriptByConnectionId = maps.scriptByConnectionId
+        stateByConnectionId = maps.stateByConnectionId
+
+        local nextSnapshot = table.freeze({
+            Revision = snapshotState:Get().Revision + 1,
+            Target = snapshot.Target,
+            Signals = snapshot.Signals,
+            DiscoveryError = snapshot.DiscoveryError,
         })
         snapshotState:Set(nextSnapshot)
         return nextSnapshot

@@ -906,9 +906,14 @@ end)
 
 callingScriptContext:SetCallback(function()
     local oldStatus = oh.getStatus()
+    local description = Methods.DescribeCall({
+        script = selected.callingScript,
+        func = selected.func,
+        args = selected.args,
+    })
 
     oh.setStatus("Copying " .. selected.callingScript.Name .. "'s path")
-    setClipboard(getInstancePath(selected.callingScript))
+    setClipboard(description.ScriptPath)
     wait(0.25)
     oh.setStatus(oldStatus)
 end)
