@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"rootDirs": [
+			"src",
+			".generated/prism-src"
+		],
+		"paths": {
+			"@prism": [
+				"prismCompat"
+			],
+			"@prism/*": [
+				"../.generated/prism-src/lib/*"
+			]
+		}
+	}
+}

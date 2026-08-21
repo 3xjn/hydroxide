@@ -5,3 +5,7 @@ roblox.toml
 .idea
 /user
 tools/live-mcp/node_modules/
+ui/node_modules/
+ui/out/
+ui/include/
+ui/.generated/

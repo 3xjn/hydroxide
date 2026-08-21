@@ -117,142 +117,31 @@ local function scrollingContent(parent, name)
         BackgroundTransparency = 1,
         ClipsDescendants = true
     })
-    local content = create("ScrollingFrame", "Content", clip, {
+    local content = frame("Content", clip, {
         Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        ScrollBarThickness = 4,
-        ScrollBarImageColor3 = Theme.Colors.MutedText
+        BackgroundTransparency = 1
     })
-    listLayout(content, 6)
     return results, clip, content
 end
 
-local function queryBar(parent, placeholder, buttonSearch, withFilter)
+local function queryBar(parent, placeholder, buttonSearch, withFilter, actionName, actionLabel)
     local queryHeight = Theme.Layout.QueryHeight
     local query = frame("Query", parent, {
         Size = UDim2.new(1, 0, 0, queryHeight),
         BackgroundTransparency = 1,
         ZIndex = withFilter and 70 or 1
     })
-
+    query:SetAttribute("Placeholder", placeholder or "")
     if buttonSearch then
-        local input = create("TextBox", "Query", query, {
-            Position = UDim2.new(0, 0, 0, 0),
-            Size = UDim2.new(1, -104, 0, queryHeight),
-            BackgroundColor3 = Theme.Colors.Elevated,
-            BorderSizePixel = 0,
-            ClearTextOnFocus = false,
-            Font = Enum.Font.Code,
-            PlaceholderColor3 = Theme.Colors.MutedText,
-            PlaceholderText = placeholder,
-            Text = "",
-            TextColor3 = Theme.Colors.Text,
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left
-        })
-        addCorner(input, 5)
-        addStroke(input)
-        addPadding(input, 12, 12, 0, 0)
-        textButton("Search", query, "Search", {
-            Position = UDim2.new(1, -92, 0, 0),
-            Size = UDim2.new(0, 92, 0, queryHeight),
-            BackgroundColor3 = Theme.Colors.AccentSurface,
-            TextColor3 = Theme.Colors.Accent
-        })
+        query:SetAttribute("Action", actionName or "search")
+        query:SetAttribute("ActionLabel", actionLabel or (actionName == "inspect" and "Inspect" or "Search"))
     else
-        local search = create("TextBox", "Search", query, {
-            Size = UDim2.new(1, withFilter and -88 or -44, 0, queryHeight),
-            BackgroundColor3 = Theme.Colors.Elevated,
-            BorderSizePixel = 0,
-            ClearTextOnFocus = false,
-            Font = Enum.Font.Code,
-            PlaceholderColor3 = Theme.Colors.MutedText,
-            PlaceholderText = placeholder,
-            Text = "",
-            TextColor3 = Theme.Colors.Text,
-            TextSize = 14,
-            TextXAlignment = Enum.TextXAlignment.Left
-        })
-        addCorner(search, 5)
-        addStroke(search)
-        addPadding(search, 12, 12, 0, 0)
-        if withFilter then
-            local filter = imageButton("Filter", query, {
-                Position = UDim2.new(1, -80, 0, 0),
-                Size = UDim2.new(0, Theme.Layout.ControlTargetSize, 0, queryHeight),
-                BackgroundColor3 = Theme.Colors.Elevated
-            })
-            image("Icon", filter, {
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(0.5, 0, 0.5, 0),
-                Size = UDim2.new(0, 18, 0, 18),
-                ImageColor3 = Theme.Colors.SecondaryText
-            })
-
-            local popover = frame("FilterPopover", query, {
-                AnchorPoint = Vector2.new(1, 0),
-                Position = UDim2.new(1, 0, 1, 8),
-                Size = UDim2.new(0, Theme.Layout.FilterPopoverWidth, 0, 148),
-                BackgroundColor3 = Theme.Colors.Elevated,
-                Visible = false,
-                ZIndex = Theme.Layout.FilterPopoverZIndex
-            })
-            addCorner(popover, 5)
-            addStroke(popover)
-
-            local function filterOption(name, text, layoutOrder)
-                local option = textButton(name, popover, "", {
-                    Position = UDim2.new(0, 8, 0, 8 + ((layoutOrder - 1) * 44)),
-                    Size = UDim2.new(1, -16, 0, Theme.Layout.ControlTargetSize),
-                    BackgroundColor3 = Theme.Colors.Hover,
-                    BackgroundTransparency = 1,
-                    Text = "",
-                    ZIndex = Theme.Layout.FilterPopoverZIndex + 1
-                })
-                option.HydroxideStroke.Transparency = 1
-                local indicator = frame("Indicator", option, {
-                    Position = UDim2.new(0, 8, 0.5, -10),
-                    Size = UDim2.new(0, 20, 0, 20),
-                    BackgroundColor3 = Theme.Colors.Elevated,
-                    ZIndex = Theme.Layout.FilterPopoverZIndex + 2
-                })
-                addCorner(indicator, 4)
-                addStroke(indicator)
-                label("Checkmark", indicator, "", {
-                    Size = UDim2.new(1, 0, 1, 0),
-                    TextColor3 = Theme.Colors.Accent,
-                    TextSize = 14,
-                    ZIndex = Theme.Layout.FilterPopoverZIndex + 3
-                })
-                label("Label", option, text, {
-                    Position = UDim2.new(0, 40, 0, 0),
-                    Size = UDim2.new(1, -48, 1, 0),
-                    TextColor3 = Theme.Colors.SecondaryText,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    ZIndex = Theme.Layout.FilterPopoverZIndex + 2
-                })
-            end
-
-            filterOption("ShowGame", "Show game code", 1)
-            filterOption("ShowRoblox", "Show Roblox code", 2)
-            filterOption("ShowExecutor", "Show executor code", 3)
-        end
-
-        local refresh = imageButton("Refresh", query, {
-            Position = UDim2.new(1, -36, 0, 0),
-            Size = UDim2.new(0, 36, 0, queryHeight),
-            BackgroundColor3 = Theme.Colors.Elevated
-        })
-        image("Icon", refresh, {
-            AnchorPoint = Vector2.new(0.5, 0.5),
-            Position = UDim2.new(0.5, 0, 0.5, 0),
-            Size = UDim2.new(0, 18, 0, 18),
-            ImageColor3 = Theme.Colors.SecondaryText
-        })
+        query:SetAttribute("Action", "refresh")
+        query:SetAttribute("ActionLabel", "Refresh")
     end
-
+    if withFilter then
+        query:SetAttribute("Filter", true)
+    end
     return query
 end
 
@@ -400,12 +289,12 @@ local function signalPage(pages)
     local targetQuery = queryBar(
         page,
         'Instance path, e.g. game:GetService("Players").LocalPlayer',
-        true
+        true,
+        false,
+        "inspect",
+        "Inspect"
     )
     targetQuery.Name = "TargetQuery"
-    targetQuery.Query.Name = "Path"
-    targetQuery.Search.Name = "Inspect"
-    targetQuery.Inspect.Text = "Inspect"
 
     local target = frame("Target", page, {
         Position = UDim2.new(0, 0, 0, 44),

@@ -12,6 +12,7 @@ if not hasMethods(Methods.RequiredMethods) then
 end
 
 local List, ListButton = import("ui/controls/List")
+local QueryBar = import("ui/controls/QueryBar")
 local FilterPopover = import("ui/controls/FilterPopover")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
@@ -25,9 +26,11 @@ local Assets = Runtime.GetTemplates().ScriptScanner
 local ScriptList = Page.List
 local ScriptInfo = Page.Info
 
-local ListQuery = ScriptList.Query
-local ListSearch = ListQuery.Search
-local ListRefresh = ListQuery.Refresh
+local ListQuery = QueryBar.new(ScriptList.Query, {
+    placeholder = "Filter scripts...",
+    action = "refresh",
+    filter = true,
+})
 local ListFilter = FilterPopover.new(ListQuery, "ScriptScannerFilterPopoverInput")
 local ListResults = ScriptList.Results.Clip.Content
 
@@ -304,9 +307,13 @@ local function filterDetailList(list, query)
     list:Recalculate()
 end
 
-local function bindDetailFilter(query, list)
-    query.Query.FocusLost:Connect(function()
-        filterDetailList(list, query.Query.Text)
+local function bindDetailFilter(host, list)
+    local query = QueryBar.new(host, { placeholder = host:GetAttribute("Placeholder"), action = false })
+    query:OnChange(function(text)
+        filterDetailList(list, text)
+    end)
+    query:OnSubmit(function(text)
+        filterDetailList(list, text)
     end)
 end
 
@@ -400,13 +407,10 @@ local function addScripts(query)
     scriptList:Recalculate()
 end
 
-ListSearch.FocusLost:Connect(function(returned)
-    if returned then
-        addScripts(ListSearch.Text)
-    end
+ListQuery:OnSubmit(function(text)
+    addScripts(text)
 end)
-
-ListRefresh.MouseButton1Click:Connect(function()
+ListQuery:OnAction(function()
     addScripts(currentQuery)
 end)
 

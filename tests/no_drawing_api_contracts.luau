@@ -28,9 +28,29 @@ local skipFiles = {
     ["tests/no_drawing_api_contracts.luau"] = true,
 }
 
+local skipPrefixes = {
+    "ui/dist/",
+    "ui/node_modules/",
+    "ui/out/",
+    "ui/.generated/",
+    "ui/include/",
+}
+
+local function shouldSkip(path)
+    if skipFiles[path] then
+        return true
+    end
+    for _, prefix in skipPrefixes do
+        if string.sub(path, 1, #prefix) == prefix then
+            return true
+        end
+    end
+    return false
+end
+
 local function walk(path, files)
     for _, name in fs.readDir(path) do
-        if name == ".git" or name == "node_modules" then
+        if name == ".git" or name == "node_modules" or name == ".generated" or (path == "ui" and name == "dist") then
             continue
         end
 
@@ -38,7 +58,9 @@ local function walk(path, files)
         if fs.isDir(child) then
             walk(child, files)
         elseif name:match("%.lua$") or name:match("%.luau$") or name:match("%.md$") or name:match("%.sh$") then
-            table.insert(files, child)
+            if not shouldSkip(child) then
+                table.insert(files, child)
+            end
         end
     end
 end
@@ -56,7 +78,7 @@ local files = {}
 walk(".", files)
 
 for _, path in files do
-    if skipFiles[path] then
+    if shouldSkip(path) then
         continue
     end
 

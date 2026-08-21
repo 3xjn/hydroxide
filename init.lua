@@ -274,6 +274,7 @@ if readFile and writeFile then
             createFolder(cacheRoot .. "/ui")
             createFolder(cacheRoot .. "/ui/controls")
             createFolder(cacheRoot .. "/ui/modules")
+            createFolder(cacheRoot .. "/ui/dist")
         end
 
         function environment.import(asset)

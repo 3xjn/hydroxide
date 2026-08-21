@@ -33,7 +33,7 @@ definitions=(
     --definitions "@hydroxide=types/hydroxide.d.luau"
 )
 
-luau-lsp analyze "${definitions[@]}" dev.lua local.lua tools/live-mcp/volt-agent.lua ui/controls/ContextMenu.lua ui/controls/FilterPopover.lua ui/remote_row_geometry.lua modules/InstancePath.lua modules/ScannerFilter.lua modules/ScannerResults.lua modules/ScriptScanner.lua modules/ModuleScanner.lua modules/ScriptBuilder.lua modules/ReactiveState.lua modules/ActorStateRegistry.lua modules/SignalSpy.lua modules/ScriptGraph.lua modules/Helpers.lua modules/Closure.lua modules/ThreadTrace.lua modules/Targeting.lua modules/Lifecycle.lua
+luau-lsp analyze "${definitions[@]}" dev.lua local.lua tools/live-mcp/volt-agent.lua ui/prism.lua ui/controls/ContextMenu.lua ui/controls/FilterPopover.lua ui/controls/QueryBar.lua ui/remote_row_geometry.lua modules/InstancePath.lua modules/ScannerFilter.lua modules/ScannerResults.lua modules/ScriptScanner.lua modules/ModuleScanner.lua modules/ScriptBuilder.lua modules/ReactiveState.lua modules/ActorStateRegistry.lua modules/SignalSpy.lua modules/ScriptGraph.lua modules/Helpers.lua modules/Closure.lua modules/ThreadTrace.lua modules/Targeting.lua modules/Lifecycle.lua
 printf 'ui-typecheck-ok\n'
 
 set +e
@@ -73,3 +73,4 @@ lune run tests/scanner_inventory_contracts.luau
 lune run tests/scanner_results_contracts.luau
 lune run tests/script_graph_contracts.luau
 lune run tests/remote_row_geometry_contracts.luau
+lune run tests/prism_pipeline_contracts.luau

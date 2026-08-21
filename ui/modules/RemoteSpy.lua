@@ -16,6 +16,7 @@ local Prompt = import("ui/controls/Prompt")
 local CheckBox = import("ui/controls/CheckBox")
 local Dropdown = import("ui/controls/Dropdown")
 local List, ListButton = import("ui/controls/List")
+local QueryBar = import("ui/controls/QueryBar")
 local MessageBox, MessageType = import("ui/controls/MessageBox")
 local ContextMenu, ContextMenuButton = import("ui/controls/ContextMenu")
 local TabSelector = import("ui/controls/TabSelector")
@@ -30,9 +31,10 @@ local Page = Base.Body.Pages.RemoteSpy
 
 local RemoteList = Page.List
 local ListFlags = RemoteList.Flags
-local ListQuery = RemoteList.Query
-local ListSearch = ListQuery.Search
-local ListRefresh = ListQuery.Refresh
+local ListQuery = QueryBar.new(RemoteList.Query, {
+    placeholder = "Type to filter...",
+    action = "refresh",
+})
 local ListResults = RemoteList.Results.Clip.Content
 
 local RemoteLogs = Page.Logs
@@ -524,19 +526,16 @@ for _i,flag in pairs(ListFlags:GetChildren()) do
     end
 end
 
-ListSearch.FocusLost:Connect(function(returned)
-    if returned then
-        for remoteInstance, log in pairs(currentLogs) do
-            local instance = log.Button.Instance
-            instance.Visible = not (instance.Visible and not remoteInstance.Name:lower():find(ListSearch.Text))
-        end
-
-        remoteList:Recalculate()
-        ListSearch.Text = ""
+ListQuery:OnSubmit(function(text)
+    for remoteInstance, log in pairs(currentLogs) do
+        local instance = log.Button.Instance
+        instance.Visible = not (instance.Visible and not remoteInstance.Name:lower():find(text, 1, true))
     end
-end)
 
-ListRefresh.MouseButton1Click:Connect(function()
+    remoteList:Recalculate()
+    ListQuery:SetText("")
+end)
+ListQuery:OnAction(function()
     refreshLogs()
 end)
 
