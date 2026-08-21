@@ -72,9 +72,33 @@ assert(
 )
 assert(
     not windowSource:find("local hideWindow = TweenService:Create(base", 1, true),
-    "Collapse must not slide the full window through the viewport"
+    "Collapse must not slide the full window off-screen"
 )
-assert(windowSource:find("base.Visible = false", 1, true), "Collapse must atomically hide the full window")
+assert(
+    not windowSource:find("TweenService:Create(open", 1, true),
+    "Collapse motion must tween the window frame, not slide a top-center launcher"
+)
+assert(
+    not windowSource:find("UDim2.new(0.5, 0, 0, layout.WorkspaceInset)", 1, true),
+    "The reopen chip must stay at the last window x,y, not a top-center dock"
+)
+assert(
+    not windowSource:find("UDim2.new(0.5, 0, 0, -layout.LauncherSize", 1, true),
+    "The reopen chip must not enter from off-screen at top-center"
+)
+assert(
+    themeSource:find("Theme.Motion = TweenInfo.new(0.15", 1, true),
+    "Collapse motion must use the existing 150ms Theme.Motion token"
+)
+assert(
+    windowSource:find("Geometry.CollapseChipPosition", 1, true),
+    "The collapsed chip must be placed from the last window x,y"
+)
+assert(
+    windowSource:find("collapsedSize = Vector2.new(base.Size.X.Offset, base.Size.Y.Offset)", 1, true),
+    "Collapse must remember the window size instead of the 36px chip"
+)
+assert(windowSource:find("base.Visible = false", 1, true), "The window must hide after it has tweened into the chip")
 assert(themeSource:find("WorkspaceInset = 12", 1, true), "The shell must use a consistent workspace inset")
 assert(themeSource:find("MinimumPageWidth = 400", 1, true), "Responsive reflow must preserve the primary tool pane")
 assert(themeSource:find("TitleBarHeight = 44", 1, true), "The title bar must use compact chrome")
@@ -163,9 +187,17 @@ assert(not windowSource:find('maximize.Text = "', 1, true), "Maximized state mus
 assert(windowSource:find("base.Position = UDim2.new(0, 0, 0, 0)", 1, true), "Maximized mode must sit flush to the viewport")
 assert(windowSource:find("setShellMaximized", 1, true), "Maximized mode must remove normal rounded outer chrome")
 
+local shellMotion = windowSource:find("TweenService:Create(base, Theme.Motion", 1, true)
 local atomicHide = windowSource:find("base.Visible = false", 1, true)
 local launcherShow = windowSource:find("open.Visible = true", 1, true)
-assert(atomicHide and launcherShow and atomicHide < launcherShow, "The full window must hide before the launcher appears")
+assert(
+    shellMotion and atomicHide and launcherShow and shellMotion < atomicHide and atomicHide < launcherShow,
+    "The window must tween into the chip, then hide, then show the reopen control"
+)
+assert(
+    windowSource:find("Position = destination,\n            Size = destinationSize", 1, true),
+    "Reopening must reverse the collapse tween from the chip rect to the restored bounds"
+)
 
 local defaultWidth, defaultHeight = themeSource:match("DefaultWindowSize = Vector2.new%((%d+), (%d+)%)")
 local minimumWidth, minimumHeight = themeSource:match("MinimumWindowSize = Vector2.new%((%d+), (%d+)%)")

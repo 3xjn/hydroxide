@@ -47,9 +47,9 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 
 ## Window lifecycle
 
-- The collapse control condenses Hydroxide into a 36-by-36 top-center reopen target containing an optically centered 18-by-18 generated Hydroxide mark.
-- Closing atomically hides the full window before the compact control enters; no title, page, border, or resize-handle pixels may remain onscreen during or after the transition.
-- Reopening atomically hides the compact control and restores the previous normal or maximized bounds.
+- The collapse control condenses Hydroxide into a 36-by-36 reopen chip containing an optically centered 18-by-18 generated Hydroxide mark. The chip stays at the last window x,y; it is not a top-center dock.
+- Collapse tweens the same window frame `Position` and `Size` into that chip rect over `Theme.Motion` (120 to 180 milliseconds). After the tween finishes, the window hides and only the chip remains; no title, page, border, or resize-handle pixels may remain onscreen.
+- Reopening hides the chip and reverse-tweens the same window frame from the chip rect back to the previous normal or maximized bounds.
 - The reopen control has a dark elevated surface, mineral-mint border, visible focus treatment, and a 36-pixel minimum interactive target.
 - The exit control is the only destructive title-bar action. It disconnects every Hydroxide-owned global listener, restores every installed hook and injected environment method, destroys the entire interface including the compact launcher, and clears the active `oh` session. A later execution must start from a clean environment.
 
@@ -78,7 +78,7 @@ All interface instances, row templates, prompts, overlays, menus, and window con
 - Resize affordance: the corner grip is secondary gray at rest, white on hover, and mint for the complete mouse-down drag. The cursor remains the same directional resize arrow across hover and active states.
 - Disabled: muted text at 55 percent opacity.
 - Destructive: reserve `Danger` for destructive actions only.
-- Transitions: 120 to 180 milliseconds, limited to color, opacity, and position.
+- Transitions: 120 to 180 milliseconds, limited to color, opacity, position, and the collapse/reopen size tween of the existing window frame.
 
 ## Accessibility and resilience
 

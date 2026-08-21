@@ -656,8 +656,8 @@ local function buildInterface()
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     })
     local open = imageButton("Open", interface, {
-        AnchorPoint = Vector2.new(0.5, 0),
-        Position = UDim2.new(0.5, 0, 0, -Theme.Layout.LauncherSize - Theme.Layout.WorkspaceInset),
+        AnchorPoint = Vector2.new(0, 0),
+        Position = UDim2.new(0, 0, 0, 0),
         Size = UDim2.new(0, Theme.Layout.LauncherSize, 0, Theme.Layout.LauncherSize),
         BackgroundColor3 = Theme.Colors.Elevated,
         Visible = false,
