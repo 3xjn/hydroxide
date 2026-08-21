@@ -64,6 +64,7 @@ lune run tests/helper_loader_contracts.luau
 lune run tests/closure_module_contracts.luau
 lune run tests/targeting_module_contracts.luau
 lune run tests/lifecycle_module_contracts.luau
+lune run tests/no_drawing_api_contracts.luau
 lune run tests/actor_state_registry_contracts.luau
 lune run tests/signal_spy_contracts.luau
 lune run tests/instance_path_contracts.luau
