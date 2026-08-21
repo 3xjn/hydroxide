@@ -1,9 +1,0 @@
-artifact=ui/dist/Hydroxide.lua
-sha256=52fa2530b41357b080591b6681b62485c894c2c941d2fd0d05ca2d26bcdac733
-prism_repository=https://github.com/3xjn/prism
-prism_commit=8b76bad45bbe726f02f39fc48d1732127ac73879
-prism_window=pending
-bundler=https://github.com/latte-soft/wax
-bundler_version=0.4.2
-mount_parent=host
-source=ui/src

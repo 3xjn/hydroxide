@@ -3,8 +3,7 @@
 	"private": true,
 	"version": "0.0.0",
 	"scripts": {
-		"build": "rbxtsc",
-		"bundle": "node ../scripts/wax_ui.cjs"
+		"build": "rbxtsc"
 	},
 	"dependencies": {
 		"@3xjn/prism": "github:3xjn/prism",

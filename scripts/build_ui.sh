@@ -11,5 +11,4 @@ else
 fi
 
 npm run build
-npm run bundle
 printf 'hydroxide-ui-build-ok\n'
