@@ -1,10 +1,17 @@
 {
 	"name": "hydroxide-ui",
 	"tree": {
-		"$className": "DataModel",
+		"$className": "ModuleScript",
+		"$properties": {
+			"Source": "return require(script.ReplicatedStorage.HydroxideUi)\n"
+		},
 		"ReplicatedStorage": {
+			"$className": "Folder",
 			"HydroxideUi": {
 				"$path": "out"
+			},
+			"Prism": {
+				"$path": ".prism/out/lib"
 			},
 			"rbxts_include": {
 				"$path": "include",

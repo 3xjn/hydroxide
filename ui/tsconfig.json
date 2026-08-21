@@ -1,8 +1,7 @@
 {
-	"extends": "./tsconfig.prism.json",
 	"compilerOptions": {
 		"allowSyntheticDefaultImports": true,
-		"baseUrl": "src",
+		"baseUrl": ".",
 		"experimentalDecorators": true,
 		"jsx": "react",
 		"jsxFactory": "React.createElement",
@@ -12,12 +11,16 @@
 		"moduleResolution": "Node",
 		"noLib": true,
 		"outDir": "out",
+		"rootDir": "src",
+		"paths": {
+			"@prism": ["./.prism/out/lib"],
+			"@prism/*": ["./.prism/out/lib/*"]
+		},
 		"skipLibCheck": true,
 		"strict": true,
 		"target": "ESNext",
 		"typeRoots": ["node_modules/@rbxts"]
 	},
-	"include": [
-		"src"
-	]
+	"include": ["src"],
+	"exclude": ["out", "node_modules"]
 }

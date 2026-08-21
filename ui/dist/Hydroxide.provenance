@@ -1,5 +1,5 @@
 artifact=ui/dist/Hydroxide.lua
-sha256=4a2ca31b273f26a1f2009c3c236eb218f7ba8b22d9d8dfcb321dc4efdfd3e9a9
+sha256=c15b6aa364fc9f2d4569a2622620e416f8b98a91a8c766313d6e2326ca596121
 prism_repository=https://github.com/3xjn/prism
 prism_commit=fad617ec2cadfbbd7092fed394464af0a90917c3
 prism_window=pending
