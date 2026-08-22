@@ -22,6 +22,8 @@ assert(filterControlSource:find("ShowExecutor", 1, true), "Luau FilterPopover mu
 assert(listControlSource:find("CanvasSize", 1, true), "Luau lists must keep ScrollingFrame canvas sizing")
 assert(listControlSource:find("MouseButton1Click", 1, true), "Luau list rows must remain clickable without Prism")
 assert(mainSource:find("xpcall", 1, true), "Feature modules must still isolate load failures")
+assert(mainSource:find("Prism.available()", 1, true), "Window chrome must follow the same optional-artifact gate as QueryBar")
+assert(mainSource:find('import("ui/window")', 1, true), "GitHub loadstring without a dist blob must keep the Luau window fallback")
 assert(not runtimeSource:find('import("ui/out', 1, true), "Runtime must not fetch rbxtsc emit as instances")
 assert(not queryBarSource:find('import("ui/out', 1, true), "QueryBar must not fetch rbxtsc emit as instances")
 assert(not listControlSource:find('import("ui/out', 1, true), "List must not fetch rbxtsc emit as instances")

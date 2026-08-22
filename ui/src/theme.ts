@@ -16,7 +16,14 @@ const warning = Color3.fromRGB(234, 179, 61);
 
 const dark = DEFAULT_DARK_THEME;
 
+export const WINDOW_WIDTH = 1120;
+export const WINDOW_HEIGHT = 680;
+export const WINDOW_MIN_WIDTH = 720;
+export const WINDOW_MIN_HEIGHT = 420;
+export const WINDOW_BACKGROUND = canvas;
+
 export const HYDROXIDE_THEME: ThemeOverride = {
+	...dark,
 	colors: {
 		palette: dark.colors.palette,
 		primary: {

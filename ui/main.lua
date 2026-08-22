@@ -9,18 +9,19 @@ end
 
 local VisualAssets = import("ui/assets")
 local Theme = import("ui/theme")
-local Window = import("ui/window")
+local Prism = import("ui/prism")
 
 local function isHydroxideInterface(instance)
 	if not instance:IsA("ScreenGui") then
 		return false
 	end
 
+	if instance.Name == "Hydroxide" then
+		return true
+	end
+
 	local base = instance:FindFirstChild("Base")
-	return base ~= nil
-		and instance:FindFirstChild("Open") ~= nil
-		and base:FindFirstChild("Drag") ~= nil
-		and base:FindFirstChild("Tabs") ~= nil
+	return base ~= nil and base:FindFirstChild("Tabs") ~= nil
 end
 
 local function destroyPreviousInterfaces(parent)
@@ -32,7 +33,6 @@ local function destroyPreviousInterfaces(parent)
 end
 
 VisualAssets.Load()
-local Base = Interface.Base
 local currentStatus = "Home Page"
 
 function oh.setStatus(text)
@@ -146,7 +146,63 @@ Interface.Parent = interfaceParent
 
 Theme.Apply(Interface, VisualAssets)
 TabSelector.SelectTab("Home")
-Window.Attach(Interface)
+
+local function adopt(host, child, fill)
+	child.Parent = host
+	if fill then
+		child.Position = UDim2.new(0, 0, 0, 0)
+		child.Size = UDim2.new(1, 0, 1, 0)
+	end
+end
+
+if Prism.available() then
+	local shell = Interface.Base
+	shell.Name = "LegacyShell"
+	local tabs = shell.Tabs
+	local body = shell.Body
+	local prompts = shell.Prompts
+	local tooltip = shell.Tooltip
+	local messageBox = shell.MessageBox
+	local messageShadow = shell.MessageBoxShadow
+	local remaining = 3
+	local function placed()
+		remaining = remaining - 1
+		if remaining > 0 then
+			return
+		end
+		shell.Visible = false
+	end
+
+	Prism.mount(Interface, {
+		kind = "window",
+		title = "Hydroxide",
+		width = Theme.Layout.DefaultWindowSize.X,
+		height = Theme.Layout.DefaultWindowSize.Y,
+		minWidth = Theme.Layout.MinimumWindowSize.X,
+		minHeight = Theme.Layout.MinimumWindowSize.Y,
+		logo = VisualAssets.Load().Logo,
+		onClose = function()
+			oh.Exit()
+		end,
+		onRail = function(rail)
+			adopt(rail, tabs, true)
+			placed()
+		end,
+		onContent = function(content)
+			adopt(content, body, true)
+			placed()
+		end,
+		onRoot = function(root)
+			adopt(root, prompts, true)
+			adopt(root, tooltip, false)
+			adopt(root, messageShadow, true)
+			adopt(root, messageBox, false)
+			placed()
+		end,
+	})
+else
+	import("ui/window").Attach(Interface)
+end
 
 if #failures > 0 then
 	local summaries = {}
@@ -154,7 +210,8 @@ if #failures > 0 then
 		local firstLine = failure.Error:match("^[^\r\n]+") or failure.Error
 		table.insert(summaries, "• " .. failure.Label .. ": " .. firstLine)
 
-		local tab = Interface.Base.Tabs.Container:FindFirstChild(failure.Name)
+		local tabs = Interface:FindFirstChild("Tabs", true)
+		local tab = tabs and tabs:FindFirstChild("Container") and tabs.Container:FindFirstChild(failure.Name)
 		if tab then
 			tab.Visible = false
 		end

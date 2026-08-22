@@ -1,8 +1,6 @@
--- TODO(prism-window): Replace this temporary chrome host with Prism Window
--- (title bar, content slot, optional rail, drag, resize, collapse, maximize;
--- close only if onClose is passed). Do not expand this module. Do not compose
--- Draggable+Box chrome. Hydroxide must consume Window from @prism when it
--- ships on master and then delete this file.
+-- Fallback chrome used only when the Prism executor blob is absent.
+-- When ui/dist/Hydroxide is present, Prism Window is the only chrome.
+-- Last-xy collapse in this file is the GitHub-loadstring path.
 
 local UserInput = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
