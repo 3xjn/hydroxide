@@ -9,4 +9,5 @@ ui/node_modules/
 ui/out/
 ui/include/
 ui/.generated/
-ui/dist/
+ui/dist/*
+!ui/dist/Hydroxide.lua
