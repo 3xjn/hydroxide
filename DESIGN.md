@@ -29,33 +29,30 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 ## Window layout
 
 - Visual reference: `design/hydroxide-home-redesign-v1.png`. It is the shell contract for the fully source-built interface.
-- When the Prism executor blob is present, chrome is Prism `Window` from `@3xjn/prism` (drag, resize, collapse, maximize, title, optional rail). Hydroxide themes it and passes its own size: default 1120 by 680 pixels, minimum 720 by 420 pixels. Do not keep Prism’s 480×360 default. The host `ScreenGui` uses `ZIndexBehavior.Sibling`. Close is passed as `onClose` so Hydroxide can still exit.
-- Hydroxide does not own the Window API, compose `Draggable`+`Box`, invent an AppShell, or reimplement collapse when Prism Window is mounted. Existing scanner pages stay in Window’s `content` slot; the tool tab strip is mounted in the optional `rail` slot.
-- When the blob is absent (the live GitHub `dev.lua` loadstring), the Luau shell in `ui/window.lua` remains the chrome, including last-xy collapse.
+- Chrome is Prism `Window` from `@3xjn/prism` (current master, collapse-into-last-xy). Hydroxide themes it (`HYDROXIDE_THEME`, density `"compact"`) and passes its own size: default 1120 by 680 pixels, minimum 720 by 420 pixels. Do not keep Prism’s 480×360 default. The host `ScreenGui` uses `ZIndexBehavior.Sibling`. Close is passed as `onClose` → `oh.Exit()`.
+- The live GitHub loadstring imports `ui/dist/Hydroxide`, a single Lua blob emitted by `cd ui && npm run build` (rbxtsc, then a plain Wax bundle of that emit). `import("ui/dist/Hydroxide")` must return a table with `mountHydroxide`. There is no Luau Window fallback, no `Draggable`+`Box` chrome, and no Hydroxide AppShell.
+- Hydroxide does not own the Window API or reimplement collapse, maximize, drag, or resize. Existing scanner pages stay Luau in Window’s `content` slot; the tool tab strip is mounted in the optional `rail` slot.
 - Default size: 1120 by 680 pixels, clamped to the current viewport with a 16-pixel outer margin.
 - Minimum size: 720 by 420 pixels, reduced only when the viewport itself is smaller.
 - Title bar: 44 pixels.
 - Tool rail: 52 pixels.
-- Title bar anatomy: generated 24-pixel mark, `Hydroxide` wordmark, and subdued `c.1` version label at the left, then 36-pixel window controls at the right. Do not repeat the product title in the center.
+- Title bar anatomy: generated 24-pixel mark, `Hydroxide` wordmark, and subdued `c.1` version label at the left, then Prism’s window controls at the right. Do not repeat the product title in the center.
 - Tool rail anatomy: 40-pixel tab targets with 22-pixel generated icons and 6-pixel vertical rhythm. Targets never compact below 36 pixels.
 - Workspace anatomy: rail tools and the primary page begin on the same 12-pixel top line beneath the title bar. The primary page owns the full remaining workspace. The inert legacy Explorer pane and its nonfunctional filter are not part of the shell.
 - Page anatomy: tool controls and results sit inside a 12-pixel page inset. Query bars are 36 pixels high. The page does not receive its own rounded card, outline, or elevation; layout grouping comes from spacing, restrained input surfaces, and one-pixel dividers.
 - Signal Spy anatomy: an exact-instance QueryBar precedes the selected-target summary and event filter. It accepts canonical Roblox paths such as `workspace.Door` and `game:GetService("Players").LocalPlayer`, resolves only instance traversal syntax, and submits from either Enter or its 36-pixel `Inspect` action. Invalid paths keep the current target intact and explain the failing segment.
 - Home composition: the welcome label, generated mark, and tagline form one centered vertical stack with a 12-pixel rhythm. Resizing preserves their order and spacing instead of positioning each element at an independent percentage of the page.
 - The title bar and tool rail remain fixed. Page-owned lists keep their own scrolling. The workspace continues to the shell's bottom edge without a separate status strip.
-- The bottom-right resize handle is a transparent 28-pixel target with a small generated grip contained inside the shell corner. Hovering it replaces the default pointer with a compact double-headed NW–SE arrow; the cursor is directional artwork, not an enlarged copy of the grip. Because Roblox overrides `UserInputService.MouseIcon` above interactive GUI, Hydroxide renders this arrow in a pointer-following top-level image while temporarily hiding the system cursor. The arrow remains visible for the complete hover and drag lifecycle, including clamped resizing, then restores the cursor visibility state Hydroxide inherited. Title-bar controls are collapse, maximize/restore, and exit. They share identical target geometry, corner treatment, raster-icon family, and hover behavior; exit alone uses the danger color. Collapse creates the compact reopen target, maximize toggles a viewport-filling state, and exit fully shuts Hydroxide down.
-- Normal windows retain the 16-pixel viewport margin, eight-pixel corner radius, and outer stroke. Maximized windows sit flush at viewport origin, fill the complete viewport, and temporarily remove the outer radius and stroke so game pixels cannot leak around or beneath the shell.
-- If the Roblox viewport changes while maximized, restored bounds are reclamped so the complete window remains inside the current 16-pixel margin.
+- Drag, resize, collapse, and maximize are Prism Window’s. Hydroxide does not compose those controls. QueryBar, FilterPopover, and result lists mount as Prism islands on the GitHub path.
 - Every shell region uses scale-plus-offset geometry or is recomputed from the current window bounds. Resizing the outer window must never leave legacy 650-by-350 geometry inside it.
 
 ## Window lifecycle
 
-- When Prism Window is mounted, collapse is Prism’s: the same root `Frame` tweens `Position` and `Size` into the last-position reopen chip over `theme.motion.duration.normal` (~160ms). Maximize is instant. Hydroxide does not reimplement that motion.
-- The collapse control condenses Hydroxide into a 36-by-36 reopen chip containing an optically centered 18-by-18 generated Hydroxide mark. The chip stays at the last window x,y; it is not a top-center dock.
-- On the Luau fallback path, collapse tweens the same window frame `Position` and `Size` into that chip rect over `Theme.Motion` (120 to 180 milliseconds). After the tween finishes, the window hides and only the chip remains; no title, page, border, or resize-handle pixels may remain onscreen.
-- Reopening hides the chip and reverse-tweens the same window frame from the chip rect back to the previous normal or maximized bounds.
+- Collapse is Prism’s: the same root `Frame` tweens `Position` and `Size` into the last-position reopen chip over `theme.motion.duration.normal` (~160ms). Maximize is instant. Hydroxide does not reimplement that motion and does not keep a Luau `window.lua` fallback.
+- The collapse control condenses Hydroxide into a 36-by-36 reopen chip. The chip stays at the last window x,y; it is not a top-center dock.
+- Reopening reverse-tweens the same window frame from the chip rect back to the previous normal or maximized bounds.
 - The reopen control has a dark elevated surface, mineral-mint border, visible focus treatment, and a 36-pixel minimum interactive target.
-- The exit control is the only destructive title-bar action. It disconnects every Hydroxide-owned global listener, restores every installed hook and injected environment method, destroys the entire interface including the compact launcher, and clears the active `oh` session. A later execution must start from a clean environment.
+- Close is the only destructive title-bar action. Hydroxide passes `onClose` so Prism Window can call `oh.Exit()`, which disconnects every Hydroxide-owned global listener, restores every installed hook and injected environment method, destroys the entire interface including the compact launcher, and clears the active `oh` session. A later execution must start from a clean environment.
 
 ## Asset contract
 
@@ -98,6 +95,6 @@ The local Volt and Roblox clients are available for executor-owned rendering. So
 
 ## Implementation boundary
 
-The complete interface is source-built. `ui/runtime.lua` owns the live instance tree and reusable templates; feature modules consume that local contract. The title bar, tool rail, workspace, Home composition, resize handle, reopen state, prompts, menus, list rows, and scanner pages must not depend on `rbxassetid://11389137937`, `rbxassetid://5042114982`, or any other imported UI model.
+The complete interface is source-built. `ui/runtime.lua` owns the live instance tree and reusable templates for tool pages; feature modules consume that local contract. Chrome is Prism `Window` mounted from `ui/dist/Hydroxide.lua`. The title bar, collapse, maximize, drag, and resize must not be reimplemented in Luau. Scanner pages, prompts, menus, list rows, and the tool rail stay local Luau in Window’s slots. Nothing in the interface may depend on `rbxassetid://11389137937`, `rbxassetid://5042114982`, or any other imported UI model.
 
 Reusable primitives are: `Surface`, `ActionButton`, `QueryBar`, `FilterPopover`, `Tooltip`, `ScrollList`, `ObjectLabel`, `Dropdown`, `CheckBox`, `Prompt`, `MessageBox`, `ContextMenu`, `Tab`, and `RowTemplate`. `FilterPopover` anchors below its query-bar action, uses a full-width 36-pixel option target, closes on outside click, and reflects shared scanner state. `Tooltip` is the rail's compact hover label: it centers above the hovered tab, falls below only when title-bar clearance would be violated, uses the elevated surface and border treatment, and renders above every page-owned popover, including an open FilterPopover. Each primitive has default, hover, selected, focused, and disabled styling where applicable and uses the token palette above.

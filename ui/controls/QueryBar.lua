@@ -368,23 +368,19 @@ function QueryBar.new(host, spec)
         SetFilterValues = QueryBar.setFilterValues,
     }
 
-    if Prism.available() then
-        if bar.FilterValues then
-            bar.Filter = bar
-        end
-
-        bar.Handle = Prism.mount(host, {
-            kind = "queryBar",
-            placeholder = bar.Placeholder,
-            value = bar.Value,
-            action = bar.Action,
-            actionLabel = bar.ActionLabel,
-            filter = bar.FilterValues,
-        })
-        sync(bar)
-    else
-        mountLuau(bar)
+    if bar.FilterValues then
+        bar.Filter = bar
     end
+
+    bar.Handle = Prism.mount(host, {
+        kind = "queryBar",
+        placeholder = bar.Placeholder,
+        value = bar.Value,
+        action = bar.Action,
+        actionLabel = bar.ActionLabel,
+        filter = bar.FilterValues,
+    })
+    sync(bar)
 
     mounted[host] = bar
     return bar

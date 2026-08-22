@@ -7,7 +7,7 @@ local mainSource = fs.readFile("ui/main.lua")
 local runtimeSource = fs.readFile("ui/runtime.lua")
 local themeSource = fs.readFile("ui/theme.lua")
 local tabSelectorSource = fs.readFile("ui/controls/TabSelector.lua")
-local windowSource = fs.readFile("ui/window.lua")
+local islandSource = fs.readFile("ui/src/HydroxideIsland.tsx")
 local resizeCursor = fs.readFile("assets/ui/hydroxide-resize-cursor.png")
 
 local function pngDimension(data, offset)
@@ -70,35 +70,17 @@ assert(
     not themeSource:find("assets.ApplyLogo(interface.Open)\n", 1, true),
     "The full launcher button must not be painted as the logo"
 )
-assert(
-    not windowSource:find("local hideWindow = TweenService:Create(base", 1, true),
-    "Collapse must not slide the full window off-screen"
-)
-assert(
-    not windowSource:find("TweenService:Create(open", 1, true),
-    "Collapse motion must tween the window frame, not slide a top-center launcher"
-)
-assert(
-    not windowSource:find("UDim2.new(0.5, 0, 0, layout.WorkspaceInset)", 1, true),
-    "The reopen chip must stay at the last window x,y, not a top-center dock"
-)
-assert(
-    not windowSource:find("UDim2.new(0.5, 0, 0, -layout.LauncherSize", 1, true),
-    "The reopen chip must not enter from off-screen at top-center"
-)
+assert(not fs.isFile("ui/window.lua"), "Chrome must not keep a Luau Window fallback")
+assert(not fs.isFile("ui/window_geometry.lua"), "Chrome must not keep Luau window geometry")
+assert(islandSource:find("<Window", 1, true), "Live chrome must be Prism Window")
+assert(islandSource:find("onClose={model.onClose}", 1, true), "Prism Window must receive Hydroxide's onClose")
+assert(islandSource:find("WINDOW_WIDTH", 1, true), "Hydroxide must pass its own window width")
+assert(islandSource:find("WINDOW_MIN_WIDTH", 1, true), "Hydroxide must pass its own minimum width")
+assert(not islandSource:find("<Draggable", 1, true), "Do not compose Draggable+Box chrome")
 assert(
     themeSource:find("Theme.Motion = TweenInfo.new(0.15", 1, true),
-    "Collapse motion must use the existing 150ms Theme.Motion token"
+    "Page motion must keep the existing 150ms Theme.Motion token"
 )
-assert(
-    windowSource:find("Geometry.CollapseChipPosition", 1, true),
-    "The collapsed chip must be placed from the last window x,y"
-)
-assert(
-    windowSource:find("collapsedSize = Vector2.new(base.Size.X.Offset, base.Size.Y.Offset)", 1, true),
-    "Collapse must remember the window size instead of the 36px chip"
-)
-assert(windowSource:find("base.Visible = false", 1, true), "The window must hide after it has tweened into the chip")
 assert(themeSource:find("WorkspaceInset = 12", 1, true), "The shell must use a consistent workspace inset")
 assert(themeSource:find("MinimumPageWidth = 400", 1, true), "Responsive reflow must preserve the primary tool pane")
 assert(themeSource:find("TitleBarHeight = 44", 1, true), "The title bar must use compact chrome")
@@ -134,30 +116,13 @@ local homeSelection = assert(mainSource:find('TabSelector.SelectTab("Home")', 1,
 assert(themeApply < homeSelection, "Home selection must be applied after theming so it remains visible")
 assert(not runtimeSource:find('frame("Explorer"', 1, true), "The inert Explorer pane must not consume workspace")
 assert(not runtimeSource:find("Filter explorer ...", 1, true), "The inert Explorer filter must be removed")
-assert(not windowSource:find("ShouldShowExplorer", 1, true), "Window layout must give the full workspace to the active tool")
-assert(windowSource:find('createControl(drag, "Maximize"', 1, true), "Maximize must use the shared title control primitive")
-assert(windowSource:find('createControl(drag, "Exit"', 1, true), "Exit must use the shared title control primitive")
-assert(windowSource:find('corner.Name = "HydroxideCorner"', 1, true), "Title controls must share the shell corner treatment")
-assert(windowSource:find('local resizeHandle = Instance.new("Frame")', 1, true), "The resize target must not be a button that overrides the custom cursor")
-assert(windowSource:find("resizeHandle.MouseEnter:Connect", 1, true), "The resize target must show its cursor on hover")
-assert(windowSource:find("resizeHandle.MouseLeave:Connect", 1, true), "The resize target must restore the previous cursor after hover")
-assert(windowSource:find('resizeCursor.Name = "ResizeCursor"', 1, true), "The resize target must own a cursor overlay that Roblox GUI hover cannot replace")
-assert(windowSource:find("resizeCursor.Image = VisualAssets.Load().ResizeCursor", 1, true), "The cursor overlay must use generated cursor artwork")
-assert(windowSource:find("UserInput.MouseIconEnabled = false", 1, true), "The resize state must hide Roblox's overriding system cursor")
-assert(windowSource:find("resizeCursor.Position = UDim2.new(0, position.X, 0, position.Y)", 1, true), "The cursor overlay must follow the pointer during resizing")
-assert(not windowSource:find("UserInput.MouseIcon =", 1, true), "The resize cursor must not rely on an icon property Roblox ignores over interactive GUI")
-assert(windowSource:find("resizing and Theme.Colors.Accent or (resizeHovered and Theme.Colors.Text or Theme.Colors.SecondaryText)", 1, true), "The resize grip must distinguish active drag, hover, and rest states")
-assert(windowSource:find("resizing = true\n            updateResizeGrip()", 1, true), "Pressing the resize handle must immediately show its active state")
-assert(windowSource:find("resizing = false\n                    updateResizeGrip()", 1, true), "Releasing the resize handle must clear its active state")
-assert(windowSource:find("WindowResizeCursorCleanup", 1, true), "Shutdown must restore a cursor owned by the resize target")
-assert(windowSource:find("WindowFocusReleased:Connect", 1, true), "Losing Roblox focus must restore the resize cursor")
+assert(not mainSource:find("ShouldShowExplorer", 1, true), "Window layout must give the full workspace to the active tool")
 assert(assetsSource:find('ResizeCursor = installAsset("hydroxide-resize-cursor.png")', 1, true), "The resize cursor must load through getcustomasset")
 assert(resizeCursor:sub(2, 4) == "PNG", "The resize cursor must remain a PNG asset")
 assert(pngDimension(resizeCursor, 17) == 24 and pngDimension(resizeCursor, 21) == 24, "The resize cursor must use a compact 24px canvas")
 assert(runtimeSource:find("ClipsDescendants = true", 1, true), "The shell must clip its chrome to the outer corner radius")
 assert(runtimeSource:find("addCorner(drag, 8)", 1, true), "The opaque title bar must own the shell's top corner radius")
 assert(runtimeSource:find('frame("SquareBottom", drag', 1, true), "The rounded title bar must square only its internal bottom edge")
-assert(windowSource:find("drag.HydroxideCorner.CornerRadius", 1, true), "Maximized mode must flatten the title-bar corner mask")
 assert(not runtimeSource:find('label("Status", base', 1, true), "The redundant visual status bar must not be built")
 assert(not runtimeSource:find("StatusBarHeight", 1, true), "The removed status bar must not reserve page space")
 assert(not themeSource:find("StatusBarHeight", 1, true), "The removed status bar must not retain a layout token")
@@ -181,23 +146,9 @@ assert(not runtimeSource:find('frame("FilterPopover", query', 1, true), "FilterP
 assert(assetsSource:find('RemoteAtlas = installAsset("hydroxide-remote-icons.png")', 1, true), "Generated Remote Spy icons must load through getcustomasset")
 assert(assetsSource:find("function Assets.ApplyRemoteIcon", 1, true), "Remote Spy icons must use their own raster atlas mapping")
 assert(not runtimeSource:find('frame("Selection", toggle', 1, true), "Remote type filters must not imitate tab selection with underlines")
-assert(assetsSource:find('WindowAtlas = installAsset("hydroxide-window-icons.png")', 1, true), "Window controls must load their generated raster atlas")
-assert(windowSource:find("VisualAssets.ApplyWindowIcon", 1, true), "Window controls must use the shared generated icon treatment")
-assert(not windowSource:find('maximize.Text = "', 1, true), "Maximized state must not switch to a mismatched font glyph")
-assert(windowSource:find("base.Position = UDim2.new(0, 0, 0, 0)", 1, true), "Maximized mode must sit flush to the viewport")
-assert(windowSource:find("setShellMaximized", 1, true), "Maximized mode must remove normal rounded outer chrome")
-
-local shellMotion = windowSource:find("TweenService:Create(base, Theme.Motion", 1, true)
-local atomicHide = windowSource:find("base.Visible = false", 1, true)
-local launcherShow = windowSource:find("open.Visible = true", 1, true)
-assert(
-    shellMotion and atomicHide and launcherShow and shellMotion < atomicHide and atomicHide < launcherShow,
-    "The window must tween into the chip, then hide, then show the reopen control"
-)
-assert(
-    windowSource:find("Position = destination,\n            Size = destinationSize", 1, true),
-    "Reopening must reverse the collapse tween from the chip rect to the restored bounds"
-)
+assert(assetsSource:find('WindowAtlas = installAsset("hydroxide-window-icons.png")', 1, true), "Window control artwork may still load through getcustomasset")
+assert(mainSource:find("onRail", 1, true), "The tool rail must sit in Prism Window's rail slot")
+assert(mainSource:find("onContent", 1, true), "Scanner pages must sit in Prism Window's content slot")
 
 local defaultWidth, defaultHeight = themeSource:match("DefaultWindowSize = Vector2.new%((%d+), (%d+)%)")
 local minimumWidth, minimumHeight = themeSource:match("MinimumWindowSize = Vector2.new%((%d+), (%d+)%)")

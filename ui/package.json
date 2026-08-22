@@ -3,7 +3,7 @@
 	"private": true,
 	"version": "0.0.0",
 	"scripts": {
-		"build": "rbxtsc"
+		"build": "rbxtsc && node ./scripts/bundle.mjs"
 	},
 	"dependencies": {
 		"@3xjn/prism": "github:3xjn/prism",

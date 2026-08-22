@@ -1,6 +1,5 @@
 local UserInput = game:GetService("UserInputService")
 local QueryBar = import("ui/controls/QueryBar")
-local Prism = import("ui/prism")
 local Theme = import("ui/theme")
 
 local FilterPopover = {}
@@ -123,42 +122,30 @@ local function attachLuau(query, eventName)
 end
 
 function FilterPopover.new(query, eventName)
-    if Prism.available() then
-        if query.Filter then
-            return query.Filter
-        end
-
-        local bar = QueryBar.new(query, {
-            placeholder = query:GetAttribute("Placeholder"),
-            action = query:GetAttribute("Action") or "refresh",
-            actionLabel = query:GetAttribute("ActionLabel"),
-            filter = true,
-        })
-        return bar.Filter
-    end
-
-    if query.Filter and query.Filter.Panel then
+    if type(query) == "table" and query.Filter then
         return query.Filter
     end
 
-    local bar = query
-    if type(query) ~= "table" or query.Host == nil then
-        bar = QueryBar.new(query, {
-            placeholder = query:GetAttribute("Placeholder"),
-            action = query:GetAttribute("Action") or "refresh",
-            actionLabel = query:GetAttribute("ActionLabel"),
-            filter = true,
-        })
-    elseif query.FilterValues == nil then
-        bar = QueryBar.new(query.Host, {
-            placeholder = query.Placeholder,
-            action = query.Action,
-            actionLabel = query.ActionLabel,
-            filter = true,
-        })
+    if type(query) == "table" and query.Host ~= nil then
+        local bar = query
+        if query.FilterValues == nil then
+            bar = QueryBar.new(query.Host, {
+                placeholder = query.Placeholder,
+                action = query.Action,
+                actionLabel = query.ActionLabel,
+                filter = true,
+            })
+        end
+        return bar.Filter
     end
 
-    return attachLuau(bar, eventName)
+    local bar = QueryBar.new(query, {
+        placeholder = query:GetAttribute("Placeholder"),
+        action = query:GetAttribute("Action") or "refresh",
+        actionLabel = query:GetAttribute("ActionLabel"),
+        filter = true,
+    })
+    return bar.Filter
 end
 
 function FilterPopover.setCallback(popover, callback)

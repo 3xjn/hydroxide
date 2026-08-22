@@ -4,7 +4,6 @@ local initSource = fs.readFile("init.lua")
 local closureSpySource = fs.readFile("modules/ClosureSpy.lua")
 local contextMenuSource = fs.readFile("ui/controls/ContextMenu.lua")
 local uiMainSource = fs.readFile("ui/main.lua")
-local windowSource = fs.readFile("ui/window.lua")
 
 assert(
     initSource:find("pcall(previousSession.Exit)", 1, true),
@@ -43,10 +42,9 @@ assert(
     not initSource:find('game:GetService("ScriptContext").Error', 1, true),
     "Hydroxide must not disable executor-wide ScriptContext error listeners that it cannot restore"
 )
-assert(windowSource:find('createControl(drag, "Exit"', 1, true), "The fallback title bar must expose a distinct full-exit action")
-assert(windowSource:find("oh.Events.WindowExit", 1, true), "The fallback full-exit listener must be owned by the Hydroxide session")
-assert(windowSource:find("oh.Exit()", 1, true), "The fallback title-bar exit action must invoke full session cleanup")
 assert(uiMainSource:find("onClose", 1, true), "Prism Window must receive onClose so Hydroxide can still exit")
+assert(uiMainSource:find("oh.Exit()", 1, true), "Prism Window onClose must invoke full session cleanup")
+assert(not uiMainSource:find('import("ui/window")', 1, true), "Exit must not depend on a Luau Window fallback")
 assert(
     contextMenuSource:find("session.Events.ContextMenuInputEnded", 1, true),
     "The global context-menu input listener must be disconnected during shutdown"

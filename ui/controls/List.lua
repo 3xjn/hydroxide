@@ -9,7 +9,6 @@ local ListButton = {}
 
 local lists = {}
 local ctrlHeld = false
-local usePrism = Prism.available()
 local constants = {
     tweenTime = TweenInfo.new(0.15),
     selected = Theme.Colors.AccentSurface,
@@ -177,16 +176,10 @@ function List.new(instance, multiClick)
     list.BindContextMenuSelected = List.bindContextMenuSelected
     list.MultiClickEnabled = multiClick
 
-    if usePrism then
-        list.Order = {}
-        list.Instance = instance
-        list.Storage = storageFor(instance)
-        list.Handle = Prism.mount(instance, { kind = "list", rows = {} })
-    else
-        local listInstance = scrollingHost(instance)
-        listInstance.CanvasSize = UDim2.new(0, 0, 0, 15)
-        list.Instance = listInstance
-    end
+    list.Order = {}
+    list.Instance = instance
+    list.Storage = storageFor(instance)
+    list.Handle = Prism.mount(instance, { kind = "list", rows = {} })
 
     table.insert(lists, list)
     return list
@@ -416,14 +409,12 @@ oh.Events.ListInputEnded = UserInput.InputEnded:Connect(function(input)
     end
 end)
 
-if usePrism then
-    oh.Events.ListPrismSync = RunService.Heartbeat:Connect(function()
-        for _i, list in pairs(lists) do
-            if list.Dirty then
-                sync(list)
-            end
+oh.Events.ListPrismSync = RunService.Heartbeat:Connect(function()
+    for _i, list in pairs(lists) do
+        if list.Dirty then
+            sync(list)
         end
-    end)
-end
+    end
+end)
 
 return List, ListButton

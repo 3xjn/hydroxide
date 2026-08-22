@@ -155,54 +155,50 @@ local function adopt(host, child, fill)
 	end
 end
 
-if Prism.available() then
-	local shell = Interface.Base
-	shell.Name = "LegacyShell"
-	local tabs = shell.Tabs
-	local body = shell.Body
-	local prompts = shell.Prompts
-	local tooltip = shell.Tooltip
-	local messageBox = shell.MessageBox
-	local messageShadow = shell.MessageBoxShadow
-	local remaining = 3
-	local function placed()
-		remaining = remaining - 1
-		if remaining > 0 then
-			return
-		end
-		shell.Visible = false
+local shell = Interface.Base
+shell.Name = "LegacyShell"
+local tabs = shell.Tabs
+local body = shell.Body
+local prompts = shell.Prompts
+local tooltip = shell.Tooltip
+local messageBox = shell.MessageBox
+local messageShadow = shell.MessageBoxShadow
+local remaining = 3
+local function placed()
+	remaining = remaining - 1
+	if remaining > 0 then
+		return
 	end
-
-	Prism.mount(Interface, {
-		kind = "window",
-		title = "Hydroxide",
-		width = Theme.Layout.DefaultWindowSize.X,
-		height = Theme.Layout.DefaultWindowSize.Y,
-		minWidth = Theme.Layout.MinimumWindowSize.X,
-		minHeight = Theme.Layout.MinimumWindowSize.Y,
-		logo = VisualAssets.Load().Logo,
-		onClose = function()
-			oh.Exit()
-		end,
-		onRail = function(rail)
-			adopt(rail, tabs, true)
-			placed()
-		end,
-		onContent = function(content)
-			adopt(content, body, true)
-			placed()
-		end,
-		onRoot = function(root)
-			adopt(root, prompts, true)
-			adopt(root, tooltip, false)
-			adopt(root, messageShadow, true)
-			adopt(root, messageBox, false)
-			placed()
-		end,
-	})
-else
-	import("ui/window").Attach(Interface)
+	shell.Visible = false
 end
+
+Prism.mount(Interface, {
+	kind = "window",
+	title = "Hydroxide",
+	width = Theme.Layout.DefaultWindowSize.X,
+	height = Theme.Layout.DefaultWindowSize.Y,
+	minWidth = Theme.Layout.MinimumWindowSize.X,
+	minHeight = Theme.Layout.MinimumWindowSize.Y,
+	logo = VisualAssets.Load().Logo,
+	onClose = function()
+		oh.Exit()
+	end,
+	onRail = function(rail)
+		adopt(rail, tabs, true)
+		placed()
+	end,
+	onContent = function(content)
+		adopt(content, body, true)
+		placed()
+	end,
+	onRoot = function(root)
+		adopt(root, prompts, true)
+		adopt(root, tooltip, false)
+		adopt(root, messageShadow, true)
+		adopt(root, messageBox, false)
+		placed()
+	end,
+})
 
 if #failures > 0 then
 	local summaries = {}
