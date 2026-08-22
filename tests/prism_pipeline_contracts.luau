@@ -18,10 +18,18 @@ local tsconfig = fs.readFile("ui/tsconfig.json")
 local projectSource = fs.readFile("ui/default.project.json")
 local explorerSource = fs.readFile("ui/modules/Explorer.lua")
 local mainSource = fs.readFile("ui/main.lua")
+local lockSource = fs.readFile("ui/package-lock.json")
 
 assert(indexSource:find("export function mountHydroxide", 1, true), "Prism entry must export mountHydroxide(parent, model)")
-assert(islandSource:find('theme={DEFAULT_DARK_THEME}', 1, true), "Islands must use Prism DEFAULT_DARK_THEME")
+assert(islandSource:find("theme={HYDROXIDE_THEME}", 1, true), "Islands must use the Hydroxide Prism theme")
 assert(islandSource:find('density="compact"', 1, true), "Islands must use compact density")
+assert(islandSource:find("<Window", 1, true), "The island entry must mount Prism Window")
+assert(islandSource:find('from "@3xjn/prism"', 1, true), "Islands must import from @3xjn/prism")
+assert(islandSource:find("kind === \"window\"", 1, true), "mountHydroxide must accept a window kind")
+assert(not islandSource:find("480", 1, true), "Hydroxide must not keep Prism's 480 default width")
+assert(not islandSource:find("TODO(prism-window)", 1, true), "Prism Window is now the chrome; do not leave the swap TODO")
+assert(windowSource:find("Fallback chrome", 1, true), "window.lua must remain a GitHub-loadstring fallback when the dist blob is absent")
+assert(not windowSource:find("TODO(prism-window)", 1, true), "window.lua is fallback chrome, not the Prism Window host")
 assert(querySource:find("<Input", 1, true), "QueryBar must render Prism Input")
 assert(querySource:find("<Button", 1, true), "QueryBar must render a Prism Button")
 assert(filterSource:find("<Popover", 1, true), "FilterPopover must render Prism Popover")
@@ -30,8 +38,6 @@ assert(filterSource:find('triggerMode="click"', 1, true), "FilterPopover must us
 assert(filterSource:find("closeOnOutsidePress", 1, true), "FilterPopover must close on outside press")
 assert(listSource:find("<ScrollArea", 1, true), "Lists must render Prism ScrollArea")
 assert(listSource:find("<Stack", 1, true) or listSource:find("<Pressable", 1, true), "Lists must render Stack or Pressable rows")
-assert(islandSource:find("TODO(prism-window)", 1, true), "The island entry must leave a Prism Window swap hook")
-assert(windowSource:find("TODO(prism-window)", 1, true), "window.lua must stay a temporary host with a Prism Window TODO")
 assert(not islandSource:find("function AppShell", 1, true), "Do not invent a Hydroxide AppShell")
 assert(not islandSource:find("HydroxideAppShell", 1, true), "Do not invent a Hydroxide AppShell")
 assert(not islandSource:find("<Draggable", 1, true), "Do not compose Draggable+Box chrome")
@@ -49,6 +55,10 @@ assert(not packageSource:find('"bundle"', 1, true), "Do not ship an executor bun
 assert(
 	packageSource:find('"@3xjn/prism": "github:3xjn/prism"', 1, true) or packageSource:find('"@3xjn/prism": "file:../prism"', 1, true),
 	"Prism must be @3xjn/prism (github:3xjn/prism or file:../prism)"
+)
+assert(
+	lockSource:find("7dd7cc4688d3d7930cad93ce75d4e00b488d8f8c", 1, true),
+	"Lockfile must pin Prism master that includes Window collapse-into-chip"
 )
 assert(not packageSource:find('"prism":', 1, true), "Do not depend on unscoped prism")
 assert(not packageSource:find("@rbxts/prism-kit", 1, true), "Do not depend on @rbxts/prism-kit")
@@ -97,7 +107,11 @@ assert(checkSource:find("types/roblox.d.luau", 1, true), "check.sh must use the 
 assert(explorerSource:find("return Explorer", 1, true), "Explorer must stay stubbed")
 assert(not explorerSource:find("List.new", 1, true), "Explorer must not grow a page in this pass")
 assert(mainSource:find("ScriptGraph = import(\"modules/ScriptGraph\")", 1, true), "ScriptGraph methods must stay on oh.Api")
-assert(mainSource:find('import("ui/window")', 1, true), "The Luau window host must remain until Prism Window merges")
+assert(mainSource:find("Prism.available()", 1, true), "Prism Window must mount only when the executor blob is present")
+assert(mainSource:find('kind = "window"', 1, true), "Hydroxide must consume Prism Window through mountHydroxide")
+assert(mainSource:find("onClose", 1, true), "Hydroxide must pass onClose so Window can still exit")
+assert(mainSource:find('import("ui/window")', 1, true), "The Luau window fallback must remain for GitHub loadstring without a dist blob")
+assert(mainSource:find("DefaultWindowSize", 1, true), "Hydroxide must pass its own window size, not Prism's 480×360 default")
 assert(not fs.isFile("ui/dist/Hydroxide.provenance"), "Do not keep a Wax provenance writer")
 assert(not fs.isDir("ui/.generated/prism"), "Prism source must not be vendored as a permanent tree")
 

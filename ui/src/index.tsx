@@ -4,7 +4,12 @@ import type { HydroxideHandle, HydroxideModel } from "./contracts";
 import { HydroxideIsland } from "./HydroxideIsland";
 
 function assertModel(model: HydroxideModel): void {
-	if (model.kind !== "queryBar" && model.kind !== "filterPopover" && model.kind !== "list") {
+	if (
+		model.kind !== "queryBar" &&
+		model.kind !== "filterPopover" &&
+		model.kind !== "list" &&
+		model.kind !== "window"
+	) {
 		error(`Hydroxide Prism island does not support kind '${tostring((model as { kind: unknown }).kind)}'`);
 	}
 }
@@ -35,4 +40,12 @@ export function mountHydroxide(parent: Instance, initialModel: HydroxideModel): 
 	};
 }
 
-export type { HydroxideHandle, HydroxideModel, ListRowModel, QueryBarModel, FilterPopoverModel, ScannerFilterValues } from "./contracts";
+export type {
+	HydroxideHandle,
+	HydroxideModel,
+	ListRowModel,
+	QueryBarModel,
+	FilterPopoverModel,
+	ScannerFilterValues,
+	WindowModel,
+} from "./contracts";

@@ -29,6 +29,9 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 ## Window layout
 
 - Visual reference: `design/hydroxide-home-redesign-v1.png`. It is the shell contract for the fully source-built interface.
+- When the Prism executor blob is present, chrome is Prism `Window` from `@3xjn/prism` (drag, resize, collapse, maximize, title, optional rail). Hydroxide themes it and passes its own size: default 1120 by 680 pixels, minimum 720 by 420 pixels. Do not keep Prism’s 480×360 default. The host `ScreenGui` uses `ZIndexBehavior.Sibling`. Close is passed as `onClose` so Hydroxide can still exit.
+- Hydroxide does not own the Window API, compose `Draggable`+`Box`, invent an AppShell, or reimplement collapse when Prism Window is mounted. Existing scanner pages stay in Window’s `content` slot; the tool tab strip is mounted in the optional `rail` slot.
+- When the blob is absent (the live GitHub `dev.lua` loadstring), the Luau shell in `ui/window.lua` remains the chrome, including last-xy collapse.
 - Default size: 1120 by 680 pixels, clamped to the current viewport with a 16-pixel outer margin.
 - Minimum size: 720 by 420 pixels, reduced only when the viewport itself is smaller.
 - Title bar: 44 pixels.
@@ -47,8 +50,9 @@ Use Gotham for interface text and Code for technical values. The spacing scale i
 
 ## Window lifecycle
 
+- When Prism Window is mounted, collapse is Prism’s: the same root `Frame` tweens `Position` and `Size` into the last-position reopen chip over `theme.motion.duration.normal` (~160ms). Maximize is instant. Hydroxide does not reimplement that motion.
 - The collapse control condenses Hydroxide into a 36-by-36 reopen chip containing an optically centered 18-by-18 generated Hydroxide mark. The chip stays at the last window x,y; it is not a top-center dock.
-- Collapse tweens the same window frame `Position` and `Size` into that chip rect over `Theme.Motion` (120 to 180 milliseconds). After the tween finishes, the window hides and only the chip remains; no title, page, border, or resize-handle pixels may remain onscreen.
+- On the Luau fallback path, collapse tweens the same window frame `Position` and `Size` into that chip rect over `Theme.Motion` (120 to 180 milliseconds). After the tween finishes, the window hides and only the chip remains; no title, page, border, or resize-handle pixels may remain onscreen.
 - Reopening hides the chip and reverse-tweens the same window frame from the chip rect back to the previous normal or maximized bounds.
 - The reopen control has a dark elevated surface, mineral-mint border, visible focus treatment, and a 36-pixel minimum interactive target.
 - The exit control is the only destructive title-bar action. It disconnects every Hydroxide-owned global listener, restores every installed hook and injected environment method, destroys the entire interface including the compact launcher, and clears the active `oh` session. A later execution must start from a clean environment.

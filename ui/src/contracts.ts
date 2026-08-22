@@ -41,7 +41,21 @@ export interface ListModel {
 	readonly onRightPress?: (id: string) => void;
 }
 
-export type HydroxideModel = QueryBarModel | FilterPopoverModel | ListModel;
+export interface WindowModel {
+	readonly kind: "window";
+	readonly title?: string;
+	readonly width: number;
+	readonly height: number;
+	readonly minWidth: number;
+	readonly minHeight: number;
+	readonly logo?: string;
+	readonly onClose?: () => void;
+	readonly onRail?: (rail: Frame) => void;
+	readonly onContent?: (content: Frame) => void;
+	readonly onRoot?: (root: Frame) => void;
+}
+
+export type HydroxideModel = QueryBarModel | FilterPopoverModel | ListModel | WindowModel;
 
 export interface HydroxideHandle {
 	readonly update: (model: HydroxideModel) => void;

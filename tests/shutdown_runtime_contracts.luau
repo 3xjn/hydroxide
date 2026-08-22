@@ -43,9 +43,10 @@ assert(
     not initSource:find('game:GetService("ScriptContext").Error', 1, true),
     "Hydroxide must not disable executor-wide ScriptContext error listeners that it cannot restore"
 )
-assert(windowSource:find('createControl(drag, "Exit"', 1, true), "The title bar must expose a distinct full-exit action")
-assert(windowSource:find("oh.Events.WindowExit", 1, true), "The full-exit listener must be owned by the Hydroxide session")
-assert(windowSource:find("oh.Exit()", 1, true), "The title-bar exit action must invoke full session cleanup")
+assert(windowSource:find('createControl(drag, "Exit"', 1, true), "The fallback title bar must expose a distinct full-exit action")
+assert(windowSource:find("oh.Events.WindowExit", 1, true), "The fallback full-exit listener must be owned by the Hydroxide session")
+assert(windowSource:find("oh.Exit()", 1, true), "The fallback title-bar exit action must invoke full session cleanup")
+assert(uiMainSource:find("onClose", 1, true), "Prism Window must receive onClose so Hydroxide can still exit")
 assert(
     contextMenuSource:find("session.Events.ContextMenuInputEnded", 1, true),
     "The global context-menu input listener must be disconnected during shutdown"
