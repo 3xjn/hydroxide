@@ -15,6 +15,16 @@ assert(narrowWidth == 568 and narrowHeight == 328, "Small viewports must overrid
 
 local tinyWidth, tinyHeight = Geometry.ClampSize(1120, 680, 300, 220, 16, 720, 420)
 assert(tinyWidth == 268 and tinyHeight == 188, "Tiny viewports must retain the complete outer margin")
+
+local chipX, chipY = Geometry.CollapseChipPosition(400, 200, 36, 1920, 1080)
+assert(chipX == 400 and chipY == 200, "A collapsed chip must stay at the last window x,y")
+
+local clampedChipX, clampedChipY = Geometry.CollapseChipPosition(-80, -12, 36, 1920, 1080)
+assert(clampedChipX == 0 and clampedChipY == 0, "A collapsed chip must remain on-screen")
+
+local edgeChipX, edgeChipY = Geometry.CollapseChipPosition(1900, 1060, 36, 1920, 1080)
+assert(edgeChipX == 1884 and edgeChipY == 1044, "A collapsed chip must stay fully inside the viewport")
+
 local windowSource = fs.readFile("ui/window.lua")
 assert(
     windowSource:find("base.Position = clampRestoredPosition(restorePosition, restoredSize)", 1, true),

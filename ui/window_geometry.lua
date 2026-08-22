@@ -28,4 +28,10 @@ function Geometry.ClampRestoredPosition(x, y, width, height, viewportWidth, view
     return clamp(x, margin, maximumX), clamp(y, margin, maximumY)
 end
 
+function Geometry.CollapseChipPosition(x, y, chipSize, viewportWidth, viewportHeight)
+    local maximumX = math.max(0, viewportWidth - chipSize)
+    local maximumY = math.max(0, viewportHeight - chipSize)
+    return clamp(x, 0, maximumX), clamp(y, 0, maximumY)
+end
+
 return Geometry

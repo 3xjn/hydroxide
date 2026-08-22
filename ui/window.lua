@@ -106,6 +106,8 @@ function Window.Attach(interface)
     local restorePosition
     local restoreSize
     local collapsedPosition
+    local collapsedSize
+    local motionTween
 
     local function viewportSize()
         return camera.ViewportSize
@@ -139,6 +141,60 @@ function Window.Attach(interface)
         return UDim2.new(0, x, 0, y)
     end
 
+    local function chipSize()
+        return UDim2.new(0, layout.LauncherSize, 0, layout.LauncherSize)
+    end
+
+    local function chipPositionFrom(position)
+        local viewport = viewportSize()
+        local x, y = Geometry.CollapseChipPosition(
+            position.X.Offset,
+            position.Y.Offset,
+            layout.LauncherSize,
+            viewport.X,
+            viewport.Y
+        )
+        return UDim2.new(0, x, 0, y)
+    end
+
+    local function playShellMotion(goal, onComplete)
+        if motionTween then
+            motionTween:Cancel()
+            motionTween = nil
+        end
+
+        local tween = TweenService:Create(base, Theme.Motion, goal)
+        motionTween = tween
+        tween.Completed:Connect(function(playbackState)
+            if motionTween ~= tween then
+                return
+            end
+
+            motionTween = nil
+            if playbackState == Enum.PlaybackState.Completed then
+                onComplete()
+            end
+        end)
+        tween:Play()
+    end
+
+    local function currentChipPosition()
+        return chipPositionFrom(collapsedPosition or base.Position)
+    end
+
+    local function restoredWindowBounds()
+        if maximized then
+            local viewport = viewportSize()
+            return UDim2.new(0, 0, 0, 0), UDim2.new(0, viewport.X, 0, viewport.Y)
+        end
+
+        local restoredSize = clampSize(collapsedSize)
+        local position = clampRestoredPosition(collapsedPosition, restoredSize)
+        collapsedPosition = position
+        collapsedSize = restoredSize
+        return position, UDim2.new(0, restoredSize.X, 0, restoredSize.Y)
+    end
+
     local function center(size)
         local viewport = viewportSize()
         base.Position = UDim2.new(0, math.floor((viewport.X - size.X) / 2), 0, math.floor((viewport.Y - size.Y) / 2))
@@ -166,8 +222,8 @@ function Window.Attach(interface)
     end
 
     styleExistingControl(collapse, "Collapse", -76)
-    open.Position = UDim2.new(0.5, 0, 0, -layout.LauncherSize - layout.WorkspaceInset)
-    open.Size = UDim2.new(0, layout.LauncherSize, 0, layout.LauncherSize)
+    open.AnchorPoint = Vector2.new(0, 0)
+    open.Size = chipSize()
     open.Visible = false
     local maximize = createControl(drag, "Maximize", "Maximize", -40)
     local exit = createControl(drag, "Exit", "Exit", -4)
@@ -312,7 +368,7 @@ function Window.Attach(interface)
     fitInitialWindow()
 
     oh.Events.WindowDragStart = drag.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and not maximized then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and not maximized and not collapsed and not motionTween then
             dragging = true
             dragStart = input.Position
             dragPosition = base.Position
@@ -332,7 +388,7 @@ function Window.Attach(interface)
     end)
 
     oh.Events.WindowResizeStart = resizeHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and not maximized then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and not maximized and not collapsed and not motionTween then
             resizing = true
             updateResizeGrip()
             showResizeCursor()
@@ -366,13 +422,13 @@ function Window.Attach(interface)
             positionResizeCursor(UserInput:GetMouseLocation())
         end
 
-        if dragging then
+        if dragging and not collapsed and not motionTween then
             local viewport = viewportSize()
             local delta = input.Position - dragStart
             local x = math.max(-base.AbsoluteSize.X + 96, math.min(dragPosition.X.Offset + delta.X, viewport.X - 96))
             local y = math.max(0, math.min(dragPosition.Y.Offset + delta.Y, viewport.Y - 48))
             base.Position = UDim2.new(0, x, 0, y)
-        elseif resizing then
+        elseif resizing and not collapsed and not motionTween then
             local delta = input.Position - resizeStart
             local size = clampSize(resizeSize + Vector2.new(delta.X, delta.Y))
             base.Size = UDim2.new(0, size.X, 0, size.Y)
@@ -381,6 +437,10 @@ function Window.Attach(interface)
     end)
 
     oh.Events.WindowMaximize = maximize.MouseButton1Click:Connect(function()
+        if collapsed or motionTween then
+            return
+        end
+
         setMaximized(not maximized)
     end)
 
@@ -390,46 +450,74 @@ function Window.Attach(interface)
     end)
 
     oh.Events.WindowCollapse = collapse.MouseButton1Click:Connect(function()
-        if collapsed then
+        if collapsed or motionTween then
             return
         end
 
         collapsed = true
+        dragging = false
+        resizing = false
         restoreResizeCursor()
+        resizeHandle.Visible = false
         collapsedPosition = base.Position
-        base.Visible = false
-        open.Position = UDim2.new(0.5, 0, 0, -layout.LauncherSize - layout.WorkspaceInset)
-        local showOpen = TweenService:Create(open, Theme.Motion, {
-            Position = UDim2.new(0.5, 0, 0, layout.WorkspaceInset)
-        })
-
-        open.Visible = true
-        showOpen:Play()
+        collapsedSize = Vector2.new(base.Size.X.Offset, base.Size.Y.Offset)
+        local targetPosition = currentChipPosition()
+        local targetSize = chipSize()
+        playShellMotion({
+            Position = targetPosition,
+            Size = targetSize
+        }, function()
+            local chipPos = currentChipPosition()
+            local chip = chipSize()
+            base.Position = chipPos
+            base.Size = chip
+            base.Visible = false
+            open.Position = chipPos
+            open.Size = chip
+            open.Visible = true
+        end)
     end)
 
     oh.Events.WindowOpen = open.MouseButton1Click:Connect(function()
-        if not collapsed then
+        if not collapsed or motionTween then
             return
         end
 
+        local origin = open.Position
         collapsed = false
-        local destination
-        if maximized then
-            local viewport = viewportSize()
-            destination = UDim2.new(0, 0, 0, 0)
-            base.Size = UDim2.new(0, viewport.X, 0, viewport.Y)
-        else
-            local restoredSize = clampSize(base.AbsoluteSize)
-            destination = clampRestoredPosition(collapsedPosition, restoredSize)
-            base.Size = UDim2.new(0, restoredSize.X, 0, restoredSize.Y)
-            collapsedPosition = destination
-        end
+        local destination, destinationSize = restoredWindowBounds()
         open.Visible = false
-        base.Position = destination
+        base.Position = origin
+        base.Size = chipSize()
         base.Visible = true
+        playShellMotion({
+            Position = destination,
+            Size = destinationSize
+        }, function()
+            base.Position = destination
+            base.Size = destinationSize
+            resizeHandle.Visible = not maximized
+            updateWorkspace()
+        end)
     end)
 
     oh.Events.WindowViewport = camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+        if collapsed then
+            if not maximized then
+                collapsedSize = clampSize(collapsedSize)
+                collapsedPosition = clampRestoredPosition(collapsedPosition, collapsedSize)
+            end
+            local chipPos = currentChipPosition()
+            local chip = chipSize()
+            open.Position = chipPos
+            open.Size = chip
+            if not motionTween then
+                base.Position = chipPos
+                base.Size = chip
+            end
+            return
+        end
+
         if maximized then
             local viewport = viewportSize()
             base.Position = UDim2.new(0, 0, 0, 0)
@@ -438,9 +526,6 @@ function Window.Attach(interface)
             local size = clampSize(base.AbsoluteSize)
             base.Position = clampRestoredPosition(base.Position, size)
             base.Size = UDim2.new(0, size.X, 0, size.Y)
-            if collapsed then
-                collapsedPosition = base.Position
-            end
         end
         updateWorkspace()
     end)
